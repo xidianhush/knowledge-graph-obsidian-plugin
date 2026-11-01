@@ -6,7 +6,7 @@
 
 1. 读 `AGENTS.md`、`TODO.md`、`README.md` 和 `DEVELOPMENT.md`，检查当前分支、工作区和 manifest；不要覆盖用户改动。
 2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。
-3. 读 `LAYOUT_SCALE_RESULT.md`、`NATIVE_AB_RESULT.md`、`CONTINUOUS_EDIT_RESULT.md` 和 `DESKTOP_STABILITY_RESULT.md`。47-A3 的 schema3 已在本地 0.0.11 实现（commit `13933dc`，已发布 pre-release `v0.0.11`）并完成独立语义/规模复核、原生基本回归、30 分钟连续压力与冷启动，剩余重点是用户体验验收；FB-006 已补宿主主进程日志通道仍 0 复现、未定因。
+3. 读 `LAYOUT_SCALE_RESULT.md`、`NATIVE_AB_RESULT.md`、`CONTINUOUS_EDIT_RESULT.md` 和 `DESKTOP_STABILITY_RESULT.md`。47-A3 的 schema3 已在本地 0.0.11 实现（commit `13933dc`，已发布 pre-release `v0.0.11`）并完成独立语义/规模复核、原生基本回归、30 分钟连续压力与冷启动，用户体验验收已完成；FB-006 已定因为测试驱动整页 reload 产物（非插件缺陷，详见 §2 与 `.local/evidence/fb006-repro/RESULT.md`），保持观察。
 4. 先建立本机合成独立库，再执行原生测试。原机器的 vault/profile、历史 ZIP、私有证据没有随 Git 传输；缺少环境不是测试通过。具体可运行/需准备的脚本见 DEVELOPMENT。
 5. 每轮按任务 ID 局部更新 TODO，记录实际测试、版本、日期和未完成项；产品体验验收由用户决定。
 
@@ -40,13 +40,13 @@
 
 已回归：schema1→3 与 schema2→3 冷载迁移、同笔记多组共享一条 `structures`、迁移写失败保留旧数据、旧版本拒绝 schema3 但不毁数据、撤销/重做、单组/全库恢复、改名与部分范围保留、增删局部修复（`npm test` 10 个合成脚本全过）。独立复核（bench-verifier，未改 src/tests）：新核心 vs 冻结 0.0.10 核心 7 场景语义 EQUIVALENT、契约 5 项通过；5 档字节比 0.082–0.772、p50 时间比全 <1、保留堆比 0.072–0.731，脚本 `scripts/schema3_*.mjs`，报告 `.local/evidence/schema3/REPORT.md`。原生 0.0.11（9243，Obsidian 1.14.5 页面/Electron 30.1.2/Chrome 124）：真实鼠标拖动→“布局已保存”→磁盘 `schemaVersion=3`，原生命令重建后节点 dx=dy=0.0 恢复；Esc 取消（“调整中 · Esc 取消”→“已取消本次调整”、磁盘/rev 不变）；Ctrl+Z 撤销生效；同笔记 note 组 + heading 组持久化后 `structures` 仅 1 条且 note 指向同一 noteKey。已完成：30 分钟原生连续压力（1161 轮 0 失败/0 渲染异常、预览 151/151、隐藏恢复 151/151、busy 卡死 0、rev 单调、heap 无攀升）；拖动/保存补充 20/20、Ctrl+Z 4/4；schema3 冷启动 rev/几何/磁盘一致（证据 `.local/evidence/continuous-011/RESULT.md`、`cold-load-011.json`）；本地 commit `13933dc`（已 push 并发布 pre-release `v0.0.11`）；同日另提交 `8a3a429`（文档）。**用户体验验收：用户已于 2026-11-01 在日常库完成（47-P2/47-P3，13:50–15:39，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）。** 2026-11-01 用户授权将日常库升级至 0.0.11 并随后人工体验：已替换三文件、备份 0.0.6 四文件、用日常库完整副本在 9244（0.0.11）/9245（0.0.6）双实例预演迁移（0.0.6 同数据 restored 0/3，0.0.11 restored 1，无布局回退），预期提示与回退步骤见 `.local/acceptance-daily-0.0.11.md`。不得因技术通过宣称 47-A3 已完成或已交付。
 
-### 2. 46-A3 / FB-006：偶发异常定位（贯穿后续开发）
+### 2. 46-A3 / FB-006：偶发异常定位（FB-006 已定因，46-A3 长时边界继续）
 
-历史稳定性主脚本 51 项断言中 50 通过、1 失败。自有资源清理与竞态通过，但出现无栈 `illegal access` 和宿主 app.js 的 `t.webContents.getZoomFactor is not a function`，不能关闭此项。
+**FB-006 状态：已定因（2026-11-01，测试驱动方式产物，非插件缺陷）**。历史 51 项断言中的 `illegal access` 与 `getZoomFactor` 已复现并归因：只有用 Playwright 注入式驱动对 Obsidian 渲染页执行整页 `page.reload()` 时才出现（每次约 4 条字符串异常 `illegal access`，CDP `Runtime.exceptionThrown`，scriptId=1/url=index.html/line 0，reload 前后旧/新主世界各一批）。决定性对照：插件 `disablePluginAndSave` 后完全未加载（`plugins=[]`）仍 4 条；0.0.9 与 0.0.10 相同；纯 raw CDP 复刻相同序列 0 条；去掉本仓 init script 的 Playwright 仍 3 条；本仓正常使用路径（30 分钟 1161 轮、150 次混合、20 次拖动保存）两异常均 0 次。`illegal access` 字符串在 obsidian-1.14.5.asar 中出现 0 次 → Electron 原生层在渲染进程 reload 时抛出；`getZoomFactor` 属 Obsidian 自身 `app.js` 标题栏 `updateStatus` 在 reload 后使用失效窗口代理 `this.eWin`，插件不在调用栈上（本轮未复现，按历史条件记录）。结论与建议：原生稳定性回归不要 reload 渲染页（改用重启应用或禁用/启用插件），统一 raw CDP；历史 host 异常不作为插件缺陷计入。证据：脚本 `.local/native/fb006_*.py`，结果 `.local/evidence/fb006-repro/RESULT.md`。
 
-先建立真正禁用插件后重载的对照：同时记录持久启用列表、运行插件对象和重载后状态。过去一次对照重载后插件仍启用，因此无效。按相同操作序列对照空白 Markdown、最小 Worker、图谱开关、关于页面与缩放；保存实际版本、原始时间戳和堆栈，过滤 CDP 启用时重放的历史异常。不能凭 app.js 堆栈判断与插件无关，也不要屏蔽错误。
+遗留观察项：46-A3 的长期资源/隐藏恢复/多视图边界与真实窗口下的极端序列仍需按原计划补测；不因 FB-006 定因就把 46-A3 整体标为完成。
 
-完成标准：形成可复现序列和归因证据；若有修复，对同序列及交互/释放回归；若暂不能复现，标明次数与条件，保持待定位或提交用户判断，不把一次无异常当成已修复。
+历史线索（保留）：稳定性主脚本 51 项断言中 50 通过、1 失败；自有资源清理与竞态通过，但出现无栈 `illegal access` 和宿主 app.js 的 `t.webContents.getZoomFactor is not a function`。过去一次“禁用插件后重载”对照因重载后插件仍启用而无效，本轮已用 `disablePluginAndSave` 补齐有效对照。
 
 ### 3. 47-A2 / 47-P2：连续编辑、预览与规模验收
 
@@ -80,4 +80,4 @@
 
 ## 可直接交给下一位的开场语
 
-请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线。本地 0.0.11 已 commit `13933dc` 并 push，GitHub pre-release `v0.0.11` 已发布：47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，用户体验验收已完成（日常库已于 2026-11-01 升级至 0.0.11，用户 13:50–15:39 验收通过，报告见 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；46-A3 / FB-006 已有宿主主进程日志通道但 0 复现、继续定位。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
+请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线。本地 0.0.11 已 commit `13933dc` 并 push，GitHub pre-release `v0.0.11` 已发布：47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，用户体验验收已完成（日常库已于 2026-11-01 升级至 0.0.11，用户 13:50–15:39 验收通过，报告见 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；46-A3 的长期/资源边界继续追踪；FB-006 已定因为测试驱动整页 reload 产物（非插件）。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
