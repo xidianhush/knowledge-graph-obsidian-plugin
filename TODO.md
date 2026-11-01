@@ -8,7 +8,7 @@
 
 **当前：用户于 2026-10-30 完成 0.0.6 日常体验，反馈原已规划功能暂时正常、体验不错；新增 FB-005：标题改名等小改动导致手动布局大范围回退，希望重建时尽量保留排列。用户已反馈 0.0.9 暂时符合预期，当前0.0.10记录去重候选已交付独立库，稳定性仍保持进行中；生命周期断言通过；FB-006 已于 2026-11-01 定因为测试驱动整页 reload 产物（非插件缺陷），待继续观察。历史验收保留，长期稳定性不据此宣称全部通过。**
 
-当前计划：ME-P3 真实副本体验通过，ME-A5 交付固定完成，ME-P4 日常试用已获用户明确授权，首发功能冻结仍待决定。ME-A6 已安装日常 0.0.6，ME-P5 用户体验完成；ME-A7 诊断完成；LC-A2 局部增删调整 0.0.9 已在独立库获得本轮用户反馈，LC-P1 已验收（暂时符合预期）；46-A3 / FB-006 按用户要求保持进行中，同时推进47-A1/A2。2026-11-01：0.0.11（schema3）已 commit `13933dc` 并 push 到 origin/main，GitHub pre-release `v0.0.11` 已发布（资产 main.js/manifest.json/styles.css/SHA256SUMS/RELEASE_NOTES.md，https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/v0.0.11；社区目录提交未做）；47-A3 合成/独立复核/原生基本回归、47-A2 30 分钟原生连续压力与 schema3 冷启动已完成；FB-006 主进程日志通道已打通并于 2026-11-01 晚定因为测试驱动整页 reload 产物（非插件缺陷，证据 `.local/evidence/fb006-repro/RESULT.md`），46-A2/A4 兼容矩阵可开始。2026-11-01 用户明确授权后已将日常库升级至 0.0.11（仅替换 main.js/manifest.json/styles.css；data.json 仍为 schema1 rev87，待用户首次建图时迁移；0.0.6 四文件已备份到 `.local/backup-daily-0.0.6/`）；升级前用日常库完整副本在 9244（0.0.11）/9245（0.0.6）双实例预演：迁移成功（486KB→8.8KB）、0.0.6 对当前数据 restored 0/3、0.0.11 restored 1（因 `Analog IC.md` 自 10-30 有 10 个标题改名，0.0.6 同样不应用），无布局回退；日常库体验验收待用户，清单见 `.local/acceptance-daily-0.0.11.md`。2026-11-01 14:00 起用户在**日常库**验收 0.0.11 通过（47-P2 / 47-P3 由用户自行标记已验收，13:50–15:39 试用到的功能暂时符合预期，产品验收报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；随后进入 push/首发范围准备，push 与发布仍需用户明确授权。用户最新反馈 real-vault-trial 暂未发现问题；本轮核对该副本磁盘仍0.0.6，运行版本未核实，不算作0.0.9真实副本验收。受限密集组、超限拒绝、帧间隔异常及长期资源未测边界继续保留。交付、安装与回退见 RELEASE_006_RESULT.md；后续稳定性/性能及发布任务仍按原清单推进，不代表公开发布授权。
+当前计划：ME-P3 真实副本体验通过，ME-A5 交付固定完成，ME-P4 日常试用已获用户明确授权，首发功能冻结仍待决定。ME-A6 已安装日常 0.0.6，ME-P5 用户体验完成；ME-A7 诊断完成；LC-A2 局部增删调整 0.0.9 已在独立库获得本轮用户反馈，LC-P1 已验收（暂时符合预期）；46-A3 / FB-006 按用户要求保持进行中，同时推进47-A1/A2。2026-11-01：0.0.11（schema3）已 commit `13933dc` 并 push 到 origin/main，GitHub pre-release `v0.0.11` 已发布（资产 main.js/manifest.json/styles.css/SHA256SUMS/RELEASE_NOTES.md，https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/v0.0.11；社区目录提交未做）；47-A3 合成/独立复核/原生基本回归、47-A2 30 分钟原生连续压力与 schema3 冷启动已完成；FB-006 主进程日志通道已打通并于 2026-11-01 晚定因为测试驱动整页 reload 产物（非插件缺陷，证据 `.local/evidence/fb006-repro/RESULT.md`），46-A2/A4 兼容矩阵随即完成（阶段一核心环境 + 阶段二 7 插件组合均通过、未捕获异常 0，证据与局限见 `COMPAT_MATRIX_RESULT.md`；46-P2 主题/窗口体验待用户确认，DEC-001 记录现状）。2026-11-01 用户明确授权后已将日常库升级至 0.0.11（仅替换 main.js/manifest.json/styles.css；data.json 仍为 schema1 rev87，待用户首次建图时迁移；0.0.6 四文件已备份到 `.local/backup-daily-0.0.6/`）；升级前用日常库完整副本在 9244（0.0.11）/9245（0.0.6）双实例预演：迁移成功（486KB→8.8KB）、0.0.6 对当前数据 restored 0/3、0.0.11 restored 1（因 `Analog IC.md` 自 10-30 有 10 个标题改名，0.0.6 同样不应用），无布局回退；日常库体验验收待用户，清单见 `.local/acceptance-daily-0.0.11.md`。2026-11-01 14:00 起用户在**日常库**验收 0.0.11 通过（47-P2 / 47-P3 由用户自行标记已验收，13:50–15:39 试用到的功能暂时符合预期，产品验收报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；随后进入 push/首发范围准备，push 与发布仍需用户明确授权。用户最新反馈 real-vault-trial 暂未发现问题；本轮核对该副本磁盘仍0.0.6，运行版本未核实，不算作0.0.9真实副本验收。受限密集组、超限拒绝、帧间隔异常及长期资源未测边界继续保留。交付、安装与回退见 RELEASE_006_RESULT.md；后续稳定性/性能及发布任务仍按原清单推进，不代表公开发布授权。
 
 ### 整体计划在哪里
 
@@ -156,12 +156,12 @@
 
 | ID | 责任人 | 工作 | 状态 | 完成标准 / 证据 |
 | --- | --- | --- | --- | --- |
-| 46-P1 | 产品 | 确认本轮目标使用环境：主题、分屏、独立窗口及常用插件组合 | 已确认基本环境；插件组合未指定 | 用户明确“深色主题，主窗口内使用”；本轮先验证该环境，第三方插件组合不推定 |
+| 46-P1 | 产品 | 确认本轮目标使用环境：主题、分屏、独立窗口及常用插件组合 | 已确认（2026-11-01） | 用户明确“深色主题，主窗口内使用”；2026-11-01 用户确认第三方插件组合为 Dataview、Templater、Obsidian Git、Style Settings、Omnisearch、Excalidraw，并授权在独立测试库安装验证 |
 | 46-A1 | 技术 | 核实实际运行版本，补验 Obsidian 1.14.5 | 已完成（版本核实） | 运行 0.0.9 / Obsidian 1.14.5，安装程序 1.6.7、Electron 30.1.2；深色独立库，见 DESKTOP_STABILITY_RESULT.md；稳定性异常另归 46-A3 |
-| 46-A2 | 技术 | 检查浅色主题的可读性、分屏与弹出独立窗口 | 待办 | 截图及事件/坐标/资源归属验证；保持图谱深色还是跟随主题属于待产品决定事项 |
+| 46-A2 | 技术 | 检查浅色主题的可读性、分屏与弹出独立窗口 | 已完成（2026-11-01，独立库） | 阶段一在 9247/0.0.11/Obsidian 1.14.5 实测：A 深色基线正常；B 浅色可读、图谱画布保持深色（`canvasLum` 46.2→46.1，属 DEC-001）；C 主窗口分屏两实例各自渲染；D 拖动保存 `revision 1039→1040`、撤销回 1041；E 弹出窗口+跨窗移动+关闭后主窗口保留；F Ctrl 预览与 Esc 正常；G 全部释放后重开正常。事件/坐标/资源归属均按视图实例核对，见 COMPAT_MATRIX_RESULT.md；图谱是否跟随主题仍待产品决定 |
 | 46-A3 | 技术 | 反复开关视图、切换设置、隐藏恢复、取消任务和插件重载 | 进行中（FB-006 已定因为测试驱动 reload 产物、非插件；长期/资源边界待补） | 30 开关、10 设置、10 竞态及10插件重载等断言通过；51 项中 50 通过，无未捕获错误项失败。app.js getZoomFactor 异常及 illegal access 原未定因，不宣称完成；见 DESKTOP_STABILITY_RESULT.md。2026-11-01 原生复跑（Obsidian 1.6.7 / Electron 30.1.2 / 插件 0.0.10，9242 未重启）：A 开→拖→存→关→重开 20/20、D 开关 30/30 + 重载 10/10、有效对照（禁用插件）20/20；历史两条异常 0 次复现，但未采集宿主主进程 stderr、运行版本≠历史版本，不宣称修复；`fileManager.renameFile` 挂起在插件禁用下同样复现→宿主/环境。缺口见 `.local/native/evidence/FB006_report.md`。2026-11-01 补宿主主进程通道（9242 带 `--enable-logging` 重启，stderr/stdout 落盘）：图谱开→关×10、About×2、快速重建竞态×8、快速抖动×8，宿主 stderr 无 `illegal access`/`getZoomFactor`/`FATAL`/`Uncaught`，渲染侧 0 异常；通道验证有效（捕获启动期 EADDRINUSE、DevTools 监听、1.14.5 更新检查），见 `.local/evidence/native-011/FB006_LOGGED_ATTEMPT.md`。2026-11-01 晚 FB-006 定因：Playwright 注入式驱动对渲染页 reload 触发 `illegal access`（插件完全禁用仍 4 条、纯 CDP 0 条、0.0.9/0.0.10 相同）→ 非插件缺陷；`getZoomFactor` 属宿主标题栏 `updateStatus` 失效窗口代理，本轮未复现。详见 FB-006 小节与 `.local/evidence/fb006-repro/RESULT.md` |
-| 46-A4 | 技术 | 在已确认的第三方插件组合中验证 Markdown 预览与卸载 | 待办（依赖 46-P1） | 不把“基础插件环境通过”扩大为所有插件组合通过 |
-| 46-P2 | 产品 | 体验修复后的桌面表现，确认主题与窗口体验 | 待用户验收（技术完成后） | 记录可接受项与剩余问题 |
+| 46-A4 | 技术 | 在已确认的第三方插件组合中验证 Markdown 预览与卸载 | 已完成（2026-11-01，限独立库与所列版本） | 阶段二在 9248/vault-012 安装并加载 7 插件（knowledge-graph-smoke 0.0.11、dataview 0.5.68、obsidian-git 2.41.1、obsidian-style-settings 1.0.9、excalidraw 2.28.1、templater 2.26.0、omnisearch 1.32.0）：拖动保存/撤销、增删与改名标题、文件与目录改名后布局身份迁移、预览内容（公式/表格/图片/链接/Dataview/Callout/Templater）、真实 Ctrl+Z、禁用启用、卸载重装均通过；发现第三方模态框会拦截画布输入（Excalidraw 欢迎页、改名“更新链接”弹窗），非插件缺陷；卸载按宿主语义删除插件目录与 data.json。未把结果扩大为所有插件组合兼容，见 COMPAT_MATRIX_RESULT.md |
+| 46-P2 | 产品 | 体验修复后的桌面表现，确认主题与窗口体验 | 待用户验收（技术已完成 2026-11-01） | 技术证据见 COMPAT_MATRIX_RESULT.md；待用户确认：浅色主题下“应用变浅、图谱画布保持深色”是否可接受（DEC-001）、分屏/弹窗/跨窗移动体验、卸载会删除已保存布局是否符合预期 |
 
 ## Step 4.7 — 连续编辑与规模性能（首轮合成验证进行中）
 
@@ -207,7 +207,7 @@
 | HX-A1 | 技术 | 筛选可公开文件，更新交接和后续计划，补齐干净 clone 构建/测试入口 | 已完成 | HANDOFF_NEXT.md、DEVELOPMENT.md；工作区及干净暂存区检出 npm test 均通过（构建+10个合成脚本），主程序哈希与0.0.10一致；私有数据继续排除。见 HANDOFF_VALIDATION_RESULT.md |
 | HX-A2 | 技术 | Commit、关联远程、push 并核对远端提交 | 已完成 | 2026-11-01 源码交接提交 013cbb661b103a0a406c2f4cd103162b17c7b3b2 已推送，ls-remote 确认远端默认分支 main / HEAD 与之相同。origin 为指定 SSH 地址；普通推送，未 force。后续仅补本条完成回执，最新提交以远端 main 为准 |
 
-后续执行顺序：46-A2/A4 兼容矩阵（用户已同意 FB-006 定因后开始；默认矩阵与场景见 HANDOFF_NEXT）→ 48-* 最终交付 → 社区插件目录提交（等稳定性观察后再决定）；46-A3 的长期/资源边界继续追踪；FB-006 已定因为测试驱动整页 reload 产物（非插件），保持观察。47-A3 技术回归与用户体验验收已完成（0.0.11 已 push + pre-release）；47-A2 授权副本/体验仍待补。具体步骤、门槛及依赖见 HANDOFF_NEXT.md，不把该计划视为已测试。
+后续执行顺序：46-A2/A4 兼容矩阵**已完成（2026-11-01，阶段一核心环境 + 阶段二 7 插件，见 COMPAT_MATRIX_RESULT.md）**，46-P2 产品确认待用户 → 48-* 最终交付 → 社区插件目录提交（等稳定性观察后再决定）；46-A3 的长期/资源边界继续追踪；FB-006 已定因为测试驱动整页 reload 产物（非插件），保持观察。47-A3 技术回归与用户体验验收已完成（0.0.11 已 push + pre-release）；47-A2 授权副本/体验仍待补。具体步骤、门槛及依赖见 HANDOFF_NEXT.md，不把该计划视为已测试。
 
 ## 可选 Step — 移动端与阶段 5 语义增强
 
@@ -228,7 +228,7 @@
 | FB-002 | 用户体验 / 缺陷 | 实际：0.0.2 日常库预览任意笔记，只停在一个圆上，按 Ctrl 就卡死，松开后不恢复；期望：稳定预览并可随时退出。此前另有焦点漏触发问题 | P1（核心流程受阻） | 已修复并通过本轮用户验收：45-P6 独立库、45-P7 真实副本及 45-P8 日常库均通过；日常反馈卡顿/漏触发未出现，暂未发现其他问题。按已报告场景关闭，若复发重新打开；不据此证明内存泄漏根因或长期资源稳定性 |
 | FB-003 | 用户体验 / 缺陷 | 实际：Esc 跳到图谱左侧标签对应的笔记，离开图谱；副本步骤：放大进入 LTI analysis 并选中内部元素后，Esc 切到该笔记；期望：收起预览/选择并保留图谱标签 | 建议 P1，待产品确认 | 已修复并经用户复验：45-P5 日常 0.0.2、45-P6 独立库及 45-P7 升级后真实副本均确认正常；旧副本 0.0.1 反馈保留为历史，不判为 0.0.3 回归 |
 | FB-004 | 用户体验 / 缺陷与范围澄清 | 0.0.4 标题拖动/避让/子树/连线、Ctrl/Esc 和阅读画面符合预期；笔记圆直接拖或手柄均不动，提示“根级元素暂不支持移动”。期望文件夹、笔记、标题均可选中调整 | P1（新增核心流程受阻，技术判断） | 已修复并经用户验收：2026-10-29 用户在 test-vault-layout-fix 和原 test-vault 确认全层级拖动、避让、子树及连线跟随正常，其他功能暂时正常。按已报告场景关闭；证据 LAYOUT_ROOT_FIX_RESULT.md |
-| DEC-001 | 产品选择 | 图谱继续保持深色，还是跟随 Obsidian 主题？ | 待定 | 等待实际体验；区分宿主浅色可读性与图谱视觉重设计 |
+| DEC-001 | 产品选择 | 图谱继续保持深色，还是跟随 Obsidian 主题？ | 待定（已有实测） | 2026-11-01 兼容矩阵实测：浅色主题下应用 chrome 变浅、图谱画布保持深色（`canvasLum` 46.2→46.1），可读性正常；是否跟随主题仍待产品决定，技术轮不改视觉契约 |
 | DEC-002 | 产品选择 | 首个桌面版本的用户范围、正式名称及发布形式 | 待定 | 已选择先个人日常试用；正式名称及后续分发仍待定 |
 
 ### FB-006 — 桌面稳定性检查中的无栈/宿主异常
@@ -260,6 +260,7 @@
 
 ## 更新记录
 
+- **2026-11-01 / Codex（46-A2/A4 兼容矩阵完成，46-P2 待用户）**：按用户确认的两阶段矩阵，在独立库 Obsidian 1.14.5 + 0.0.11 上完成技术验证。阶段一（9247/vault-011）：深色基线、浅色可读性、主窗口分屏、弹出窗口与跨窗移动/关闭、拖动保存与撤销、Ctrl 预览与 Esc、全部释放后重开均通过；实测浅色下应用 chrome 变浅而图谱画布保持深色（`canvasLum` 46.2→46.1，DEC-001 现状记录），阶段一未捕获异常 0（22 条均为测试自造噪声）。阶段二（9248/vault-012，用户指定 7 插件）：加载 dataview 0.5.68、obsidian-git 2.41.1、style-settings 1.0.9、excalidraw 2.28.1、templater 2.26.0、omnisearch 1.32.0 后，拖动保存/撤销、增删/改名标题、文件与目录改名后的组键与 structures 迁移、预览内容（公式/表格/图片/链接/Dataview/Callout/Templater）、真实 Ctrl+Z、禁用启用、卸载重装全部通过，异常 0。发现并记录：第三方模态框（Excalidraw 欢迎页、Obsidian“更新链接”）会拦截画布输入并让 `renameFile` Promise 不 resolve，属宿主/其他插件行为，非本插件缺陷；卸载按宿主语义删除插件目录与 data.json（布局随卸载丢失）。证据 `.local/evidence/compat-matrix/{phase1,phase2,phase2b,phase2c}.json`、截图 `.local/native/evidence/shots/p1-*.png`、`p2c-*.png`，汇总见 COMPAT_MATRIX_RESULT.md。46-P2（主题/窗口产品确认）转待用户；⚠ 矩阵完成后应 push，但旧 PAT 已 revoke，本次仅本地提交，push 需用户提供新凭据或自行完成。
 - **2026-11-01 / Codex（FB-006 定因：测试驱动 reload 产物，非插件）**：按用户明确“开始 FB-006 定因”执行（46-A2/A4 兼容矩阵按约定等 FB-006 结论后再开始）。复现：Playwright 注入式驱动对 Obsidian 渲染页执行整页 `page.reload()` + About 读取 → 每次约 4 条无栈字符串异常 `illegal access`（CDP `Runtime.exceptionThrown`；scriptId=1、url=index.html、line 0；reload 前后旧/新主世界各一批），0.0.9 与 0.0.10 相同。对照：`disablePluginAndSave` 后插件完全未加载（`plugins=[]`）仍 4 条（决定性）；纯 raw CDP 复刻相同序列 0 条；去掉本仓 init script 的 Playwright 仍 3 条；本仓正常使用路径（0.0.10/0.0.11 的 30 分钟 1161 轮、150 次混合压力、20 次拖动保存等）两异常均 0 次。归因：`illegal access` 由 Electron 原生层在渲染进程 reload 时抛出（该字符串在 obsidian-1.14.5.asar 中出现 0 次），`getZoomFactor` 为 Obsidian 自身 `app.js` 标题栏 `updateStatus` 使用 reload 后失效的窗口代理 `this.eWin`（插件不在调用栈上），本轮未复现、按历史条件记录。结论：FB-006 非插件缺陷；原生稳定性回归不应 reload 渲染页（改用重启应用/禁用启用插件），统一用 raw CDP。证据脚本 `.local/native/fb006_*.py`、结果 `.local/evidence/fb006-repro/RESULT.md`（含对照矩阵与上下文映射）。实例 9242（0.0.10）/9246（0.0.9）仍在运行；本条目未 commit/push/发布，发布范围仍以用户授权为准。
 - **2026-11-01 / Codex（0.0.11 push 与 GitHub pre-release）**：用户明确选择 A 方案（push + tag + pre-release）并要求补 MIT LICENSE。完成：`chore: add MIT license` commit `b9dbd65`；push main `3491795..b9dbd65`（含 `13933dc`/`8a3a429`/`12e6393`/`92e7c40`/`b9dbd65`）；推送注解 tag `v0.0.11`；创建 GitHub pre-release `v0.0.11`（main.js 325,976 B sha256 `205b1bd0…`、manifest.json、styles.css、SHA256SUMS、RELEASE_NOTES.md），链接 https://github.com/xidianhush/knoeledg-graph-obsidian-plugin/releases/tag/v0.0.11 。私有截图目录 `product-site-img-evidence/` 未入库；Obsidian 社区目录提交未做；FB-006 仍未定因，故标记为 pre-release。
 
