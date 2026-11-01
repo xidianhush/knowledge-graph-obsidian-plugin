@@ -1,6 +1,6 @@
 # 下一位 Coding Agent 交接入口
 
-交接日期：2026-11-01（Asia/Shanghai）。仓库：https://github.com/xidianhush/knoeledg-graph-obsidian-plugin 。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
+交接日期：2026-11-01（Asia/Shanghai）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
 
 ## 先做什么
 

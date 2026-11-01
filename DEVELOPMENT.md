@@ -3,8 +3,8 @@
 使用 Node.js 22 或更新版本。纯 JS 构建只用 Node 标准库，没有 npm 依赖安装步骤。
 
 ```sh
-git clone https://github.com/xidianhush/knoeledg-graph-obsidian-plugin.git
-cd knoeledg-graph-obsidian-plugin
+git clone https://github.com/xidianhush/knowledge-graph-obsidian-plugin.git
+cd knowledge-graph-obsidian-plugin
 npm test
 ```
 
