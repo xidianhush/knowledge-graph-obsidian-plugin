@@ -18,7 +18,7 @@
 - 0.0.7–0.0.9 实现可信标题改名迁移、可区分重复标题以及纯增删/尺寸变化后的局部布局修复。用户对 0.0.9 反馈“暂时符合预期”；混合替换、层级变化、歧义仍保守回退，不能承诺任何编辑都保留。
 - 0.0.10 将同组成员重复的 outline 提升到组级，布局存储 **schema2**，兼容旧 schema1 读取和迁移，写失败保留旧状态。技术回归完成，**用户体验仍待完成**。
 - 本地 0.0.11（commit `13933dc`，未推送）把 identity 提升为**笔记级共享**（`structures[noteKey]`），组记录只留 `shape/points/note/structure`，留一个路径无关的结构摘要做守卫；schema1/2 懒迁移，写失败保留旧数据，旧版本读 schema3 会禁用调整但不毁数据。合成回归 10 脚本全过；独立复核（新核心 vs 冻结 0.0.10 核心）7 场景语义 EQUIVALENT、5 档字节比 0.082–0.772、堆比 0.072–0.731（见 `.local/evidence/schema3/REPORT.md`）。原生（9243，Obsidian 1.14.5/Electron 30.1.2）已验证真实拖动→保存→重建恢复（dx=dy=0）、Esc 取消、Ctrl+Z 撤销，以及同笔记两组共享 1 条 structures；30 分钟连续压力（1161 轮 0 失败、重建 p50 0.400 s、预览 151/151、隐藏恢复 151/151、heap 27.8→29.7 MB）与 schema3 冷启动（rev/几何一致）已完成；体验验收仍待用户。
-- 原机器独立 `test-vault-layout-fix` 安装 0.0.10；真实副本与日常库最近核对的磁盘版本为 0.0.6。不要把用户后续“副本没问题”当成 0.0.9/0.0.10 真实验收，也不要假定新机器有这些库。
+- 原机器独立 `test-vault-layout-fix` 安装 0.0.10；real-vault-trial 磁盘版本为 0.0.6；**日常库于 2026-11-01 获用户明确授权升级至 0.0.11**（仅替换 main.js/manifest.json/styles.css，data.json 保留 schema1 rev87、首次建图时迁移；0.0.6 四文件备份在 `.local/backup-daily-0.0.6/`，验收清单 `.local/acceptance-daily-0.0.11.md`）。不要把用户后续“副本没问题”当成 0.0.9/0.0.10 真实验收，也不要假定新机器有这些库。
 
 0.0.10 main.js 历史验收 SHA-256：`ff171eee6be55bbad81579c1f4bbabb26f7b583754d936ee9f2d9b34fa8ddd55`。本地已提交的 0.0.11 构建（manifest 0.0.11，commit `13933dc`）main.js SHA-256：`205b1bd0383a223f92aef6f09e36327882bd081f3c707bab725fb47b9d3bf049`（325976 B；技术回归完成，仍待用户体验验收）。构建会复制本地存在的私有快照，打包时只能白名单取 main.js、manifest.json、styles.css，不能直接公开 dist 全目录。schema2 降级仅替换旧二进制不够：旧版会拒绝新结构写入，应先另存新配置，再恢复对应旧版程序及升级前配置；这会失去备份之后的调整，不能静默执行。
 
@@ -38,7 +38,7 @@
 
 2026-11-01 本地实现 schema3：`outline`/`identity` 从每组记录提升为按笔记共享的 `structures[noteKey]`，组记录只留 `shape/points/note/structure`（路径无关结构摘要，改名后仍可 apply）；身份与歧义保护未删除。同机同进程 0.0.10→0.0.11：单篇 5000 标题/10 组记录 11,496,712→875,447 B、模型+协调+JSON p50 472.5→93.1 ms；1000 标题/10 组 2.26→0.19 MB、92.3→16.7 ms；50 篇各 1 组 1.19→0.92 MB、66.9→40.8 ms（核心合成口径，不含 Worker/UI/磁盘）。证据见 `LAYOUT_SCALE_RESULT.md` 与 `scripts/layout_scale_ab_0_0_10.mjs`；实现位置 `src/core/layout-state.js`，本地构建 main.js sha256 `205b1bd0383a223f92aef6f09e36327882bd081f3c707bab725fb47b9d3bf049`，manifest 0.0.11。
 
-已回归：schema1→3 与 schema2→3 冷载迁移、同笔记多组共享一条 `structures`、迁移写失败保留旧数据、旧版本拒绝 schema3 但不毁数据、撤销/重做、单组/全库恢复、改名与部分范围保留、增删局部修复（`npm test` 10 个合成脚本全过）。独立复核（bench-verifier，未改 src/tests）：新核心 vs 冻结 0.0.10 核心 7 场景语义 EQUIVALENT、契约 5 项通过；5 档字节比 0.082–0.772、p50 时间比全 <1、保留堆比 0.072–0.731，脚本 `scripts/schema3_*.mjs`，报告 `.local/evidence/schema3/REPORT.md`。原生 0.0.11（9243，Obsidian 1.14.5 页面/Electron 30.1.2/Chrome 124）：真实鼠标拖动→“布局已保存”→磁盘 `schemaVersion=3`，原生命令重建后节点 dx=dy=0.0 恢复；Esc 取消（“调整中 · Esc 取消”→“已取消本次调整”、磁盘/rev 不变）；Ctrl+Z 撤销生效；同笔记 note 组 + heading 组持久化后 `structures` 仅 1 条且 note 指向同一 noteKey。已完成：30 分钟原生连续压力（1161 轮 0 失败/0 渲染异常、预览 151/151、隐藏恢复 151/151、busy 卡死 0、rev 单调、heap 无攀升）；拖动/保存补充 20/20、Ctrl+Z 4/4；schema3 冷启动 rev/几何/磁盘一致（证据 `.local/evidence/continuous-011/RESULT.md`、`cold-load-011.json`）；本地 commit `13933dc`（未 push）。**仍未完成：独立库/日常库用户体验验收（47-P3，待用户）。** 不得因技术通过宣称 47-A3 已完成或已交付。
+已回归：schema1→3 与 schema2→3 冷载迁移、同笔记多组共享一条 `structures`、迁移写失败保留旧数据、旧版本拒绝 schema3 但不毁数据、撤销/重做、单组/全库恢复、改名与部分范围保留、增删局部修复（`npm test` 10 个合成脚本全过）。独立复核（bench-verifier，未改 src/tests）：新核心 vs 冻结 0.0.10 核心 7 场景语义 EQUIVALENT、契约 5 项通过；5 档字节比 0.082–0.772、p50 时间比全 <1、保留堆比 0.072–0.731，脚本 `scripts/schema3_*.mjs`，报告 `.local/evidence/schema3/REPORT.md`。原生 0.0.11（9243，Obsidian 1.14.5 页面/Electron 30.1.2/Chrome 124）：真实鼠标拖动→“布局已保存”→磁盘 `schemaVersion=3`，原生命令重建后节点 dx=dy=0.0 恢复；Esc 取消（“调整中 · Esc 取消”→“已取消本次调整”、磁盘/rev 不变）；Ctrl+Z 撤销生效；同笔记 note 组 + heading 组持久化后 `structures` 仅 1 条且 note 指向同一 noteKey。已完成：30 分钟原生连续压力（1161 轮 0 失败/0 渲染异常、预览 151/151、隐藏恢复 151/151、busy 卡死 0、rev 单调、heap 无攀升）；拖动/保存补充 20/20、Ctrl+Z 4/4；schema3 冷启动 rev/几何/磁盘一致（证据 `.local/evidence/continuous-011/RESULT.md`、`cold-load-011.json`）；本地 commit `13933dc`（未 push）；同日另提交 `8a3a429`（文档）。**仍未完成：用户体验验收（47-P3，待用户）。** 2026-11-01 用户授权将日常库升级至 0.0.11 并随后人工体验：已替换三文件、备份 0.0.6 四文件、用日常库完整副本在 9244（0.0.11）/9245（0.0.6）双实例预演迁移（0.0.6 同数据 restored 0/3，0.0.11 restored 1，无布局回退），预期提示与回退步骤见 `.local/acceptance-daily-0.0.11.md`。不得因技术通过宣称 47-A3 已完成或已交付。
 
 ### 2. 46-A3 / FB-006：偶发异常定位（贯穿后续开发）
 
@@ -74,10 +74,10 @@
 
 - 用户负责目标、优先级、体验结论；agent 负责实现、技术证据、清单维护。用户的“暂时正常”保留其范围。
 - 2026-11-01 用户明确授权本次 commit 和 push 到指定 GitHub 仓库。旧文档中的“不 push”是历史约束，本次已被取代；后续推送看新授权。不 force push。
-- 不读取 `Utilities/API Key.md`，不写日常笔记，不擅自扩大真实副本范围或升级日常库。原授权副本只涉及两个指定目录及引用图片，细节见 TODO。
+- 不读取 `Utilities/API Key.md`，不写日常笔记，不擅自扩大真实副本范围或升级日常库。原授权副本只涉及两个指定目录及引用图片，细节见 TODO。2026-11-01 用户单独授权将日常库升级至 0.0.11（仅本次三文件替换，不扩展为其它库操作）。
 - 不把 `.local`、vault/profile、data.json、截图或私有快照加入 Git。原始证据不可跨机器获得时，如实保留摘要与未复跑状态。
 - 网络中断后先读 TODO 和 git status，续接未完工作，不从历史交接重做已验收功能。
 
 ## 可直接交给下一位的开场语
 
-请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线。本地 0.0.11 已 commit `13933dc`（未 push/未发布）：47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，下一步是用户体验验收（日常库升级需用户单独授权）；46-A3 / FB-006 已有宿主主进程日志通道但 0 复现、继续定位。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
+请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线。本地 0.0.11 已 commit `13933dc`（未 push/未发布）：47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，下一步是用户体验验收（日常库已于 2026-11-01 获授权升级至 0.0.11，待用户反馈）；46-A3 / FB-006 已有宿主主进程日志通道但 0 复现、继续定位。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
