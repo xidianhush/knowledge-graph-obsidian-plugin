@@ -2,6 +2,8 @@
 
 本次将项目源码、测试/维护脚本、原型、历史增量代码及文档纳入 Git；保留原 TODO 基线提交。目标远程为用户指定的 `git@github.com:xidianhush/knoeledg-graph-obsidian-plugin.git`。推送状态以 TODO 的 HX-A2 与 Git 远端为准。
 
+源码提交 `013cbb661b103a0a406c2f4cd103162b17c7b3b2` 已普通推送至 main，`git ls-remote --symref origin HEAD refs/heads/main` 确认默认分支为 main，HEAD/main 均为该提交。此次共纳入182个文件；本完成回执作为后续文档提交同步。没有创建 Release。
+
 ## 本轮实际执行
 
 - 新增 `npm test`：构建后串行运行 10 个合成检查脚本；本地工作区通过。
