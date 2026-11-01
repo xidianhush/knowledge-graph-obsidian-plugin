@@ -4,7 +4,7 @@
 
 **2026-11-01 开发交接**：从 GitHub clone 后先读 [HANDOFF_NEXT.md](HANDOFF_NEXT.md)，按 [DEVELOPMENT.md](DEVELOPMENT.md) 执行 `npm test`。该入口使用合成输入，无需个人库。源码交接不等于正式发布；原机器路径、本地证据与安装状态均须与新环境区分。
 
-2026-11-01：47-A3 首轮实现完成——布局存储升级为 **schema3**，同一笔记的所有分组共享一份 identity，`outline` 不再逐组重复；旧 schema1/2 数据在下次协调/写入时自动迁移，失败保留原数据。0.0.11 合成回归 10 个脚本全部通过；同机 5000 标题/10 组核心记录 11.50MB→0.88MB、模型+协调+JSON p50 472.5→93.1ms，见 [LAYOUT_SCALE_RESULT.md](LAYOUT_SCALE_RESULT.md)。本轮改动**尚未提交、未发布、未升级任何库**，原生交互回归（Ctrl/Esc、拖动、保存、重建、取消）待补。
+2026-11-01：47-A3 首轮实现完成——布局存储升级为 **schema3**，同一笔记的所有分组共享一份 identity，`outline` 不再逐组重复；旧 schema1/2 数据在下次协调/写入时自动迁移，失败保留原数据。0.0.11 合成回归 10 个脚本全部通过；同机 5000 标题/10 组核心记录 11.50MB→0.88MB、模型+协调+JSON p50 472.5→93.1ms，见 [LAYOUT_SCALE_RESULT.md](LAYOUT_SCALE_RESULT.md)。2026-11-01 已本地 commit `13933dc`（未 push、未发布、未升级任何库）；原生 0.0.11（Obsidian 1.14.5）拖/存/重建（dx=dy=0）/Esc/撤销、同笔记两组共享 1 条 structures、30 分钟连续压力（1161 轮 0 失败、重建 p50 0.400s、预览 151/151、隐藏恢复 151/151、busy 卡死 0）、schema3 冷启动（rev/几何一致）均已完成，见 `.local/evidence/native-011/LAYOUT_NATIVE_RESULT.md` 与 `.local/evidence/continuous-011/RESULT.md`。剩余：用户体验验收（47-P3）。
 
 2026-10-31：继续推进 47-* 规模验证，五档多组布局核心对照完成。单篇长笔记保存多组时仍存在结构信息重复，下一步评估跨组共享与兼容迁移；尚未修改运行代码。详见 [LAYOUT_SCALE_RESULT.md](LAYOUT_SCALE_RESULT.md)。原生长测、FB-006 定位和 0.0.10 用户体验仍待完成。
 
