@@ -1,0 +1,2 @@
+* text=auto eol=lf
+tests/fixtures/graph-core-0.0.9.mjs -text

@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {buildGraph} from '../dist/pipeline.mjs';
+import {createLayoutModel,createLayoutEditor} from '../tests/fixtures/graph-core-0.0.9.mjs';
+const folder='__kg_native_ab__',text=Array.from({length:100},(_,i)=>`${i%10?'##':'#'} H${i}\nbody ${i}`).join('\n');
+const files=Array.from({length:10},(_,i)=>({path:`${folder}/Note${i}.md`,text}));
+const g=buildGraph({files,config:{include:[folder+'/**']}}),m=createLayoutModel(g.nodes,g.meta.layout_root_radius),e=createLayoutEditor(g.nodes,g.meta.layout_root_radius);
+const n=g.nodes.find(n=>n.id===folder+'/Note0#H0/H1');assert.equal(e.begin(n.id),null);e.move(n.x+1,n.y+1);e.commit();
+const record=m.capture(m.groupKey(n.id));assert.ok(record);
+const data={settingsVersion:1,settings:{autoUpdate:true,debounceMs:100},pipeline:{config:{include:[folder+'/**']}},layoutOverrides:{schemaVersion:1,revision:1,groups:{[m.groupKey(n.id)]:record}}};
+fs.mkdirSync('.local/evidence/native-ab',{recursive:true});fs.writeFileSync('.local/evidence/native-ab/fixture.json',JSON.stringify({files,data}));

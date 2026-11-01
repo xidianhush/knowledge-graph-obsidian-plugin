@@ -1,0 +1,6 @@
+dist/
+.local/
+test-vault/
+test-profile/
+node_modules/
+__pycache__/

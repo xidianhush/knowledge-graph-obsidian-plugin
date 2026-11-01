@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>手动布局 · 交互原型</title><link rel="icon" href="data:,">
+<style>
+:root{color-scheme:dark;font-family:system-ui,'Microsoft YaHei',sans-serif;color:#e1e6ed;background:#14181e;font-size:14px}*{box-sizing:border-box}body{margin:0}main{max-width:1100px;margin:auto;padding:24px}header{display:flex;justify-content:space-between;align-items:center;gap:16px}h1{font-size:24px;margin:0 0 8px;font-weight:600}.muted{color:#a7b2c0}button,select{font:inherit;color:inherit;background:#242c36;border:1px solid #465363;border-radius:6px;padding:8px 12px}button{cursor:pointer}button:disabled{opacity:.4;cursor:default}button[aria-pressed=true]{background:#cadde9;color:#17222d}button:focus-visible,select:focus-visible{outline:2px solid #8bc8ee;outline-offset:3px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:20px 0 12px}label{display:flex;gap:8px;align-items:center}.stage{border:1px solid #36404c;border-radius:8px;background:#191f27;overflow:hidden}svg{display:block;width:100%;height:min(65vh,620px);min-height:340px;touch-action:none;user-select:none;outline:none}svg text{pointer-events:none;fill:#e1e6ed;font-size:13px}.edge{stroke:#86a3b7;stroke-width:1.5;opacity:.7;pointer-events:none}.node{fill:#334553;stroke:#728695;stroke-width:1}.node.selected{stroke:#bce5ff;stroke-width:3}.node.active{stroke:#e7c184;stroke-width:3}.container{fill:#202a34;stroke:#526372;stroke-width:1.5}.handle{fill:#d4e8f5;stroke:#142332;stroke-width:2;cursor:grab}.foot{display:flex;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px 14px;border-top:1px solid #36404c}#status{color:#b9d7ea}aside{margin-top:16px;line-height:1.8}.badge{font-size:12px;color:#b7c8d5;border:1px solid #465363;border-radius:16px;padding:5px 10px;white-space:nowrap}@media(max-width:620px){main{padding:14px}header{align-items:flex-start}.toolbar{gap:6px}button,select{padding:8px}h1{font-size:21px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style></head><body><main>
+<header><div><h1>给知识挪个位置</h1><div class="muted">拖动知识点或整篇笔记，看看同组圆如何让位。</div></div><span class="badge">合成原型 · 不改笔记</span></header>
+<div class="toolbar">
+<button id="mode" aria-pressed="false">调整布局：关</button>
+<label>场景 <select id="scene"><option value="sparse">稀疏 · 9 篇笔记</option><option value="dense">密集 · 19 篇笔记</option><option value="boundary">边界 · 受限拖动</option></select></label>
+<button id="parent" disabled>选父级</button><button id="undo" disabled>撤销</button><button id="redo" disabled>重做</button><button id="reset" disabled>恢复此组</button>
+<label><input id="hide" type="checkbox">隐藏两篇笔记</label><button id="home">视图归位</button>
+</div>
+<div class="stage"><svg id="graph" tabindex="0" role="application" aria-label="布局交互画布：开启调整布局后拖圆；Esc 取消当前拖动。"></svg>
+<div class="foot"><span id="status" role="status">阅读模式：拖空白平移，滚轮缩放</span><span id="selected" class="muted">未选中</span></div></div>
+<aside class="muted">试三个动作：① 开启调整布局，拖中间的小圆；② 点“选父级”，拖圆上方的手柄；③ 撤销。<br>Esc 取消本次拖动。隐藏的笔记仍占空间。布局仅在本次页面会话中保留。</aside>
+</main><script type="module" src="./app.mjs"></script></body></html>

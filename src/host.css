@@ -1,0 +1,15 @@
+.kg-layout-tools { position:absolute; right:12px; top:54px; z-index:16; max-width:calc(100% - 24px); background:#18222e; border:1px solid #405064; border-radius:6px; padding:6px; font-size:12px; }
+.kg-layout-tools button { cursor:pointer; }
+.kg-layout-tools button[aria-pressed="true"] { background:#b5daf4; color:#132435; }
+#layout-options:not([hidden]) { display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap; }
+/* Obsidian split panes can be far narrower than the standalone page.
+   Keep the one-row 46px inset and make every control reachable by scrolling. */
+@container (max-width: 1000px) {
+  #topbar { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  #topbar::-webkit-scrollbar { display: none; }
+  #topbar .brand, #topbar .spacer, #readout { display: none; }
+  #levelbar { flex: 0 0 auto; min-width: 0; }
+  #pills { flex: 0 1 auto; max-width: 140px; }
+  #topbar > input, #topbar > select, #topbar > button { flex-shrink: 0; }
+  #legend { max-width: min(280px, calc(100cqw - 24px)); }
+}

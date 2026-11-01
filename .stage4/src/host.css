@@ -1,0 +1,11 @@
+/* Obsidian split panes can be far narrower than the standalone page.
+   Keep the one-row 46px inset and make every control reachable by scrolling. */
+@container (max-width: 1000px) {
+  #topbar { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  #topbar::-webkit-scrollbar { display: none; }
+  #topbar .brand, #topbar .spacer, #readout { display: none; }
+  #levelbar { flex: 0 0 auto; min-width: 0; }
+  #pills { flex: 0 1 auto; max-width: 140px; }
+  #topbar > input, #topbar > select, #topbar > button { flex-shrink: 0; }
+  #legend { max-width: min(280px, calc(100cqw - 24px)); }
+}

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__PAGE_TITLE__</title>
+<style>
+  :root {
+    /* 2026-10-24 视觉改版：深青黄昏底色 + 一层暖琥珀高光（用户给的参考图：
+       青灰天幕 / 暖窗光 / 暗红点缀）。克制、不加霓虹、不加装饰元素。
+       背景放在 CSS 层（画布透明），这样改背景不会污染画布的像素判据。 */
+    --bg-0: #060e11;
+    --bg-1: #0c1e23;
+    --bg-2: #12292f;
+    --panel: rgba(12,25,30,.62);
+    --panel-2: rgba(255,255,255,.045);
+    --line: rgba(255,255,255,.08);
+    --text: #d6dde2;
+    --muted: #8a98a2;
+    --accent: #e6bf7d;          /* 暖琥珀：只给焦点/高亮/命中用 */
+    --accent-soft: rgba(230,191,125,.16);
+    --glass-border: rgba(255,255,255,.085);
+    --glass-shadow: 0 14px 44px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.045);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    /* 深青径向渐变 + 极淡胶片颗粒（两层背景，颗粒在上方，只负责压色带）。
+       2026-10-24 视觉改版：中心提亮、四角压得更深，模拟参考图里「黄昏天幕 + 远处微光」。 */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+                      radial-gradient(1250px 840px at 52% 38%, #17343b 0%, #0e2329 42%, #060f13 78%, #040a0d 100%);
+    background-repeat: repeat, no-repeat;
+    background-size: 140px 140px, cover;
+    color: var(--text);
+    font: 13px/1.6 "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  /* 画布必须铺满视口并有真实的 clientWidth/clientHeight —— render.js 的
+     fitRadius() 与 home_layer 都按这个尺寸算，CSS 不给尺寸就什么都画不出来。
+     <canvas> 是替换元素：width/height 为 auto 时取固有尺寸 300×150，inset:0
+     撑不开它（left/right 同时为 0 时 right、bottom 被忽略），所以必须写死
+     100%。底部预留 46px 给 footer（render.js 的 FOOTER_H 必须与此一致）。
+     背景透明：底色由 body 的 CSS 渐变提供，render.js 每帧只 clearRect。 */
+  #cv { display: block; position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; background: transparent; }
+
+  /* ── 顶栏 ─────────────────────────────────────────────────────── */
+  #topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 46px;
+    display: flex; align-items: center; gap: 8px; padding: 0 12px;
+    background: linear-gradient(180deg, rgba(8,18,22,.78), rgba(8,18,22,.46));
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    backdrop-filter: blur(18px) saturate(125%);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 1px 24px rgba(0,0,0,.35);
+    z-index: 20;
+  }
+  /* 顶栏一行放不下时宁可让 #readout 折成两行，也不让 brand 折成三行溢出顶栏 */
+  #topbar .brand { font-weight: 600; letter-spacing: .3px; white-space: nowrap; flex: 0 0 auto; }
+  #topbar .brand small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .spacer { flex: 1; }
+  button, select, input {
+    background: rgba(255,255,255,.045); color: var(--text);
+    border: 1px solid rgba(255,255,255,.10); border-radius: 7px;
+    padding: 5px 9px; font: inherit; outline: none;
+    transition: background .15s ease, border-color .15s ease;
+  }
+  button:hover, select:hover { background: rgba(255,255,255,.085); border-color: rgba(255,255,255,.17); cursor: pointer; }
+  input:focus { border-color: rgba(230,191,125,.55); box-shadow: 0 0 0 3px var(--accent-soft); }
+  input::placeholder { color: var(--muted); }
+  option { background: #0d1f24; color: var(--text); }
+  #search { width: min(150px, 24vw); }
+
+  /* 阶段 2.4：层级胶囊在**深层库**上会挤爆顶栏（10 层在 1440px 下就已经超额，
+     深目录 + h6 能到 16~18 层）。levelbar 允许收缩、pills 横向滚动 —— 宁可让胶囊
+     滚动，也不许把搜索框 / 重置按钮挤出顶栏（那正是 2026-10-20 的老 bug 形态）。 */
+  #levelbar { display: flex; align-items: center; gap: 6px; flex: 0 1 auto; min-width: 0; }
+  #pills {
+    display: flex; gap: 3px; min-width: 0;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+  }
+  #pills::-webkit-scrollbar { display: none; }
+  #levelbar button { width: 22px; padding: 5px 0; text-align: center; flex: 0 0 auto; }
+  .pill {
+    padding: 3px 0; width: 22px; text-align: center; flex: 0 0 auto;
+    border-radius: 999px; border: 1px solid rgba(255,255,255,.09);
+    background: rgba(255,255,255,.03); color: var(--muted); cursor: pointer; font-size: 12px;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .pill:hover { background: rgba(255,255,255,.07); color: var(--text); }
+  .pill.on {
+    color: #f6e3bf; border-color: rgba(230,191,125,.55);
+    background: rgba(230,191,125,.14);
+    box-shadow: 0 0 14px rgba(230,191,125,.10) inset;
+  }
+  /* ⚠️ 顶栏在 1440px 下仍然是「超额」的：所有控件的 max-content 加起来超过容器宽度
+     （2026-10-24 删掉「连线模式」下拉后仍超额 —— 剩下的搜索框/两个下拉/重置视角
+     都不该再压）。所以两个可压缩项必须各自封顶，否则会撑出 46px 的顶栏被裁掉 ——
+     历史 bug（2026-10-20 实测）：#readout 89×96、y=-25，#reset 33×95、y=-25，
+     「重置视角」被压成竖排三行。
+     修法：readout 折行封顶到两行，reset 禁止压缩。两者都不再依赖「空间够不够」。 */
+  #readout {
+    color: var(--muted); font-size: 12px; line-height: 19px;
+    min-width: 0; flex: 0 1 auto;
+    /* 最多折两行，超出直接省略（尾部「继续向上滚可深入」在图例提示里有全文）。
+       这样高度恒 <= 38px < 顶栏 46px，几何上不可能再上下溢出。 */
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  #readout b { color: var(--text); font-weight: 600; }
+  /* 两条缺一不可：flex:0 0 auto 让它不参与压缩，nowrap 保证文字横向排。
+     只写其中一条仍会被挤成竖排（浏览器按最小内容宽度折行）。 */
+  #reset { flex: 0 0 auto; white-space: nowrap; }
+
+  /* ── 侧栏 ─────────────────────────────────────────────────────── */
+  #sidebar {
+    position: absolute; top: 46px; right: 0; bottom: 0;
+    /* 阶段 2.5：小窗口上 360px 会占掉 1/3 屏宽（1280 宽时 28%、更窄时更糟）。
+       封顶到 40vw，宽屏仍是 360px；renderer 的 inset 读的是实际宽度，fit/home 自动跟随。 */
+    width: min(360px, 40vw);
+    background: linear-gradient(180deg, rgba(9,21,25,.78), rgba(9,21,25,.58));
+    -webkit-backdrop-filter: blur(22px) saturate(125%);
+    backdrop-filter: blur(22px) saturate(125%);
+    border-left: 1px solid var(--glass-border);
+    box-shadow: -24px 0 60px rgba(0,0,0,.42);
+    transform: translateX(100%); transition: transform .22s ease;
+    overflow-y: auto; padding: 16px; z-index: 15;
+  }
+  #sidebar.open { transform: none; }
+  #sidebar h2 { margin: 0 0 4px; font-size: 16px; }
+  #sidebar .path { color: var(--muted); font-size: 12px; word-break: break-all; margin-bottom: 12px; }
+  #sidebar .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    font-size: 11px; padding: 2px 8px; border-radius: 999px;
+    background: rgba(255,255,255,.045); border: 1px solid var(--glass-border); color: var(--muted);
+  }
+  #sidebar .excerpt {
+    background: rgba(255,255,255,.035); border: 1px solid var(--glass-border); border-radius: 9px;
+    padding: 10px; color: #b8c3c8; font-size: 12px; margin-bottom: 12px;
+    max-height: 150px; overflow-y: auto; white-space: pre-wrap;
+  }
+  #sidebar .actions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  #sidebar h3 { font-size: 12px; color: var(--muted); text-transform: none;
+    margin: 14px 0 6px; border-top: 1px solid var(--glass-border); padding-top: 10px; }
+  .elist { list-style: none; margin: 0; padding: 0; }
+  .elist li {
+    padding: 5px 8px; border-radius: 7px; cursor: pointer; font-size: 12px;
+    display: flex; align-items: center; gap: 6px;
+    transition: background .12s ease;
+  }
+  .elist li:hover { background: rgba(255,255,255,.06); }
+  .elist .arrow { color: var(--muted); font-family: monospace; }
+  .elist .tag { font-size: 10px; color: var(--muted); margin-left: auto; white-space: nowrap; }
+  #sidebar .hlist { max-height: 260px; overflow-y: auto; }
+  #sidebar .hlist li { font-size: 12px; }
+  #sidebar .hdepth { color: var(--muted); font-family: monospace; font-size: 11px; }
+
+  /* ── 图例与提示 ───────────────────────────────────────────────── */
+  #legend {
+    position: absolute; left: 12px; bottom: 12px; z-index: 10;
+    background: rgba(9,21,25,.56);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+    backdrop-filter: blur(20px) saturate(130%);
+    border: 1px solid var(--glass-border); border-radius: 12px;
+    box-shadow: var(--glass-shadow);
+    padding: 9px 13px; font-size: 12px; max-width: 280px;
+    /* 阶段 2.5：学科 >12 个时图例开两列（app.js 会挂 .wide），面板跟着放宽，
+       但永远不超过视口的 46% —— 30 个学科的库上不会再被一条长滚动条占掉左下角。 */
+    max-height: calc(100% - 58px); overflow-y: auto;
+  }
+  #legend.wide { max-width: min(460px, 46vw); width: min(460px, 46vw); }
+  /* 两列布局：每行仍是「色点 + .tx」，两列之间留 10px —— 行内的 .tx 有 min-width:0，
+     长学科名会自然换行而不是把列撑破。 */
+  #legend-domains.multi {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    align-items: start;
+  }
+  /* 图例可收起：说明文字很长（可见约 20 行），挡住画布左下角时能折成一条。
+     ⚠️ 收起只藏 #legend-body。 */
+  #legend-head { display: flex; align-items: center; gap: 8px; }
+  #legend-head .t { font-size: 11px; color: var(--muted); font-weight: 600; letter-spacing: .3px; }
+  #legend-head button { margin-left: auto; flex: none; padding: 1px 8px; font-size: 11px; line-height: 16px; }
+  #legend-body { margin-top: 4px; }
+  #legend.collapsed #legend-body { display: none; }
+  /* 每行只有两样东西：左侧图标 + 右侧一段文字。文字**必须**包在 .tx 里 ——
+     .row 是 flex 容器，裸文本里一旦夹了 <b>，每个文本片段和内联元素都会各自
+     变成一个 flex item，被挤成几列互相覆盖（2026-10-20 修的真实 bug：三行说明
+     文字重叠成多列、不可读）。
+     行距取 1px：图例内容本身很长（可见 24 行），加到 2px 就会顶到 max-height
+     上限、面板内部出现滚动条；面板高度主要是内容量决定的，不是那个 flex bug。 */
+  #legend .row { display: flex; align-items: flex-start; gap: 8px; margin: 1px 0; }
+  #legend .row .tx { flex: 1 1 auto; min-width: 0; }
+  #legend .sw { width: 22px; height: 3px; border-radius: 2px; flex: none; margin-top: 8px; }
+  #legend .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; margin-top: 4px; }
+  #legend .row svg { flex: none; margin-top: 5px; }
+  #legend h4 { margin: 0 0 4px; font-size: 11px; color: var(--muted); font-weight: 600; }
+  #legend section + section { margin-top: 7px; }
+  #legend .hint { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 6px; }
+
+  #tooltip {
+    position: absolute; pointer-events: none; z-index: 30; display: none;
+    background: rgba(10,23,27,.72);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid var(--glass-border); border-radius: 10px;
+    padding: 8px 11px; font-size: 12px; max-width: 320px;
+    box-shadow: 0 12px 36px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  #tooltip b { font-size: 13px; }
+  #tooltip .sub { color: var(--muted); font-size: 11px; margin-top: 3px; }
+
+  #toast {
+    position: absolute; left: 50%; bottom: 26px; transform: translateX(-50%);
+    background: rgba(10,23,27,.78);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    backdrop-filter: blur(16px) saturate(130%);
+    border: 1px solid var(--glass-border); border-radius: 10px;
+    padding: 8px 14px; font-size: 12px; opacity: 0; transition: opacity .2s;
+    pointer-events: none; z-index: 40;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  #toast.show { opacity: 1; }
+  #footer {
+    position: absolute; right: 12px; bottom: 12px; color: var(--muted);
+    font-size: 11px; z-index: 10; text-align: right; line-height: 1.5;
+    text-shadow: 0 1px 3px rgba(0,0,0,.6);
+  }
+  #hits {
+    position: absolute; top: 54px; left: 12px; z-index: 18;
+    /* 阶段 2.5：小窗口上 280px 的命中列表会盖掉半个画布 */
+    width: min(280px, 62vw);
+    background: rgba(9,21,25,.72);
+    -webkit-backdrop-filter: blur(20px) saturate(130%);
+    backdrop-filter: blur(20px) saturate(130%);
+    border: 1px solid var(--glass-border); border-radius: 10px;
+    box-shadow: var(--glass-shadow);
+    max-height: 300px; overflow-y: auto; display: none;
+  }
+  #hits .hit { padding: 6px 10px; font-size: 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,.05); }
+  #hits .hit:last-child { border-bottom: none; }
+  #hits .hit:hover { background: rgba(255,255,255,.06); }
+  #hits .hit .why { color: var(--muted); font-size: 11px; }
+
+  /* ── KaTeX（构建期内联，字体已换 base64）──────────────────────────── */
+  /*__KATEX_CSS__*/
+
+  /* ── Obsidian 式悬停预览浮层（2026-10-22 第三轮）─────────────────────
+     第 11 带（链接带）里按住 Ctrl 悬停链药丸 → 这个浮层。
+     排版交给浏览器（不是 canvas fillText），所以标题/列表/表格/代码/图片/公式
+     都能正常排 —— 这是「够用」升级到「好用」的关键。 */
+  #preview {
+    position: fixed; z-index: 60; display: none;
+    width: 700px; max-width: calc(100vw - 32px); max-height: 74vh; overflow-y: auto;
+    background: rgba(10,22,26,.86);
+    -webkit-backdrop-filter: blur(26px) saturate(125%);
+    backdrop-filter: blur(26px) saturate(125%);
+    color: #d6dde2;
+    border: 1px solid var(--glass-border); border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.05);
+    padding: 16px 20px 20px;
+    font: 14px/1.75 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    overscroll-behavior: contain;
+  }
+  #preview.show { display: block; }
+  #preview h1, #preview h2, #preview h3, #preview h4, #preview h5, #preview h6 {
+    color: #edf2f4; line-height: 1.4; margin: 16px 0 8px; font-weight: 600;
+  }
+  #preview h1 { font-size: 22px; } #preview h2 { font-size: 19px; }
+  #preview h3 { font-size: 17px; } #preview h4, #preview h5, #preview h6 { font-size: 15px; }
+  #preview > :first-child { margin-top: 0; }
+  #preview p { margin: 8px 0; }
+  #preview ul, #preview ol { margin: 8px 0 8px 22px; }
+  #preview li { margin: 3px 0; }
+  #preview img.pv-img { max-width: 100%; border-radius: 8px; margin: 8px 0; display: block; }
+  #preview code { background: rgba(255,255,255,.07); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  #preview pre { background: rgba(0,0,0,.28); padding: 10px 12px; border-radius: 8px; overflow: auto; border: 1px solid rgba(255,255,255,.05); }
+  #preview pre code { background: none; padding: 0; }
+  #preview table { border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+  #preview th, #preview td { border: 1px solid rgba(255,255,255,.10); padding: 5px 9px; }
+  #preview th { background: rgba(255,255,255,.05); }
+  #preview blockquote { border-left: 3px solid rgba(230,191,125,.35); margin: 8px 0; padding: 2px 12px; color: #9aa8b0; }
+  #preview mark { background: rgba(230,191,125,.18); color: #f6e3bf; border-radius: 3px; padding: 0 2px; }
+  #preview a { color: #e6bf7d; }
+  #preview .pv-wl { color: #e6bf7d; border-bottom: 1px dashed rgba(230,191,125,.45); cursor: pointer; }
+  #preview .pv-wl.pv-unresolved { color: var(--muted); border-bottom-color: rgba(138,152,162,.35); cursor: default; }
+  #preview .pv-attach { color: var(--muted); background: rgba(255,255,255,.05); border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+  #preview .pv-missing { color: #e07a72; font-size: 12px; }
+  /* 第五轮：浮层顶部 sticky 面包屑（哪篇笔记 › 哪一节），滚深了也认得出位置 */
+  #preview .pv-crumbs {
+    position: sticky; top: -16px; z-index: 2; margin: -16px -20px 10px;
+    padding: 10px 20px; background: rgba(8,18,22,.9);
+    -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+    color: #9aa8b0; font-size: 11px; border-bottom: 1px solid rgba(255,255,255,.07);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #preview .pv-crumbs:empty { display: none; }
+  #preview .pv-hint { color: var(--muted); font-size: 11px; border-top: 1px solid rgba(255,255,255,.08); margin-top: 14px; padding-top: 8px; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+
+<header id="topbar">
+  <span class="brand">__PAGE_TITLE__<small id="subtitle"></small></span>
+  <div id="levelbar">
+    <button id="zoomout" title="缩小一层（[）">−</button>
+    <span id="pills"></span>
+    <button id="zoomin" title="放大一层（]）">+</button>
+  </div>
+  <span id="readout"></span>
+  <span class="spacer"></span>
+  <input id="search" type="search" placeholder="搜索笔记 / 标题…">
+  <select id="domain"><option value="all">全部学科</option></select>
+  <select id="labels" title="标签的显示策略（自动 = 按屏幕密度竞争）">
+    <option value="auto">自动</option>
+    <option value="all">全部显示</option>
+    <option value="selected">只显示选中</option>
+  </select>
+  <button id="reset" title="回到该层默认视角">重置视角</button>
+</header>
+
+<div id="hits"></div>
+<aside id="sidebar"></aside>
+
+<div id="legend">
+  <div id="legend-head">
+    <span class="t">图例</span>
+    <button id="legend-toggle" type="button" aria-expanded="true" aria-controls="legend-body"
+            title="收起 / 展开图例（快捷键 L）">收起</button>
+  </div>
+  <div id="legend-body">
+  <section>
+    <h4>学科（顶层目录）</h4>
+    <div id="legend-domains"></div>
+  </section>
+  <section id="legend-rel">
+    <h4>关系（每处 [[链接]] 各画一条细线，任何尺度都在）</h4>
+    <div class="row"><span class="sw" style="background:linear-gradient(90deg,#5B8FCC,#4FAFA8)"></span><span class="tx">链接<strong>颜色 = 学科色</strong>：同一学科内同色，跨学科链接两端渐变；存储粒度（整篇级/标题级）不参与配色，类型看线型与端点标记</span></div>
+    <div class="row"><span class="sw" style="height:2px;background:repeating-linear-gradient(90deg,#7FB2E8 0 5px,transparent 5px 9px)"></span><span class="tx">并列/对比（方向未知）—— 虚线段，两端都只标圆点</span></div>
+    <div class="row"><svg width="24" height="10" viewBox="0 0 24 10" style="flex:none"><circle cx="3.2" cy="5" r="2.6" fill="#C7D5E2"/><line x1="5.5" y1="5" x2="15" y2="5" stroke="#AFC6DA" stroke-width="2"/><path d="M23 5 L14.5 1.4 L14.5 8.6 Z" fill="#C7D5E2"/></svg><span class="tx">链接线的两端：圆点 = 出发点，箭头 = 指向处（线在两个圆的边界处截断，不插进圆心）</span></div>
+    <div class="row"><span class="tx"><b>同一对元素之间线的条数 = 关联强度</b>：缩到文件级时两篇笔记之间那一束细线，就是它们互相引用的分量</span></div>
+    <div class="row"><span class="tx">缩放<b>只改线的长度和形状</b>，不改颜色、不改浓淡、不减少条数 —— 链接本来就是从一个标题指向一个标题的，不该因为缩小而消失</span></div>
+    <div class="row"><span class="sw" style="background:#d6dbe4;height:0;border-top:1.5px dotted rgba(214,219,228,.55)"></span><span class="tx">包含：不画成网，悬停/选中时只用灰色<b>点线</b>画出祖先链 —— 点线是「你在哪」，实线才是「谁链接谁」</span></div>
+  </section>
+  <section>
+    <h4>节点（一律实心圆）</h4>
+    <div class="row"><span class="dot" style="background:#5B8FCC"></span><span class="tx">颜色 = 学科（顶层目录）</span></div>
+    <div class="row"><span class="dot" style="background:#5B8FCC;width:16px;height:16px"></span><span class="tx">大小 = 规模（下辖元素越多越大）</span></div>
+    <div class="row"><span class="dot" style="background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.35)"></span><span class="tx">黄色光环 = 搜索命中</span></div>
+    <div class="row"><span class="dot" style="background:#5B8FCC;box-shadow:0 0 0 2px #7FB2E8"></span><span class="tx">蓝色圆环 = 与选中元素直接相连（含其内部子元素的链接，出入向都算）</span></div>
+  </section>
+  <div class="hint">
+    光标放在节点上<b>向上滚 = 逐层深入</b>，向下滚 = 回到更粗的层级 · 拖拽平移，
+    或用<b>方向键</b>平移（按住 <b>Shift</b> 快 4 倍，不用点任何东西、不会改选中）·
+    单击看详情（<b>只留下与它相关的连线</b>，其余淡到近乎消失；相连的元素亮蓝环）·
+    双击深入 · <b>Esc</b> 收起并恢复全部连线 · <b>[</b> <b>]</b> 逐层切换 ·
+    <b>Home</b> 回到默认视角（缩远缩近都不再受限，缩丢了就按它）
+  </div>
+  </div>
+</div>
+
+<div id="tooltip"></div>
+<div id="toast"></div>
+<div id="preview" role="dialog" aria-label="笔记预览"></div>
+<footer id="footer">
+  生成于 __GENERATED__ · 数据来自 Obsidian vault（本地构建，无服务器）
+</footer>
+
+<script>/*__KATEX_JS__*/</script>
+<script>/*__KATEX_AUTO__*/</script>
+<script>/*__RENDER__*/</script>
+<script type="application/json" id="graph-data">/*__DATA__*/</script>
+<script>/*__APP__*/</script>
+</body>
+</html>

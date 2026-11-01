@@ -1,0 +1,13 @@
+.workspace-leaf-content[data-type="knowledge-graph-smoke-view"] .kg-smoke-content {
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+}
+.workspace-leaf-content[data-type="knowledge-graph-smoke-view"] .kg-smoke-host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  isolation: isolate;
+}

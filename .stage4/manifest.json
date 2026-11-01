@@ -1,0 +1,9 @@
+{
+  "id": "knowledge-graph-smoke",
+  "name": "Knowledge Graph Smoke",
+  "version": "0.0.1",
+  "minAppVersion": "1.5.0",
+  "description": "Stage 4 smoke test: the existing knowledge map in a native Obsidian view.",
+  "author": "Hush",
+  "isDesktopOnly": false
+}

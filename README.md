@@ -1,0 +1,134 @@
+# Knowledge Graph Obsidian Plugin — 0.0.10 开发候选
+
+当前项目：`D:/Documents/ChatGPT/knoeledg-graph-obsidian-plugin`。
+
+**2026-11-01 开发交接**：从 GitHub clone 后先读 [HANDOFF_NEXT.md](HANDOFF_NEXT.md)，按 [DEVELOPMENT.md](DEVELOPMENT.md) 执行 `npm test`。该入口使用合成输入，无需个人库。源码交接不等于正式发布；原机器路径、本地证据与安装状态均须与新环境区分。
+
+2026-10-31：继续推进 47-* 规模验证，五档多组布局核心对照完成。单篇长笔记保存多组时仍存在结构信息重复，下一步评估跨组共享与兼容迁移；尚未修改运行代码。详见 [LAYOUT_SCALE_RESULT.md](LAYOUT_SCALE_RESULT.md)。原生长测、FB-006 定位和 0.0.10 用户体验仍待完成。
+
+**共同计划与进度入口：[TODO.md](TODO.md)**。按 Step 记录技术与产品双方的任务、完成状态、验收条件、体验反馈和待决定事项，双方均可编辑。原始总路线图在 [PLAN_APPLICABILITY.md](D:/obsidian_vault/knowledge-graph/PLAN_APPLICABILITY.md)，属于设计背景，其中阶段 4 的旧状态已过时；当前进度看 TODO 与本项目验收结果。后续协作维护规则见 [AGENTS.md](AGENTS.md)。
+
+**手动布局开发**：**0.0.6 已通过独立库、真实副本及本轮日常体验；用户反馈原规划功能暂时正常，同时提出 FB-005：标题改名等小改动导致已有布局大范围回退**。诊断与改进方案见 [LAYOUT_CONTINUITY_PLAN.md](LAYOUT_CONTINUITY_PLAN.md)，**用户已反馈 0.0.9 暂时符合预期；0.0.10 布局记录去重候选已在独立库交付，待体验，稳定性验收保持进行中**；新增空位优先、有界局部避让和兼容旁支保留。生命周期检查发现尚未定因的 FB-006 异常，尚未全量通过，见 [DESKTOP_STABILITY_RESULT.md](DESKTOP_STABILITY_RESULT.md)。适用范围、证据和步骤见 [LAYOUT_INCREMENTAL_RESULT.md](LAYOUT_INCREMENTAL_RESULT.md)，改名历史见 [LAYOUT_RENAME_EXTENDED_RESULT.md](LAYOUT_RENAME_EXTENDED_RESULT.md)。0.0.10 使用布局 schema2，兼容旧数据读取；降级须参考备份说明，见 [CONTINUOUS_EDIT_RESULT.md](CONTINUOUS_EDIT_RESULT.md)。同条件原生A/B显示当前合成规模整体更新延迟近似持平，分阶段结果见 [NATIVE_AB_RESULT.md](NATIVE_AB_RESULT.md)。日常库与 real-vault-trial 磁盘仍为 0.0.6。ME-A5 交付固定和 ME-A6 安装完成，首发功能冻结仍待决定。调整面板支持“恢复此组”和“全库恢复自动布局”；调整模式可用 Ctrl+Z、Ctrl+Shift+Z / Ctrl+Y。布局保存于本库插件 data.json，不写笔记；撤销历史最多 50 次，仅在本会话有效。候选会先尝试局部适配；无法可靠迁移、求解无解或超限时按组回退并提示。交付与回退见 [RELEASE_006_RESULT.md](RELEASE_006_RESULT.md)，功能限制见 [LAYOUT_PERSISTENCE_RESULT.md](LAYOUT_PERSISTENCE_RESULT.md)；当前状态看 TODO 的 ME-* / LC-*，9241 页面仍为旧合成原型。
+
+阶段 4.0–4.3 已完成；本轮完成设置界面、配置持久化、构建反馈及独立测试库验收，并按用户确认的范围完成真实库副本试用。当前活动源码为根目录 `src/`，构建入口为 `scripts/build.mjs`。`.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 是接手时已有的历史增量文件，不作为当前构建入口。历史 HANDOFF_STAGE4.md 不用于判断进度。
+
+**2026-10-30 更新（ME-A4 / ME-P3）**：性能分档及真实副本技术验证完成，用户真实场景验收通过，仍使用原 0.0.6 产物。真实副本包含 95 篇笔记、3310 个节点，27 项检查通过，原始笔记和图片未变。密集相切组仍可能放不下，超过 128 同级/5000 受影响节点不支持调整；详细测量、异常和未测范围见 [LAYOUT_PERFORMANCE_RESULT.md](LAYOUT_PERFORMANCE_RESULT.md)。体验验收不代表长期稳定性结论或日常升级授权。
+
+本轮结果见 [SETTINGS_RESULT.md](SETTINGS_RESULT.md)。原生预览与更新契约见 [NATIVE_RESULT.md](NATIVE_RESULT.md)，纯 JS 管线历史验收见 [PIPELINE_RESULT.md](PIPELINE_RESULT.md)。
+
+2026-10-27 阶段 4.5 首轮交互修复版为 **0.0.2**，修正已复现的 Ctrl 焦点漏触发与 Esc 离开图谱问题；独立库技术回归及用户体验验收通过。经用户明确授权，日常库运行文件已升级，保留现有配置；用户已确认重新加载，进入日常试用。见 [交互修复结果](INTERACTION_RESULT.md)。最低 Obsidian 版本为 1.5.7，本轮实际测试 1.14.5。
+
+随后用户反馈日常库 Esc 正常，Ctrl 预览仍卡死。当前源码为 **0.0.3**，加入限量预览、120 ms 悬停等待和最新请求串行处理；14 项新增检查、31 项原生及 16 项键盘回归通过。2026-10-27 用户在 TODO 45-P6 / 45-P7 / 45-P8 依次确认独立库、真实副本与日常库体验通过；日常库升级后卡顿/漏触发未出现，暂未发现其他问题。已报告的 Ctrl / Esc 问题本轮闭环，长期稳定性仍待后续验证。详见 [预览负载结果与限制](PREVIEW_LOAD_RESULT.md)。
+
+## 使用
+
+### 日常学习试用
+
+**日常交付（2026-10-30）：日常库三个运行文件已从 0.0.3 升级到 0.0.6，用户已完成本轮体验，原规划功能暂时符合预期。** 旧运行文件和配置已备份，三个安装文件哈希与验收产物一致，data.json 前后不变。后来新增的布局连续性改进与 0.0.10 仍在独立库验证。安装回执 `.local/daily-upgrade-0.0.6-receipt.json`；源码固定、安装与回退见 [RELEASE_006_RESULT.md](RELEASE_006_RESULT.md)。没有自动操作日常运行实例。
+
+历史：2026-10-27 日常库升级 0.0.3 并通过 45-P8 用户验收；旧版 0.0.2 留备份，原回执 `.local/daily-upgrade-0.0.3-receipt.json` 保留，不作为本轮重新执行的测试。
+
+2026-10-27，经用户安装权限确认，将已验收的阶段 4.4 构建（版本 0.0.1）安装到 `D:/obsidian_vault/hush-ob-bucket/.obsidian/plugins/knowledge-graph-smoke/`。只新增三个运行文件及本插件的 data.json，四文件哈希核验通过；没有修改笔记、其他插件配置或启用列表。安装回执在 `.local/daily-install-receipt.json`。这是个人日常试用，尚不代表桌面稳定性与正式发布验收已经完成。
+
+同日，用户验收独立库 0.0.2 后明确授权日常升级，现已备份并替换 main.js、manifest.json、styles.css，哈希与验收产物一致；data.json 前后哈希相同，用户扩展的范围设置保留。升级回执与旧版备份位置见 `.local/daily-upgrade-0.0.2-receipt.json`。请在第三方插件设置中关闭再开启本插件，再打开当前库图谱，使正在运行的实例加载新代码；无需卸载插件。
+
+1. 在日常库的 **设置 → 第三方插件** 中找到并启用 **Knowledge Graph Smoke**。若列表未刷新，先关闭并重新打开设置；仍未出现时保存当前工作再重启 Obsidian。
+2. 点击侧边栏网络图标，或在命令面板执行 **Knowledge Graph Smoke: 从当前库构建知识图谱**。日常安装不包含冻结快照，请使用当前库命令。
+3. 初始范围为 `Science and Tech/**` 与 `Literature History Philosophy/**`；排除 `Utilities/**`，自动更新开启、防抖 500 ms、原生预览开启、预算 60000 字符。可在本插件设置里查看和调整。
+4. 学习中按需要搜索/缩放、Ctrl 悬停预览、打开笔记或标题。把“场景 → 实际表现 → 希望怎样”记入 [TODO.md](TODO.md) 的反馈区，也可以直接在聊天里描述。
+
+若影响学习，可关闭图谱标签页（停止该视图的更新监听和构建），或在第三方插件列表禁用本插件。需要卸载时，使用该插件的卸载入口；笔记不由本插件安装流程修改，卸载会移除插件配置。不要用独立库验收脚本连接日常库执行增删测试。
+
+### 图谱操作与设置
+
+在独立库中，通过侧边栏网络图标或命令 **Knowledge Graph Smoke: 从当前库构建知识图谱** 打开图谱。插件名称与 ID 暂时沿用既有名称以保持安装和测试兼容。
+
+进入 **设置 → Knowledge Graph Smoke**：
+
+- **包含范围 / 排除范围**：每行一个规则，例如 `Science and Tech/**`。`**` 明确表示全库；空包含范围不能保存。沿用管线的匹配语义：`*` 可跨目录，规则同时匹配库内相对路径和文件名，忽略大小写；不是 gitignore 语法。排除优先于包含。
+- **排除笔记**：每行一个笔记名、相对路径或去掉 `.md` 的路径；笔记名会排除不同目录的同名笔记，区分大小写。
+- **目录映射**：可选 JSON 数组，如 `[{"from":"课程","to":"学习"}]`。使用最长前缀，仅改变图中目录，不移动文件。冲突时构建明确报错并保留旧图。
+- **自动更新 / 防抖**：默认开启、350 ms，可配置 100–10000 ms。关闭后不响应 Vault 变动，仍可用命令或状态栏手动重建。保存新设置会重建已打开的当前库视图。
+- **原生笔记预览 / 字符预算**：默认开启；0 使用默认 60000 字符，可设为 0–1000000。0.0.3 实际正文另受 12000 字符、80 个公式标记和 6 个顶层嵌入标记限制（不是硬内存上限）。Ctrl + 悬停等待 120 ms 后临时预览，点击固定，Esc 关闭；关闭预览不会读取预览正文。预算按完整行截取，重笔记从目标标题开始，超出时提示打开全文。
+
+点击 **检查范围** 只枚举路径并报告匹配数量，不读取正文；点击 **保存并应用** 才保存并触发重建。无效输入和保存失败留在设置界面，运行中配置保持不变。**撤销未保存修改** 恢复最近成功保存的配置。
+
+隐藏目录、node_modules 等由既有管线排除，`Utilities/API Key.md` 始终在读取前排除。旧图暂时保留时，已移出范围的节点不能继续触发原生读取。
+
+图谱显示等待防抖、读取进度、布局计算、完成、空范围、失败、取消状态；完成时显示笔记数、节点数、边数与耗时。构建中可取消，完成/失败后可重新构建。取消仅取消本次任务，后续事件仍遵循自动更新开关。失败保留上次成功图谱；关闭视图释放 Worker、计时器、订阅及预览组件。
+
+原有滚轮缩放、拖拽、搜索、过滤、层级、选中、原生公式/图片、笔记及标题跳转契约保留。新图成功后恢复相机、搜索、过滤、标签模式和仍存在的选中项。
+
+## 配置持久化
+
+使用 Obsidian `loadData()` / `saveData()`，仅存入该库插件的 `data.json`。兼容原有 `pipeline.config`、`annotations`、`candidates`；保存保留未知根字段、高级布局/配色字段和旧预览预算。保存操作串行执行，写入成功后才发布运行中配置。
+
+0.0.6 另存 `layoutOverrides: { schemaVersion: 1, revision, groups }`，与设置共用串行队列。松手后保存整组最终位置；失败时恢复上次保存的位置并提示。普通正文编辑和兼容重建保留布局；成员、标题结构或半径不兼容时该组回退。全库恢复会清除全部组覆盖（包含当前范围外的覆盖），可在本会话撤销。历史在结构变化和插件重载后清空。
+
+```json
+{
+  "settingsVersion": 1,
+  "settings": { "autoUpdate": true, "debounceMs": 350 },
+  "pipeline": {
+    "config": {
+      "include": ["Science and Tech/**", "Literature History Philosophy/**"],
+      "exclude": ["Utilities/**"],
+      "exclude_notes": [],
+      "remap": [],
+      "preview": { "enabled": true, "max_note_chars": 60000 }
+    },
+    "annotations": {},
+    "candidates": {}
+  }
+}
+```
+
+## 构建和测试
+
+本机 Node.js 标准库构建，无 npm 安装步骤；插件运行时不调用 Node、Python 或网络服务，不新增第三方运行时依赖。测试脚本依赖 Python、Playwright、Pillow、本机 Obsidian 与 Chrome。
+
+```powershell
+node scripts/build.mjs
+node scripts/core_check.mjs
+node scripts/pipeline_contract_check.mjs
+node scripts/settings_check.mjs
+python scripts/prepare_smoke.py --launch
+python scripts/native_check.py
+python scripts/interaction_check.py
+python scripts/preview_pressure_check.py
+python scripts/vault_pipeline_check.py
+python scripts/smoke_check.py --reload-plugin
+python scripts/browser_core_check.py
+python scripts/settings_integration_check.py
+```
+
+本工作区独立测试实例使用 `test-vault/`、`test-profile/` 与 `127.0.0.1:9238`。修改后将 `dist/main.js`、`manifest.json`、`styles.css` 复制到该测试库的 `.obsidian/plugins/knowledge-graph-smoke/` 后重载。所有 Obsidian 集成脚本先核对库的绝对路径，拒绝连接其他库。不要并发运行操作同一个 Obsidian 实例的脚本。
+
+冻结快照回归使用 `.local/smoke-payload.json` 与 `upstream/` 原渲染器；prepare/smoke 历史脚本仍需要本机原渲染项目 `D:/obsidian_vault/knowledge-graph` 做来源核对。它不是日常知识库。`upstream/provenance.json` 保留冻结源码哈希。`smoke-payload.json` 只用于快照命令；当前库模式只需 main.js、manifest.json、styles.css。
+
+2026-10-26 本轮：原有 88 项集成检查全部通过；新增设置集成 24 项、真实副本验收 17 项通过；核心、管线契约及设置 Node 检查通过。快照 Canvas PNG 逐像素一致。没有重跑阶段 4.2 的 12 组 Python/JS golden 与 Worker 全量对照，不将其历史结果算作本轮结果。
+
+## 已确认的真实库副本
+
+2026-10-27 版本核对：副本原先仍安装 0.0.1；已备份并同步三个运行文件至 0.0.3，保留 data.json。**用户已在 45-P7 确认复验通过**：Ctrl 不再卡顿、悬停可预览，LTI analysis 内选中后的 Esc 保留图谱。该结论来自用户体验；未补跑副本公式/图片与资源压力自动检查，未通过调试接口取得运行版本。随后日常库也按明确授权完成 0.0.3 文件升级，并通过 45-P8 用户体验验收。
+
+用户确认源库为 `D:/obsidian_vault/hush-ob-bucket`，目标为当前项目 `real-vault-trial/`，仅包含 **Science and Tech** 与 **Literature History Philosophy** 的 Markdown 及其中引用的本地图片。
+
+2026-10-26 已复制 95 篇笔记、567 张图片（420159458 bytes），没有复制源库 `.obsidian`、`.git`、`.trash` 或其余笔记目录。1 个图片引用未能匹配，记录在本地 `.local/evidence/real-trial-copy.json`。当时未向日常库安装；2026-10-27 的日常安装见上节。未读取 Utilities/API Key.md，没有 push。
+
+副本使用 `real-trial-profile/`，独立端口 `127.0.0.1:9239`，只启用当前插件及基本核心插件。已实测 3310 节点、3406 边，构建约 0.22–0.26 秒（单机两次观察，不是性能保证）。副本当前自动更新开启、防抖 500 ms、预览开启、预算 60000 字符。
+
+```powershell
+# 仅在目标不存在、且独立测试已通过时使用；脚本拒绝覆盖现有副本。
+python scripts/prepare_real_trial.py --launch
+# 已启动副本时复验：只在副本创建/删除合成探针笔记，原始副本文字保持不变。
+python scripts/real_trial_check.py
+```
+
+`real-vault-trial/`、`real-trial-profile/`、`test-vault/`、`test-profile/`、`.local/`、`dist/` 均已 gitignore。证据与截图包含本地内容，不应发布。
+
+## 代码与边界
+
+`src/settings.js` 负责设置草稿、校验、范围检查与原生设置页；`src/plugin.js` 负责视图、配置发布、自动更新和构建状态；`src/adapters/vault-pipeline.js` 负责先筛选后读取及 Worker；`src/adapters/obsidian-native.js` 负责按需预览和跳转。`src/core/`、纯 JS 管线算法与共享 Canvas/HUD 的活动代码保持原契约。
+
+更新仍为 Worker 完整重建。大库长时间连续编辑、移动端、触摸、浅色主题、弹出窗口、第三方 Markdown 后处理插件组合未完成验收。2026-10-26 设置阶段的新实例运行过 1.6.7；2026-10-27 的交互及预览候选检查实际运行 1.14.5，具体覆盖范围见对应结果文档。

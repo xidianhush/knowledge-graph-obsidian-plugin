@@ -1,0 +1,6 @@
+{
+  "name": "knowledge-graph-obsidian-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": { "build": "node scripts/build.mjs" }
+}
