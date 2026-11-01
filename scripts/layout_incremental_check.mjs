@@ -60,12 +60,12 @@ for(const [name,nodes] of [
 }
 const impossible=structuredClone(base);impossible[1].r=101;
 const im=createLayoutModel(impossible,200),ir=im.reconcile(br);
-assert.deepEqual(ir,br);assert.equal(im.apply(ir).skipped,1);results.push({name:'infeasible group keeps old record and falls back'});
+assert.deepEqual(ir.groups,br);assert.equal(im.apply(ir).skipped,1);results.push({name:'infeasible group keeps old record and falls back'});
 const many=[base[0],...Array.from({length:129},(_,i)=>({id:'P/'+i,path:'P/'+i+'.md',parent:'P',kind:'note',x:i%10,y:Math.floor(i/10),r:.1,depth:2}))];
-const large=createLayoutModel(many,200);assert.deepEqual(large.reconcile(br),br);results.push({name:'over 128 children declines repair'});
+const large=createLayoutModel(many,200);assert.deepEqual(large.reconcile(br).groups,br);results.push({name:'over 128 children declines repair'});
 const huge=[...structuredClone(base),{id:'P/C',path:'P/C.md',parent:'P',kind:'note',x:0,y:-25,r:10,depth:2},
  ...Array.from({length:5000},(_,i)=>({id:'P/A/'+i,parent:'P/A',kind:'folder',x:0,y:0,r:.01,depth:3}))];
-assert.deepEqual(createLayoutModel(huge,200).reconcile(br),br);results.push({name:'over 5000 affected nodes declines repair'});
+assert.deepEqual(createLayoutModel(huge,200).reconcile(br).groups,br);results.push({name:'over 5000 affected nodes declines repair'});
 const dense=[{id:'Q',kind:'folder',x:0,y:0,r:100,depth:1},...Array.from({length:128},(_,i)=>({id:'Q/'+i,path:'Q/'+i+'.md',parent:'Q',kind:'note',x:(i%16-7.5)*5,y:(Math.floor(i/16)-3.5)*5,r:1,depth:2}))];
 const dm=createLayoutModel(dense,200);dense[1].y+=1;const dk=dm.groupKey('Q/0'),dr={[dk]:dm.capture(dk)};
 const grown=structuredClone(dense);grown.slice(1).forEach(n=>n.r=8);

@@ -44,7 +44,7 @@ for(const scenario of scenarios){
       at=performance.now();const encoded=JSON.stringify(records[version]);records[version]=JSON.parse(encoded);
       const jsonRoundtripMs=performance.now()-at;
       assert.equal(applied.skipped,0);assert.equal(applied.restored,scenario.groups);
-      assert.equal(Object.keys(records[version]).length,scenario.groups);
+      assert.equal(Object.keys(records[version].groups??records[version]).length,scenario.groups);
       assert.ok(data.nodes.every(n=>Number.isFinite(n.x+n.y+n.r)));
       geometries[version]=data.nodes.map(n=>[n.x,n.y]);
       samples.push({step,operation:['rename','restore','add','delete'][step%4],warmup:step<4,version,

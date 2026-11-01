@@ -27,7 +27,7 @@ await rename(original.replace('# Alpha','# Renamed Parent'),'Parent rename prese
 await rename(original.replace('## One','## Two'),'Rename into a distinct-body duplicate title');
 await rename(original.replace('## One','## Renamed').replace('beta body','edited unrelated prose'),'Unrelated section body edits do not invalidate rename');
 const enriched=model(build(original)).reconcile(Object.fromEntries(Object.entries(initial.groups).map(([k,v])=>{const c=structuredClone(v);delete c.identity;return[k,c];})));
-await rename(original.replace('## One','## Renamed'),'Legacy records enriched on compatible build',{...initial,groups:enriched});
+await rename(original.replace('## One','## Renamed'),'Legacy records enriched on compatible build',{schemaVersion:3,revision:initial.revision,groups:enriched.groups,structures:enriched.structures});
 for(const [name,text] of [
   ['Rename plus body change',original.replace('## One\none body','## New\nnew body')],
   ['Multiple renames',original.replace('## One','## New').replace('## Two','## Other')],
