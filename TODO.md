@@ -231,7 +231,7 @@
 | FB-003 | 用户体验 / 缺陷 | 实际：Esc 跳到图谱左侧标签对应的笔记，离开图谱；副本步骤：放大进入 LTI analysis 并选中内部元素后，Esc 切到该笔记；期望：收起预览/选择并保留图谱标签 | 建议 P1，待产品确认 | 已修复并经用户复验：45-P5 日常 0.0.2、45-P6 独立库及 45-P7 升级后真实副本均确认正常；旧副本 0.0.1 反馈保留为历史，不判为 0.0.3 回归 |
 | FB-004 | 用户体验 / 缺陷与范围澄清 | 0.0.4 标题拖动/避让/子树/连线、Ctrl/Esc 和阅读画面符合预期；笔记圆直接拖或手柄均不动，提示“根级元素暂不支持移动”。期望文件夹、笔记、标题均可选中调整 | P1（新增核心流程受阻，技术判断） | 已修复并经用户验收：2026-10-29 用户在 test-vault-layout-fix 和原 test-vault 确认全层级拖动、避让、子树及连线跟随正常，其他功能暂时正常。按已报告场景关闭；证据 LAYOUT_ROOT_FIX_RESULT.md |
 | DEC-001 | 产品选择 | 图谱继续保持深色，还是跟随 Obsidian 主题？ | 已决定（2026-11-01） | 用户确认浅色主题下“应用变浅、图谱画布保持深色”可接受，即维持图谱深色、不跟随宿主主题；若日后希望跟随，作为新需求重新评估，技术轮不改视觉契约 |
-| DEC-002 | 产品选择 | 首个桌面版本的用户范围、正式名称及发布形式 | 已决定（2026-11-02） | 首发渠道仅自用；用户自用 1–2 天后考虑公开分发（届时按 48-P3 再决定）；正式名称 `knowledge-map`；描述暂定；桌面专用（isDesktopOnly）与最低 Obsidian 版本按实测收紧后写入 manifest |
+| DEC-002 | 产品选择 | 首个桌面版本的用户范围、正式名称及发布形式 | 已决定（2026-11-02） | 首发渠道仅自用；用户自用 1–2 天后考虑公开分发（届时按 48-P3 再决定）；正式名称 `knowledge-map`；描述已确认（2026-11-02，即 manifest 现有英文）；桌面专用（isDesktopOnly）与最低 Obsidian 版本按实测收紧后写入 manifest |
 | DEC-003 | 产品选择 | 正文摘要在图谱、布局与日志中的口径 | 已决定（2026-11-02） | 保持现有悬停摘要：note 节点在内存中携带最多 220 字符正文摘要用于悬停/预览，不写入 data.json、日志或状态消息；不因隐私顾虑移除该交互（用户决定） |
 
 ### FB-006 — 桌面稳定性检查中的无栈/宿主异常
@@ -262,6 +262,7 @@
 | 2026-10-27 | 独立库验收 0.0.2 后明确授权升级日常库测试 | 用户确认修复奏效、体验顺畅；只替换三个运行文件并保留现有设置，旧运行文件留本地备份 |
 
 ## 更新记录
+- **2026-11-02 / Codex（0.0.12 装入日常库自用体验）**：用户确认描述文案、授权 0.0.12 装日常库、`id` 保持 `knowledge-graph-smoke`。已备份 0.0.11 三文件到 `.local/backup-daily-0.0.11/`，将 `.local/release/0.0.12/` 三文件装入 `D:\obsidian_vault\hush-ob-bucket\.obsidian\plugins\knowledge-graph-smoke\`：`main.js` 哈希不变（`205b1bd0…`）、`manifest.json` 变为 0.0.12/Knowledge Map/1.6.7/桌面限定、`styles.css` 不变、`data.json` 前后哈希一致（未触发迁移）。回执 `.local/daily-upgrade-0.0.12-receipt.json`；库内仅 manifest.json 一处改动，未在库内 commit。本轮无代码改动、未重跑合成脚本；未 push/未发布。
 - **2026-11-02 / Codex（46-A3 90 分钟长时观测完成）**：9249（vault-real 授权副本，3310 节点，0.0.11）连续运行 5,401 s，540 次采样、89 次重建、17 次隐藏→恢复，failures 空、渲染异常 0；heap 41.32→52.13 MB（38.12–90.99 MB 锯齿、无单调增长）；fps p50 63.9；磁盘 rev83/groups0/530 B 全程不变，busy/unsupported false。同步 `DELIVERY_48A2_RESULT.md` §3 与 46-A3 行。本轮为观测与文档更新：10 个合成脚本未改动、未重跑；平台回归仍以 1.6.7/1.14.5/空白库既有证据为准；本地提交未 push、未发布；测试实例（9249/9251/9252/9253）已全部关闭。
 - **2026-11-02 / Codex（0.0.12 交付候选 + 48-A2 候选回归；46-A3 长时观测进行中）**：按用户 48-P2 决定收紧 manifest：名称 `Knowledge Map`（id 仍 `knowledge-graph-smoke`，避免既有 data.json/命令失效）、版本 0.0.12、`minAppVersion` 1.6.7、`isDesktopOnly: true`、描述暂定；package.json 同步 0.0.12。`main.js` 与 0.0.11 相同（`205b1bd0…`/325,976 B）。`node scripts/test.mjs` 10 脚本全过；`node scripts/package.mjs` 产出 `.local/release/0.0.12/`（三文件 + SHA256SUMS，拒绝私有快照/data.json）。平台回归：Obsidian 1.6.7 上插件加载/构建/拖动保存/Ctrl+Z/重建通过（`phase-167.json`，0.0.11 对照 `phase-167-0.0.11.json`）；Obsidian 1.14.5 上拖动 rev 1051→1052、撤销 1053、磁盘 schema3 rev1053 groups30 structures6（`drag-9252.json`；首次拖动失败因 Excalidraw 欢迎弹窗拦截输入，关闭后通过）；空白库 9253 五项 A–E 全过（`blank-vault.json` verdict pass）。docs/INSTALL.md 更新到 0.0.12（平台桌面专用、最低 1.6.7、升级无需迁移）、README 与 DEVELOPMENT 同步；新增 `DELIVERY_48A2_RESULT.md`。本轮另启动 46-A3 90 分钟长时资源观测（9249，vault-real）：截至约 25 分钟 178 条记录，heap 38.1–81.6 MB 无增长趋势、渲染异常 0、busy/unsupported 均 false，完整结果待收尾。候选未 push、未发布、未装日常库；48-A2 最终交付验收待用户。
 

@@ -84,7 +84,8 @@
 - 本地候选 **0.0.12**：`manifest.json` 名称 **Knowledge Map**（内部 id `knowledge-graph-smoke` 不变，避免既有 data.json/命令失效）、`version` 0.0.12、`minAppVersion` 1.6.7、`isDesktopOnly: true`、描述暂定；`package.json` 同步 0.0.12；`main.js` 不变（`205b1bd0…`，325,976 B）。
 - 打包：`node scripts/package.mjs` → `.local/release/0.0.12/`（`main.js`/`manifest.json`/`styles.css`/`SHA256SUMS`）；`node scripts/test.mjs` 10 脚本全过。
 - 平台回归：Obsidian 1.6.7（自带）插件加载、构建、拖动保存 rev1049→1050、Ctrl+Z、重建通过；Obsidian 1.14.5 拖动 rev1051→1052、撤销 rev1053、磁盘 schema3 rev1053/groups30/structures6；空白库五项 A–E 通过（md 0 起测）。证据 `.local/evidence/compat-matrix/{phase-167.json,drag-9252.json}` 与 `.local/evidence/delivery-48a1/blank-vault.json`，报告 `DELIVERY_48A2_RESULT.md`。
-- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录、未装日常库**；描述文案待用户定稿；id 改名涉及 data.json 迁移，暂不改。48-A2 最终交付验收待用户执行安装后确认。
+- 用户 2026-11-02 决定：描述文案采用上述英文；**0.0.12 已按授权装入日常库用于 1–2 天自用体验**（仅替换三文件；`main.js` 与 0.0.11 完全相同、`data.json` 未改动，回执 `.local/daily-upgrade-0.0.12-receipt.json`、备份 `.local/backup-daily-0.0.11/`）；`id` 保持 `knowledge-graph-smoke`，无需迁移。
+- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录**；描述已定稿；id 不改。48-A2 最终交付验收待用户执行安装后确认。
 
 ## 权限与协作习惯
 

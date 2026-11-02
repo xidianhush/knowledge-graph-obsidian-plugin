@@ -11,7 +11,7 @@
 | 版本 | 0.0.11 | 0.0.12 |
 | minAppVersion | 1.5.7（未验收的声明） | **1.6.7**（已实测） |
 | isDesktopOnly | false | **true** |
-| 描述 | Stage 4 smoke test...（内部文案） | 暂定：Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures. |
+| 描述 | Stage 4 smoke test...（内部文案） | Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures.（用户 2026-11-02 确认） |
 | main.js | 325,976 B / `205b1bd0…` | **不变**，同上 |
 | manifest.json | 262 B / `c2cc6672…` | 291 B / `6fcc0b52ec8d44a9e6f1c0749fe2e12a0ebaccf56733a76470cf85e93e39a72f` |
 | styles.css | 2,255 B / `ac10538c…` | 不变，同上 |
@@ -62,7 +62,7 @@
 ## 4. 边界与未完成
 
 - 0.0.12 是**本地候选**：未 push、未打 tag、未发布 Release、未提交 Obsidian 社区目录。
-- 描述文案为暂定，待用户确认后随最终发布定稿；如正式名称仍保留 `knowledge-map`，目录 id 与显示名可按最终决定再调（id 改名涉及 data.json 迁移，需单独评估）。
+- 描述文案已由用户 2026-11-02 确认（即本文件所用英文）；`knowledge-map` 仅作为对外名称，manifest id 保持 `knowledge-graph-smoke`，因此无需 data.json 迁移（id 改名涉及 data.json 迁移，需单独评估）。
 - 48-A2 的“最终交付验收”仍需用户在执行安装后确认（`docs/INSTALL.md` 已含安装/升级/卸载/回退步骤）。
 - 46-A3 本轮 90 分钟观测已完成（通过）；FB-006 保持观察（勿对渲染页整页 reload）。
 - 移动端未验证，manifest 已声明 `isDesktopOnly: true`。
