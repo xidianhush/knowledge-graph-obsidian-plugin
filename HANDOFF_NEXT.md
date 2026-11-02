@@ -44,7 +44,7 @@
 
 **FB-006 状态：已定因（2026-11-01，测试驱动方式产物，非插件缺陷）**。历史 51 项断言中的 `illegal access` 与 `getZoomFactor` 已复现并归因：只有用 Playwright 注入式驱动对 Obsidian 渲染页执行整页 `page.reload()` 时才出现（每次约 4 条字符串异常 `illegal access`，CDP `Runtime.exceptionThrown`，scriptId=1/url=index.html/line 0，reload 前后旧/新主世界各一批）。决定性对照：插件 `disablePluginAndSave` 后完全未加载（`plugins=[]`）仍 4 条；0.0.9 与 0.0.10 相同；纯 raw CDP 复刻相同序列 0 条；去掉本仓 init script 的 Playwright 仍 3 条；本仓正常使用路径（30 分钟 1161 轮、150 次混合、20 次拖动保存）两异常均 0 次。`illegal access` 字符串在 obsidian-1.14.5.asar 中出现 0 次 → Electron 原生层在渲染进程 reload 时抛出；`getZoomFactor` 属 Obsidian 自身 `app.js` 标题栏 `updateStatus` 在 reload 后使用失效窗口代理 `this.eWin`，插件不在调用栈上（本轮未复现，按历史条件记录）。结论与建议：原生稳定性回归不要 reload 渲染页（改用重启应用或禁用/启用插件），统一 raw CDP；历史 host 异常不作为插件缺陷计入。证据：脚本 `.local/native/fb006_*.py`，结果 `.local/evidence/fb006-repro/RESULT.md`。
 
-遗留观察项：46-A3 的长期资源/隐藏恢复/多视图边界与真实窗口下的极端序列仍需按原计划补测；不因 FB-006 定因就把 46-A3 整体标为完成。
+遗留观察项：46-A3 的长期资源/隐藏恢复/多视图边界与真实窗口下的极端序列仍需按原计划补测；不因 FB-006 定因就把 46-A3 整体标为完成。2026-11-02 已补一轮 **90 分钟长时观测**（9249/vault-real，5,401 s、540 次采样、89 次重建、17 次隐藏→恢复；failures 空、渲染异常 0；heap 41.32→52.13 MB 锯齿无单调增长；fps p50 63.9；rev83/groups0/530 B 不变），证据 `.local/evidence/longrun-46a3/`，汇总见 `DELIVERY_48A2_RESULT.md` §3；结论“本窗口内无泄漏/无异常”，不等于无限期保证，后续按需复跑。
 
 历史线索（保留）：稳定性主脚本 51 项断言中 50 通过、1 失败；自有资源清理与竞态通过，但出现无栈 `illegal access` 和宿主 app.js 的 `t.webContents.getZoomFactor is not a function`。过去一次“禁用插件后重载”对照因重载后插件仍启用而无效，本轮已用 `disablePluginAndSave` 补齐有效对照。
 
