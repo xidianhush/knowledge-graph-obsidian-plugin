@@ -21,7 +21,7 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
 
-当前版本号为 0.0.11（已 push 到 GitHub 并发布 pre-release；尚未提交 Obsidian 社区目录）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+当前交付候选为 0.0.12（本地，未 push、未发布；0.0.11 已 push 并发布 pre-release；均未提交 Obsidian 社区目录）。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`，`main.js` 与 0.0.11 相同（sha256 `205b1bd0…`）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
 
 首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
 
@@ -44,4 +44,4 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 ## 交付边界
 
-源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。正式名称、manifest 描述、支持的平台与最低版本、发布渠道仍待 48-P2/48-P1 决定；manifest 当前仍声明移动端可用及最低 1.5.7，这两项声明尚无完整验收，正式发布前必须校准（移动端建议先改为 `isDesktopOnly: true` 或补测）。
+源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述为暂定文案，待用户确认后随最终发布定稿。

@@ -5,7 +5,7 @@
 ## 先做什么
 
 1. 读 `AGENTS.md`、`TODO.md`、`README.md` 和 `DEVELOPMENT.md`，检查当前分支、工作区和 manifest；不要覆盖用户改动。
-2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 待 48-P1/P2 决定后跑最终回归。
+2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 待 48-P1/P2 决定后跑最终回归。 2026-11-02 晚：48-P2 平台声明已落地到 **0.0.12 本地候选**（manifest 名称 Knowledge Map、minAppVersion 1.6.7、isDesktopOnly true；`main.js` 与 0.0.11 相同 `205b1bd0…`），48-A2 候选回归在 Obsidian 1.6.7 / 1.14.5 / 空白库通过，见 `DELIVERY_48A2_RESULT.md`；候选未 push、未发布、未装日常库；46-A3 90 分钟长时观测进行中。
 3. 读 `LAYOUT_SCALE_RESULT.md`、`NATIVE_AB_RESULT.md`、`CONTINUOUS_EDIT_RESULT.md` 和 `DESKTOP_STABILITY_RESULT.md`。47-A3 的 schema3 已在本地 0.0.11 实现（commit `13933dc`，已发布 pre-release `v0.0.11`）并完成独立语义/规模复核、原生基本回归、30 分钟连续压力与冷启动，用户体验验收已完成；FB-006 已定因为测试驱动整页 reload 产物（非插件缺陷，详见 §2 与 `.local/evidence/fb006-repro/RESULT.md`），保持观察。
 4. 先建立本机合成独立库，再执行原生测试。原机器的 vault/profile、历史 ZIP、私有证据没有随 Git 传输；缺少环境不是测试通过。具体可运行/需准备的脚本见 DEVELOPMENT。
 5. 每轮按任务 ID 局部更新 TODO，记录实际测试、版本、日期和未完成项；产品体验验收由用户决定。
@@ -20,7 +20,7 @@
 - 本地 0.0.11（commit `13933dc`，已推送并发布 pre-release `v0.0.11`）把 identity 提升为**笔记级共享**（`structures[noteKey]`），组记录只留 `shape/points/note/structure`，留一个路径无关的结构摘要做守卫；schema1/2 懒迁移，写失败保留旧数据，旧版本读 schema3 会禁用调整但不毁数据。合成回归 10 脚本全过；独立复核（新核心 vs 冻结 0.0.10 核心）7 场景语义 EQUIVALENT、5 档字节比 0.082–0.772、堆比 0.072–0.731（见 `.local/evidence/schema3/REPORT.md`）。原生（9243，Obsidian 1.14.5/Electron 30.1.2）已验证真实拖动→保存→重建恢复（dx=dy=0）、Esc 取消、Ctrl+Z 撤销，以及同笔记两组共享 1 条 structures；30 分钟连续压力（1161 轮 0 失败、重建 p50 0.400 s、预览 151/151、隐藏恢复 151/151、heap 27.8→29.7 MB）与 schema3 冷启动（rev/几何一致）已完成；用户已于 2026-11-01 在日常库完成体验验收（47-P2/47-P3）。
 - 原机器独立 `test-vault-layout-fix` 安装 0.0.10；real-vault-trial 磁盘版本为 0.0.6；**日常库于 2026-11-01 获用户明确授权升级至 0.0.11**（仅替换 main.js/manifest.json/styles.css，data.json 保留 schema1 rev87、首次建图时迁移；0.0.6 四文件备份在 `.local/backup-daily-0.0.6/`，验收清单 `.local/acceptance-daily-0.0.11.md`）。不要把用户后续“副本没问题”当成 0.0.9/0.0.10 真实验收，也不要假定新机器有这些库。
 
-0.0.10 main.js 历史验收 SHA-256：`ff171eee6be55bbad81579c1f4bbabb26f7b583754d936ee9f2d9b34fa8ddd55`。本地已提交的 0.0.11 构建（manifest 0.0.11，commit `13933dc`）main.js SHA-256：`205b1bd0383a223f92aef6f09e36327882bd081f3c707bab725fb47b9d3bf049`（325976 B；技术回归与用户体验验收均已完成，2026-11-01 发布 pre-release）。构建会复制本地存在的私有快照，打包时只能白名单取 main.js、manifest.json、styles.css，不能直接公开 dist 全目录。schema2 降级仅替换旧二进制不够：旧版会拒绝新结构写入，应先另存新配置，再恢复对应旧版程序及升级前配置；这会失去备份之后的调整，不能静默执行。
+0.0.10 main.js 历史验收 SHA-256：`ff171eee6be55bbad81579c1f4bbabb26f7b583754d936ee9f2d9b34fa8ddd55`。本地已提交的 0.0.11 构建（manifest 0.0.11，commit `13933dc`）main.js SHA-256：`205b1bd0383a223f92aef6f09e36327882bd081f3c707bab725fb47b9d3bf049`（325976 B；技术回归与用户体验验收均已完成，2026-11-01 发布 pre-release）。构建会复制本地存在的私有快照，打包时只能白名单取 main.js、manifest.json、styles.css，不能直接公开 dist 全目录。0.0.12 候选 manifest（291 B，sha256 `6fcc0b52ec8d44a9e6f1c0749fe2e12a0ebaccf56733a76470cf85e93e39a72f`）与 0.0.11 的差异仅为名称/最低版本/桌面声明/版本号，`main.js`、`styles.css` 未变。schema2 降级仅替换旧二进制不够：旧版会拒绝新结构写入，应先另存新配置，再恢复对应旧版程序及升级前配置；这会失去备份之后的调整，不能静默执行。
 
 ## 关键实现位置
 
@@ -78,6 +78,13 @@
 - `docs/INSTALL.md`：手动安装（三文件）、升级（保留 data.json，schema1/2→3 自动迁移）、回退、卸载（宿主会删除 data.json，布局随之丢失）、**新库首次打开会出现 Obsidian 的“你是否信任这个仓库的作者？”提示，需选择信任否则插件不加载**、数据与隐私（布局不含笔记正文；笔记节点悬停摘要最多 220 字符、仅内存、不写 data.json/日志）、已知限制、维护者打包命令、反馈模板。
 - 空白库验证（`.local/native/vault-blank` + 9250）：仅三文件安装可见；空库首次建图 `phase=empty` 友好提示且无异常；建 3 篇笔记后 11 节点、正文标记未进入 data.json/状态/错误；设置 `debounceMs` 落盘并在禁用/启用后保留；卸载删除插件目录与 data.json。证据 `.local/evidence/delivery-48a1/blank-vault.json`（verdict pass）。
 - 仍待 48-P2：manifest 的 `name`（Knowledge Graph Smoke）/`description`（Stage 4 smoke test…）为内部文案，`isDesktopOnly:false` 与 `minAppVersion:1.5.7` 尚未按正式范围校准。
+
+## 48-A2 交付候选现状（2026-11-02）
+
+- 本地候选 **0.0.12**：`manifest.json` 名称 **Knowledge Map**（内部 id `knowledge-graph-smoke` 不变，避免既有 data.json/命令失效）、`version` 0.0.12、`minAppVersion` 1.6.7、`isDesktopOnly: true`、描述暂定；`package.json` 同步 0.0.12；`main.js` 不变（`205b1bd0…`，325,976 B）。
+- 打包：`node scripts/package.mjs` → `.local/release/0.0.12/`（`main.js`/`manifest.json`/`styles.css`/`SHA256SUMS`）；`node scripts/test.mjs` 10 脚本全过。
+- 平台回归：Obsidian 1.6.7（自带）插件加载、构建、拖动保存 rev1049→1050、Ctrl+Z、重建通过；Obsidian 1.14.5 拖动 rev1051→1052、撤销 rev1053、磁盘 schema3 rev1053/groups30/structures6；空白库五项 A–E 通过（md 0 起测）。证据 `.local/evidence/compat-matrix/{phase-167.json,drag-9252.json}` 与 `.local/evidence/delivery-48a1/blank-vault.json`，报告 `DELIVERY_48A2_RESULT.md`。
+- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录、未装日常库**；描述文案待用户定稿；id 改名涉及 data.json 迁移，暂不改。48-A2 最终交付验收待用户执行安装后确认。
 
 ## 权限与协作习惯
 
