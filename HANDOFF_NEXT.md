@@ -5,7 +5,7 @@
 ## 先做什么
 
 1. 读 `AGENTS.md`、`TODO.md`、`README.md` 和 `DEVELOPMENT.md`，检查当前分支、工作区和 manifest；不要覆盖用户改动。
-2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。
+2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 待 48-P1/P2 决定后跑最终回归。
 3. 读 `LAYOUT_SCALE_RESULT.md`、`NATIVE_AB_RESULT.md`、`CONTINUOUS_EDIT_RESULT.md` 和 `DESKTOP_STABILITY_RESULT.md`。47-A3 的 schema3 已在本地 0.0.11 实现（commit `13933dc`，已发布 pre-release `v0.0.11`）并完成独立语义/规模复核、原生基本回归、30 分钟连续压力与冷启动，用户体验验收已完成；FB-006 已定因为测试驱动整页 reload 产物（非插件缺陷，详见 §2 与 `.local/evidence/fb006-repro/RESULT.md`），保持观察。
 4. 先建立本机合成独立库，再执行原生测试。原机器的 vault/profile、历史 ZIP、私有证据没有随 Git 传输；缺少环境不是测试通过。具体可运行/需准备的脚本见 DEVELOPMENT。
 5. 每轮按任务 ID 局部更新 TODO，记录实际测试、版本、日期和未完成项；产品体验验收由用户决定。
@@ -50,6 +50,8 @@
 
 ### 3. 47-A2 / 47-P2：连续编辑、预览与规模验收
 
+**2026-11-02 更新：技术验证已完成（授权副本真实 30 分钟连续压力 + include 内合成笔记的结构/改名/泄漏验证，报告 `REAL_VAULT_RESULT.md`，机器证据 `.local/evidence/continuous-real/`）；体验验收仍待用户。**
+
 首轮建议 30 分钟，固定 seed 与操作序列，在合成库循环正文保存、标题改名、添加/删除、预览打开/固定/关闭、重建/取消、隐藏/恢复；覆盖 1000/5000 标题及多保存组。更大规模根据用户 47-P1 的实际需求决定，不默认已支持 2 万节点。
 
 记录请求到视图提交、Worker 启动到返回、模型/布局协调、saveData、帧间隔、错误与自有资源；每隔数分钟采样堆和保存队列。阶段可能嵌套，不能重复相加；提交完成不等于第一帧。回收后的持续趋势和保留对象才有助于判断泄漏，单次峰值不足。
@@ -69,6 +71,13 @@
 在上述阻断问题有明确结论后，与用户确定首发范围、正式名称/ID、邀请试用或公开分发，以及可接受限制。当前 ID 暂不改；若改名需规划配置迁移。
 
 补齐安装/升级/卸载、空白库首次使用、无结果/失败提示、保留配置与回退文档；校准 manifest 平台与最低版本；核对许可证和上游代码分发条件。对最终 commit 构建三文件包，记录哈希、干净重建与关键回归，公开合成示例并排除私有内容。用户验收正式包后再按明确授权创建 Release 或提交社区目录。此次源码 push 不等于这些动作获批。
+
+## 48-A1 交付材料现状（2026-11-02）
+
+- `scripts/package.mjs`：校验 `manifest.json` 与 `package.json` 版本一致、拒绝把 `smoke-payload.json`/`data.json` 打进包、只复制 `main.js`/`manifest.json`/`styles.css` 到 `.local/release/<version>/` 并写 SHA256SUMS。
+- `docs/INSTALL.md`：手动安装（三文件）、升级（保留 data.json，schema1/2→3 自动迁移）、回退、卸载（宿主会删除 data.json，布局随之丢失）、**新库首次打开会出现 Obsidian 的“你是否信任这个仓库的作者？”提示，需选择信任否则插件不加载**、数据与隐私（布局不含笔记正文；笔记节点悬停摘要最多 220 字符、仅内存、不写 data.json/日志）、已知限制、维护者打包命令、反馈模板。
+- 空白库验证（`.local/native/vault-blank` + 9250）：仅三文件安装可见；空库首次建图 `phase=empty` 友好提示且无异常；建 3 篇笔记后 11 节点、正文标记未进入 data.json/状态/错误；设置 `debounceMs` 落盘并在禁用/启用后保留；卸载删除插件目录与 data.json。证据 `.local/evidence/delivery-48a1/blank-vault.json`（verdict pass）。
+- 仍待 48-P2：manifest 的 `name`（Knowledge Graph Smoke）/`description`（Stage 4 smoke test…）为内部文案，`isDesktopOnly:false` 与 `minAppVersion:1.5.7` 尚未按正式范围校准。
 
 ## 权限与协作习惯
 

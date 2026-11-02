@@ -10,7 +10,18 @@ npm test
 
 `npm test` 先构建，再串行执行 10 个合成检查脚本：核心生命周期、管线契约、设置、原型几何、正式拖动、保存状态、基础改名、扩展改名、增删修复、schema3 迁移。无需 Obsidian、Python、网络或个人笔记。报告写入被忽略的 `.local/evidence/`。Node 性能样本随机器而变，不是速度门槛。
 
-只构建：`npm run build`。输出 `dist/main.js`、`dist/manifest.json`、`dist/styles.css` 及供测试使用的模块；运行插件只需前三个文件。若本地存在 `.local/smoke-payload.json`，历史构建脚本会额外复制私有快照到 dist，**不能直接打包整个 dist**。当前版本号为 0.0.11（本地实现，尚未提交/发布）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+只构建：`npm run build`。输出 `dist/main.js`、`dist/manifest.json`、`dist/styles.css` 及供测试使用的模块；运行插件只需前三个文件。若本地存在 `.local/smoke-payload.json`，历史构建脚本会额外复制私有快照到 dist，**不能直接打包整个 dist**。
+
+生成交付包（白名单三个运行文件 + SHA256SUMS，拒绝快照与 data.json）：
+
+```sh
+node scripts/build.mjs
+node scripts/package.mjs            # 输出 .local/release/<version>/
+```
+
+使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
+
+当前版本号为 0.0.11（已 push 到 GitHub 并发布 pre-release；尚未提交 Obsidian 社区目录）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
 
 首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
 
@@ -33,4 +44,4 @@ npm test
 
 ## 交付边界
 
-源码推送仅用于开发交接，没有创建 GitHub Release，也没有提交 Obsidian 社区目录。正式名称、许可证/上游权属说明、支持的平台与最低版本、发布渠道均待确定。manifest 当前仍声明移动端可用及最低 1.5.7，这些声明尚无完整验收，正式发布前必须校准。
+源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。正式名称、manifest 描述、支持的平台与最低版本、发布渠道仍待 48-P2/48-P1 决定；manifest 当前仍声明移动端可用及最低 1.5.7，这两项声明尚无完整验收，正式发布前必须校准（移动端建议先改为 `isDesktopOnly: true` 或补测）。
