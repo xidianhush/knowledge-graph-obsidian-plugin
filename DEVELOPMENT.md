@@ -44,4 +44,4 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 ## 交付边界
 
-源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述为暂定文案，待用户确认后随最终发布定稿。
+源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述已由用户确认（即 manifest 现有英文）；0.0.12 已按授权装入日常库并完成 1–2 天自用体验（2026-11-03 通过）；剩余公开发布与社区目录提交属 48-P3，待用户决定。

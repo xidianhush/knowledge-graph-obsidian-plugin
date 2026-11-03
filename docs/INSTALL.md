@@ -10,7 +10,7 @@
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 实际验证环境 | Obsidian 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
 | 平台声明 | `isDesktopOnly: true`，仅支持桌面版 Obsidian；移动端未验证、不在支持范围 |
-| 发布状态 | 0.0.12 为本地候选（未 push、未发布）；0.0.11 已发布 GitHub pre-release；均未提交 Obsidian 社区目录 |
+| 发布状态 | 0.0.12 为本地候选（未 push、未发布）；2026-11-03 已在日常库完成 1–2 天自用体验并通过（报告见 `product-site-acceptance/`）；0.0.11 已发布 GitHub pre-release；均未提交 Obsidian 社区目录 |
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 

@@ -52,6 +52,11 @@
 
 新库首次安装会出现“你是否信任这个仓库的作者？”提示，需选“信任仓库作者并启用插件”；已写入 `docs/INSTALL.md`。
 
+### 2.5 用户日常库自用体验（2026-11-03，通过）
+
+- 0.0.12 装入日常库（`data.json` 未动）后完成 1–2 天自用体验：Node 4 关机重启后布局完整保留；Node 5 移动 `半导体物理.md` 后图谱自动更新、仅局部大小变化；Node 6 修改 `LTI analysis` 标题与正文后内部仅对应圆大小变化、外部无可见变化；Node 7 修改章节并新增链接后位置大小无可见变化；Node 8 调整 `Electronic engineering basic` 子元素位置仅内部变化——均“符合预期”。报告：`product-site-acceptance/product-site-acceptance-report/v0.0.12_PRODUCT_SITE_ACCEPTANCE_REPORT.md`。
+- 体验期间日常库 `data.json` 正常增长（rev302 / groups12 / structures5，178,715 B），未出现异常或降级提示。
+
 ## 3. 46-A3 长期资源观测（已完成 90 分钟，通过）
 
 - 实例 9249（`vault-real` 授权副本，95 篇/3310 节点，0.0.11，空布局），脚本 `.local/native/lead_longrun_46a3.py`：每 10 s 采样 heap/fps/state/磁盘/异常/隐藏状态，每 60 s 重建，每 300 s 隐藏→恢复；实际运行 **5,401 s**。
@@ -61,8 +66,8 @@
 
 ## 4. 边界与未完成
 
-- 0.0.12 是**本地候选**：未 push、未打 tag、未发布 Release、未提交 Obsidian 社区目录。
+- 0.0.12 是**本地候选**：未 push、未打 tag、未发布 Release、未提交 Obsidian 社区目录；候选已装入日常库并通过自用体验（id 保持 `knowledge-graph-smoke`，无需迁移）。剩余发布动作属 48-P3。
 - 描述文案已由用户 2026-11-02 确认（即本文件所用英文）；`knowledge-map` 仅作为对外名称，manifest id 保持 `knowledge-graph-smoke`，因此无需 data.json 迁移（id 改名涉及 data.json 迁移，需单独评估）。
-- 48-A2 的“最终交付验收”仍需用户在执行安装后确认（`docs/INSTALL.md` 已含安装/升级/卸载/回退步骤）。
+- 48-A2 已完成：用户于 2026-11-03 在日常库完成 0.0.12 1–2 天自用体验并确认符合预期（报告 `product-site-acceptance/product-site-acceptance-report/v0.0.12_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）。
 - 46-A3 本轮 90 分钟观测已完成（通过）；FB-006 保持观察（勿对渲染页整页 reload）。
 - 移动端未验证，manifest 已声明 `isDesktopOnly: true`。

@@ -18,7 +18,7 @@
 - 0.0.7–0.0.9 实现可信标题改名迁移、可区分重复标题以及纯增删/尺寸变化后的局部布局修复。用户对 0.0.9 反馈“暂时符合预期”；混合替换、层级变化、歧义仍保守回退，不能承诺任何编辑都保留。
 - 0.0.10 将同组成员重复的 outline 提升到组级，布局存储 **schema2**，兼容旧 schema1 读取和迁移，写失败保留旧状态。技术回归完成，**用户体验仍待完成**。
 - 本地 0.0.11（commit `13933dc`，已推送并发布 pre-release `v0.0.11`）把 identity 提升为**笔记级共享**（`structures[noteKey]`），组记录只留 `shape/points/note/structure`，留一个路径无关的结构摘要做守卫；schema1/2 懒迁移，写失败保留旧数据，旧版本读 schema3 会禁用调整但不毁数据。合成回归 10 脚本全过；独立复核（新核心 vs 冻结 0.0.10 核心）7 场景语义 EQUIVALENT、5 档字节比 0.082–0.772、堆比 0.072–0.731（见 `.local/evidence/schema3/REPORT.md`）。原生（9243，Obsidian 1.14.5/Electron 30.1.2）已验证真实拖动→保存→重建恢复（dx=dy=0）、Esc 取消、Ctrl+Z 撤销，以及同笔记两组共享 1 条 structures；30 分钟连续压力（1161 轮 0 失败、重建 p50 0.400 s、预览 151/151、隐藏恢复 151/151、heap 27.8→29.7 MB）与 schema3 冷启动（rev/几何一致）已完成；用户已于 2026-11-01 在日常库完成体验验收（47-P2/47-P3）。
-- 原机器独立 `test-vault-layout-fix` 安装 0.0.10；real-vault-trial 磁盘版本为 0.0.6；**日常库于 2026-11-01 获用户明确授权升级至 0.0.11**（仅替换 main.js/manifest.json/styles.css，data.json 保留 schema1 rev87、首次建图时迁移；0.0.6 四文件备份在 `.local/backup-daily-0.0.6/`，验收清单 `.local/acceptance-daily-0.0.11.md`）。不要把用户后续“副本没问题”当成 0.0.9/0.0.10 真实验收，也不要假定新机器有这些库。
+- 原机器独立 `test-vault-layout-fix` 安装 0.0.10；real-vault-trial 磁盘版本为 0.0.6；**日常库于 2026-11-01 获用户明确授权升级至 0.0.11**（仅替换 main.js/manifest.json/styles.css；0.0.6 四文件备份在 `.local/backup-daily-0.0.6/`，验收清单 `.local/acceptance-daily-0.0.11.md`）。**2026-11-02 用户再次授权把 0.0.12 候选装入日常库做 1–2 天自用体验**（仅三文件，`main.js` 与 0.0.11 相同、`data.json` 未动；回执 `.local/daily-upgrade-0.0.12-receipt.json`、备份 `.local/backup-daily-0.0.11/`），2026-11-03 体验通过。不要把用户后续“副本没问题”当成 0.0.9/0.0.10 真实验收，也不要假定新机器有这些库。
 
 0.0.10 main.js 历史验收 SHA-256：`ff171eee6be55bbad81579c1f4bbabb26f7b583754d936ee9f2d9b34fa8ddd55`。本地已提交的 0.0.11 构建（manifest 0.0.11，commit `13933dc`）main.js SHA-256：`205b1bd0383a223f92aef6f09e36327882bd081f3c707bab725fb47b9d3bf049`（325976 B；技术回归与用户体验验收均已完成，2026-11-01 发布 pre-release）。构建会复制本地存在的私有快照，打包时只能白名单取 main.js、manifest.json、styles.css，不能直接公开 dist 全目录。0.0.12 候选 manifest（291 B，sha256 `6fcc0b52ec8d44a9e6f1c0749fe2e12a0ebaccf56733a76470cf85e93e39a72f`）与 0.0.11 的差异仅为名称/最低版本/桌面声明/版本号，`main.js`、`styles.css` 未变。schema2 降级仅替换旧二进制不够：旧版会拒绝新结构写入，应先另存新配置，再恢复对应旧版程序及升级前配置；这会失去备份之后的调整，不能静默执行。
 
@@ -60,11 +60,11 @@
 
 历史同实例原生 A/B（约千标题）两版整体延迟约 344.5/344.9 ms，近似持平；它排除了旧的非同时段比较，不能宣称新版整体提速。
 
-### 4. 46-A2 / 46-A4 / 46-P2：兼容矩阵（技术已完成 2026-11-01，产品确认待用户）
+### 4. 46-A2 / 46-A4 / 46-P2：兼容矩阵（技术已完成 2026-11-01，产品确认已完成 2026-11-02）
 
 用户指定组合为 Dataview、Templater、Obsidian Git、Style Settings、Omnisearch、Excalidraw，并授权在独立测试库安装。已在独立库 Obsidian 1.14.5 + 0.0.11 完成两阶段验证：阶段一核心环境（浅色可读性、主窗口分屏、弹出窗口与跨窗移动/关闭、拖动保存与撤销、Ctrl 预览与 Esc、全部释放后重开）；阶段二 7 插件组合（拖动保存/撤销、增删与改名标题、文件/目录改名后的布局身份迁移、Markdown 预览内容、真实 Ctrl+Z、禁用启用、卸载重装）。结果与证据见 `COMPAT_MATRIX_RESULT.md`；异常 0，机器可读证据在 `.local/evidence/compat-matrix/`。
 
-现状与边界：浅色主题下应用 chrome 变浅而图谱画布保持深色（`canvasLum` 46.2→46.1），是否跟随主题仍是 DEC-001 产品待决定项；卸载会按宿主语义删除插件目录与 `data.json`（已保存布局随之丢失），需写入安装/升级/卸载说明；第三方插件模态框（Excalidraw 欢迎页、Obsidian“更新链接”）会拦截画布输入并让 `renameFile` 长时间不 resolve，属宿主/其他插件行为，测试须先关闭或应答模态框，不是本插件缺陷。46-P2 主题/窗口体验待用户确认；不把本轮结果扩大为“所有插件组合兼容”或移动端结论。Obsidian 最近实测为应用 1.14.5、安装程序 1.6.7、Electron 30.1.2；新环境先重新核实。
+现状与边界：浅色主题下应用 chrome 变浅而图谱画布保持深色（`canvasLum` 46.2→46.1），是否跟随主题仍是 DEC-001 产品待决定项；卸载会按宿主语义删除插件目录与 `data.json`（已保存布局随之丢失），需写入安装/升级/卸载说明；第三方插件模态框（Excalidraw 欢迎页、Obsidian“更新链接”）会拦截画布输入并让 `renameFile` 长时间不 resolve，属宿主/其他插件行为，测试须先关闭或应答模态框，不是本插件缺陷。46-P2 主题/窗口体验已由用户确认（2026-11-02，DEC-001 决定维持图谱深色、不跟随宿主主题）；不把本轮结果扩大为“所有插件组合兼容”或移动端结论。Obsidian 最近实测为应用 1.14.5、安装程序 1.6.7、Electron 30.1.2；新环境先重新核实。
 
 ### 5. 48-*：最终交付与发布验收
 
@@ -85,7 +85,8 @@
 - 打包：`node scripts/package.mjs` → `.local/release/0.0.12/`（`main.js`/`manifest.json`/`styles.css`/`SHA256SUMS`）；`node scripts/test.mjs` 10 脚本全过。
 - 平台回归：Obsidian 1.6.7（自带）插件加载、构建、拖动保存 rev1049→1050、Ctrl+Z、重建通过；Obsidian 1.14.5 拖动 rev1051→1052、撤销 rev1053、磁盘 schema3 rev1053/groups30/structures6；空白库五项 A–E 通过（md 0 起测）。证据 `.local/evidence/compat-matrix/{phase-167.json,drag-9252.json}` 与 `.local/evidence/delivery-48a1/blank-vault.json`，报告 `DELIVERY_48A2_RESULT.md`。
 - 用户 2026-11-02 决定：描述文案采用上述英文；**0.0.12 已按授权装入日常库用于 1–2 天自用体验**（仅替换三文件；`main.js` 与 0.0.11 完全相同、`data.json` 未改动，回执 `.local/daily-upgrade-0.0.12-receipt.json`、备份 `.local/backup-daily-0.0.11/`）；`id` 保持 `knowledge-graph-smoke`，无需迁移。
-- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录**；描述已定稿；id 不改。48-A2 最终交付验收待用户执行安装后确认。
+- 用户 2026-11-03 完成日常库 1–2 天自用体验并给出验收：Node 4 重启后布局完整保留、Node 5 移动笔记后图谱自动更新、Node 6 改标题/正文后仅相应元素局部变化、Node 7 改章节加链接后位置大小不变、Node 8 调整子目录子元素位置仅内部变化，均“符合预期”；报告 `product-site-acceptance/product-site-acceptance-report/v0.0.12_PRODUCT_SITE_ACCEPTANCE_REPORT.md`（截图在 `product-site-acceptance/product-site-img-evidence/`，仅本地、已 gitignore）。**48-A2 完成**。
+- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录**；描述已定稿；id 不改。剩余动作属 48-P3（公开发布与社区目录）待用户决定。
 
 ## 权限与协作习惯
 

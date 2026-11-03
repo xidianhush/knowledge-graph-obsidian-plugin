@@ -18,4 +18,6 @@ data.json
 *.key
 *.log
 *.pyc
+# 产品端验收截图：含真实库笔记标题，仅本地保存，不进公开交付
 product-site-img-evidence/
+product-site-acceptance/product-site-img-evidence/
