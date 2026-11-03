@@ -6,6 +6,7 @@ class KnowledgeGraphView extends ItemView {
   constructor(leaf, plugin, source = 'snapshot') {
     super(leaf); this.plugin = plugin; this.generation = 0; this.source = source;
     this.watchEvents = []; this.layoutEvents = []; this.updateTimer = null; this.closed = true;
+    this.statusTimer = null;
     // The host handles Escape before bubbling DOM listeners; claim it only in this view.
     this.scope = new Scope(this.app.scope);
     this.scope.register([], 'Escape', event => {
@@ -52,9 +53,23 @@ class KnowledgeGraphView extends ItemView {
     };
     for (const name of ['create', 'modify', 'delete', 'rename']) this.watchEvents.push(vault.on(name, changed));
   }
+  rebuildButton() { return this.host?.shadowRoot?.getElementById('rebuild') || null; }
+  syncRebuildButton(phase) {
+    const button = this.rebuildButton();
+    if (!button) return;
+    const busy = phase === 'building' || phase === 'waiting';
+    button.disabled = busy;
+    button.classList.toggle('is-busy', busy);
+    const label = button.querySelector('.kg-action-label');
+    if (label) label.textContent = busy ? '构建中…' : '重新构建';
+    else button.textContent = busy ? '构建中…' : '重新构建';
+  }
   progress(message, phase = 'building') {
     this.buildState = { phase, message, updatedAt: Date.now() };
     this.contentEl.dataset.buildPhase = phase;
+    this.syncRebuildButton(phase);
+    const win = this.contentEl.ownerDocument.defaultView;
+    win.clearTimeout(this.statusTimer); this.statusTimer = null;
     if (!this.statusEl?.isConnected) {
       if (!this.session) this.contentEl.replaceChildren();
       this.statusEl = this.contentEl.appendChild(this.contentEl.ownerDocument.createElement('div'));
@@ -63,11 +78,22 @@ class KnowledgeGraphView extends ItemView {
     this.statusEl.replaceChildren();
     const text = this.statusEl.appendChild(this.contentEl.ownerDocument.createElement('span'));
     text.setAttribute('role', 'status'); text.setAttribute('aria-live', 'polite'); text.textContent = message;
+    // 重建入口常驻顶栏；状态条只保留「构建中可取消」与「还没有图谱可看时」的按钮，
+    // 避免与顶栏按钮重复。取消/失败/空库提示保留到下一次构建。
     if (this.source === 'vault') {
       const busy = ['building', 'waiting'].includes(phase);
-      const button = this.statusEl.appendChild(this.contentEl.ownerDocument.createElement('button'));
-      button.textContent = busy ? '取消' : '重新构建';
-      button.onclick = () => busy ? this.cancelBuild() : void this.rebuild();
+      if (busy || !this.session) {
+        const button = this.statusEl.appendChild(this.contentEl.ownerDocument.createElement('button'));
+        button.textContent = busy ? '取消' : '重新构建';
+        button.onclick = () => busy ? this.cancelBuild() : void this.rebuild();
+      }
+    }
+    // 构建完成提示约 2 秒后自动消失，不再常驻遮挡画布底部。
+    if (phase === 'ready') {
+      this.statusTimer = win.setTimeout(() => {
+        this.statusTimer = null;
+        this.statusEl?.remove(); this.statusEl = null;
+      }, 2000);
     }
   }
   cancelBuild() {
@@ -113,6 +139,7 @@ class KnowledgeGraphView extends ItemView {
       if (this.source === 'vault') {
         nextServices = createNativeGraphServices(this);
         nextServices.layoutStore = this.plugin.layoutStore;
+        nextServices.onRebuild = () => { if (!this.closed) void this.rebuild(); };
         const decoded=decodeGraphPayload(payload);
         await this.plugin.layoutStore.reconcile(createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius),
           ()=>generation===this.generation && !this.closed && !controller.signal.aborted && layoutEpoch===this.plugin.layoutEpoch);
@@ -161,6 +188,7 @@ class KnowledgeGraphView extends ItemView {
   release() {
     this.buildController?.abort(); this.buildController = null;
     this.contentEl.ownerDocument.defaultView.clearTimeout(this.updateTimer); this.updateTimer = null;
+    this.contentEl.ownerDocument.defaultView.clearTimeout(this.statusTimer); this.statusTimer = null;
     for (const ref of this.watchEvents) this.app.vault.offref(ref);
     this.watchEvents = [];
     this.releaseSession(); this.statusEl = null;

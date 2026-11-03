@@ -27,8 +27,8 @@
 .kg-native-preview .kg-native-preview-body { overflow: auto; padding: 12px 18px; max-height: 55vh; min-height: 0; }
 .kg-native-preview-body img { max-width: 100%; }
 .kg-native-preview .kg-native-preview-hint { color: var(--text-muted); font-size: var(--font-smallest); }
-.kg-smoke-content > .kg-build-status { position: absolute; bottom: 56px; left: 12px; right: 12px; z-index: 25; padding: 8px 12px; border-radius: 6px; background: var(--background-secondary); color: var(--text-normal); display: flex; align-items: center; gap: 8px; font-size: var(--font-smallest); pointer-events: none; }
-.kg-build-status > span { flex: 1; overflow-wrap: anywhere; }
+.kg-smoke-content > .kg-build-status { position: absolute; bottom: 56px; left: 50%; transform: translateX(-50%); z-index: 25; max-width: calc(100% - 24px); padding: 8px 14px; border-radius: 999px; background: var(--background-secondary); color: var(--text-normal); display: flex; align-items: center; gap: 8px; font-size: var(--font-smallest); pointer-events: none; border: 1px solid var(--background-modifier-border); box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+.kg-build-status > span { overflow-wrap: anywhere; min-width: 0; }
 .kg-build-status > button { pointer-events: auto; flex-shrink: 0; }
 .kg-settings textarea { width: 260px; min-height: 80px; }
 .kg-settings .kg-settings-message { position: sticky; top: 0; background: var(--background-primary); z-index: 1; padding: 8px 0; }

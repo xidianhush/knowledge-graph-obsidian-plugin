@@ -564,9 +564,7 @@ function mountHud(scope, surface, core, services = {}) {
     onFrame: updateStats,
   });
 
-  const editTools=document.createElement('div');editTools.className='kg-layout-tools';
-  editTools.innerHTML='<button id="layout-mode" aria-pressed="false">调整布局</button><div id="layout-options" hidden><button id="layout-parent">选父级</button><button id="layout-undo">撤销</button><button id="layout-redo">重做</button><button id="layout-reset-group" title="恢复所选元素及其同父兄弟；保留内部子组调整">恢复此组</button><button id="layout-reset-all" title="清除本库全部已保存的布局调整；本会话可撤销">全库恢复自动布局</button><span id="layout-status" role="status"></span></div>';
-  surface.appendChild(editTools);
+  const editTools=$('layout-tools');
   const layoutStatus=$('layout-status');
   scope.cleanup(layoutStore.subscribe(state=>{
     let result={skipped:0};
@@ -588,7 +586,13 @@ function mountHud(scope, surface, core, services = {}) {
   for(const kind of ['undo','redo','reset-group','reset-all'])scope.listen($('layout-'+kind),'click',()=>runLayoutCommand(kind));
   scope.listen($('layout-mode'),'click',()=>{
     R.setEditMode(!R.editMode);$('layout-mode').setAttribute('aria-pressed',String(R.editMode));
-    $('layout-mode').textContent=R.editMode?'结束调整':'调整布局';$('layout-options').hidden=!R.editMode;
+    $('layout-mode').setAttribute('aria-label',R.editMode?'结束布局调整':'调整布局');
+    const label=$('layout-mode').querySelector('.kg-action-label');
+    if(label)label.textContent=R.editMode?'结束调整':'调整布局';
+    else $('layout-mode').textContent=R.editMode?'结束调整':'调整布局';
+    editTools.hidden=!R.editMode;
+    if(R.editMode)layoutStatus.textContent='拖动圆或标题调整位置；改动自动保存，点「结束调整」退出';
+    syncInsets();
     hidePreview();hideTooltip();surface.focus({preventScroll:true});
   });
   scope.listen($('layout-parent'),'click',()=>{
@@ -609,7 +613,12 @@ function mountHud(scope, surface, core, services = {}) {
     const side = $('sidebar');
     const open = !!(side && side.classList.contains('open'));
     const right = open ? (side.getBoundingClientRect().width || 0) : 0;
-    R.setInsets({ top: TOP_H, bottom: BOTTOM_H, right: right });
+    // 布局工具条可见时是顶栏下方的第二条横带：把它的真实高度计入上内边距，
+    // 让 fit / home 与相机中心按「真正没被盖住的矩形」算，而不是按 46px 顶栏算。
+    const band = editTools && !editTools.hidden ? (editTools.getBoundingClientRect().height || 0) : 0;
+    // 图例 / 搜索命中列表按同一条横带的真实高度避让（窄容器里提示文案会换行）。
+    surface.style.setProperty('--kg-band-h', band + 'px');
+    R.setInsets({ top: TOP_H + band, bottom: BOTTOM_H, right: right });
   }
   syncInsets();
   window.addEventListener('resize', syncInsets);
@@ -863,6 +872,13 @@ function mountHud(scope, surface, core, services = {}) {
   scope.listen($('zoomin'), 'click', () => stepLevel(1));
   scope.listen($('zoomout'), 'click', () => stepLevel(-1));
   scope.listen($('reset'), 'click', () => { R.resetView(); toast('已回到默认视角'); });
+  // 重新构建入口常驻顶栏（宿主只在「当前库」视图注入 onRebuild）。
+  // 按钮的文案/禁用态由插件按构建阶段同步，这里只负责“点了要重建”。
+  const rebuildButton = $('rebuild');
+  if (rebuildButton && typeof services.onRebuild === 'function') {
+    rebuildButton.hidden = false;
+    scope.listen(rebuildButton, 'click', () => { services.onRebuild(); });
+  }
   scope.listen($('search'), 'input', (e) => searchSoon(e.target.value));
   scope.listen($('search'), 'focus', (e) => { if (e.target.value.trim()) runSearch(e.target.value.trim()); });
   scope.listen($('search'), 'blur', () => setTimeout(() => { $('hits').style.display = 'none'; }, 180));

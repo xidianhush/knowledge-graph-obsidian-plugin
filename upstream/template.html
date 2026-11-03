@@ -316,8 +316,21 @@
     <option value="all">全部显示</option>
     <option value="selected">只显示选中</option>
   </select>
+  <button id="rebuild" title="重新构建当前库的图谱（不用关开视图）" aria-label="重新构建当前库的图谱" hidden><span class="kg-action-icon" aria-hidden="true">↻</span><span class="kg-action-label">重新构建</span></button>
+  <button id="layout-mode" title="进入/退出布局调整：拖动节点、调整整组" aria-pressed="false"><span class="kg-action-icon" aria-hidden="true">✥</span><span class="kg-action-label">调整布局</span></button>
   <button id="reset" title="回到该层默认视角">重置视角</button>
 </header>
+
+<div id="layout-tools" class="kg-layout-tools" hidden>
+  <div id="layout-options">
+    <button id="layout-parent">选父级</button>
+    <button id="layout-undo">撤销</button>
+    <button id="layout-redo">重做</button>
+    <button id="layout-reset-group" title="恢复所选元素及其同父兄弟；保留内部子组调整">恢复此组</button>
+    <button id="layout-reset-all" title="清除本库全部已保存的布局调整；本会话可撤销">全库恢复自动布局</button>
+    <span id="layout-status" role="status"></span>
+  </div>
+</div>
 
 <div id="hits"></div>
 <aside id="sidebar"></aside>

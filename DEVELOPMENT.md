@@ -21,7 +21,7 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
 
-当前交付版本：**0.0.12**（内部候选，已 push、未公开发布；已装用户日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）。下一版本为 **0.0.13**：只做 UI/UX 优化与发布准备（见 HANDOFF_NEXT.md「下一阶段交接」）。历史：0.0.11 已 push 并发布 GitHub pre-release；尚无任何版本提交 Obsidian 社区目录。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`，`main.js` 与 0.0.11 相同（sha256 `205b1bd0…`）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+当前交付版本：**0.0.13**（UI/UX 打磨，本地候选，未 push/未发布，待用户日常库验收 UI-P1）。构建 `main.js` 332,269 B sha256 `5dca2bfb1783a08e17bd5b0de15c929ddd050e27c524e62524d97057b67b5e3e`；打包产物 `.local/release/0.0.13/`（三文件 + SHA256SUMS + RELEASE_NOTES），发布说明草稿 `docs/RELEASE_NOTES_0.0.13.md`。历史：0.0.12 为内部候选（已装日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）；0.0.11 已 push 并发布 GitHub pre-release；尚无任何版本提交 Obsidian 社区目录。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`（0.0.13 沿用）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移；0.0.13 只改 HUD/样式，不改数据格式与交互契约。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
 
 首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
 
@@ -44,4 +44,4 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 ## 交付边界
 
-源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述已由用户确认（即 manifest 现有英文）；0.0.12 已按授权装入日常库并完成 1–2 天自用体验（2026-11-03 通过）；剩余公开发布与社区目录提交属 48-P3，待用户决定。
+源码已 push 到公开仓库并发布 GitHub pre-release v0.0.11（三个运行文件附件 + SHA256SUMS），仓库含 MIT LICENSE。**仍未提交 Obsidian 社区插件目录**。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述已由用户确认（即 manifest 现有英文）；0.0.12 已按授权装入日常库并完成 1–2 天自用体验（2026-11-03 通过）。0.0.13 在此基础上只改 HUD 结构与样式（顶栏重建按钮、2 秒构建状态胶囊、布局工具横带、窄窗口紧凑化），布局数据与交互契约不变；本地已构建、跑完 10 个合成脚本、打包到 `.local/release/0.0.13/` 并在合成库 vault-012 + Obsidian 1.15.0 做过原生 UI 验证，但**未 push、未发布、未装日常库**，待用户 UI-P1 验收。剩余公开发布与社区目录提交属 48-P3，待用户明确授权。

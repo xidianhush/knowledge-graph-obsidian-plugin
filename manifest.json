@@ -1,7 +1,7 @@
 {
   "id": "knowledge-graph-smoke",
   "name": "Knowledge Map",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "minAppVersion": "1.6.7",
   "description": "Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures.",
   "author": "Hush",

@@ -1,7 +1,36 @@
-.kg-layout-tools { position:absolute; right:12px; top:54px; z-index:16; max-width:calc(100% - 24px); background:#18222e; border:1px solid #405064; border-radius:6px; padding:6px; font-size:12px; }
-.kg-layout-tools button { cursor:pointer; }
-.kg-layout-tools button[aria-pressed="true"] { background:#b5daf4; color:#132435; }
-#layout-options:not([hidden]) { display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap; }
+/* 布局工具条：与顶栏同样左右贴边。编辑时作为顶栏下方的第二条横带（画布 inset
+   由 hud 的 syncInsets 让出它的真实高度）；阅读时整条隐藏 —— 可视区始终是完整矩形，
+   不再像旧版那样用浮动按钮在右上角挖掉一块画布。 */
+.kg-layout-tools { position:absolute; left:0; right:0; top:46px; z-index:19; display:flex; align-items:center; gap:8px; padding:0 12px; min-height:38px; font-size:12px;
+  background:linear-gradient(180deg, rgba(8,18,22,.82), rgba(8,18,22,.5));
+  -webkit-backdrop-filter:blur(18px) saturate(125%); backdrop-filter:blur(18px) saturate(125%);
+  border-bottom:1px solid rgba(255,255,255,.085); box-shadow:0 1px 24px rgba(0,0,0,.35); }
+.kg-layout-tools[hidden] { display:none; }
+.kg-layout-tools button { cursor:pointer; flex:0 0 auto; }
+#layout-options { display:flex; align-items:center; gap:8px; min-width:0; flex:1 1 auto; flex-wrap:wrap; }
+#layout-options[hidden] { display:none; }
+#layout-status { color:#8a98a2; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* 侧栏（对象详情）打开时它从 top:46 起覆盖右侧；工具条让出同一宽度，别压住侧栏头部。
+   :has 在 Obsidian 的 Chromium 124 上可用，无需 JS 同步。 */
+.kg-surface:has(#sidebar.open) .kg-layout-tools { right:min(360px, 40cqw); }
+/* 工具条展开时把搜索命中列表压到它下面，避免两条横带重叠。实际高度由 hud 写进
+   --kg-band-h（窄容器里提示文案会换行，横带不止 38px，写死会重新叠上）。 */
+#layout-tools:not([hidden]) + #hits { top:calc(46px + var(--kg-band-h, 38px) + 8px); }
+/* 图例是「bottom:12 起、最多撑到 top:46」的卡片：工具条展开时它的可用高度要再让出
+   横带的真实高度，否则卡片头部（图例标题/收起）会被第二条横带盖住。 */
+#layout-tools:not([hidden]) ~ #legend { max-height:calc(100% - 58px - var(--kg-band-h, 38px)); }
+#layout-mode[aria-pressed="true"] { background:rgba(230,191,125,.88); border-color:rgba(230,191,125,.88); color:#132435; }
+#layout-mode[aria-pressed="true"]:hover { background:rgba(230,191,125,.96); border-color:rgba(230,191,125,.96); }
+/* 顶栏常驻「重新构建」：重建入口从底部状态条移到这里，状态条不再常驻占画布。 */
+#rebuild { flex:0 0 auto; white-space:nowrap; }
+#rebuild[hidden] { display:none; }
+#rebuild:disabled { opacity:.55; cursor:default; }
+#rebuild:disabled:hover { background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.10); }
+/* 顶栏动作按钮：宽容器显示文字，窄容器退化为单字形（title/aria-label 保留含义），
+   把 686px 这类「主窗口 + 左侧文件列表」的常见宽度重新收进一行，不再把「重置视角」挤出右缘。 */
+.kg-action-icon { display:none; font-size:15px; line-height:1; }
+#rebuild.is-busy .kg-action-icon { animation:kg-spin 1s linear infinite; }
+@keyframes kg-spin { to { transform:rotate(360deg); } }
 /* Obsidian split panes can be far narrower than the standalone page.
    Keep the one-row 46px inset and make every control reachable by scrolling. */
 @container (max-width: 1000px) {
@@ -12,4 +41,13 @@
   #pills { flex: 0 1 auto; max-width: 140px; }
   #topbar > input, #topbar > select, #topbar > button { flex-shrink: 0; }
   #legend { max-width: min(280px, calc(100cqw - 24px)); }
+}
+/* 窄容器（主窗口 + 左侧文件列表 ≈ 686px）：动作按钮只留字形、收紧间距与搜索框，
+   使顶栏继续是一行完整可见的控件，而不是把最右侧「重置视角」挤到滚动区外。 */
+@container (max-width: 880px) {
+  #topbar { gap:6px; padding:0 8px; }
+  #search { width:110px; }
+  #rebuild { width:30px; padding:5px 0; text-align:center; }
+  .kg-action-icon { display:inline; }
+  .kg-action-label { display:none; }
 }
