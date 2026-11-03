@@ -21,7 +21,7 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
 
-当前交付版本：**0.0.13**（UI/UX 打磨，本地候选，未 push/未发布，待用户日常库验收 UI-P1）。构建 `main.js` 332,269 B sha256 `5dca2bfb1783a08e17bd5b0de15c929ddd050e27c524e62524d97057b67b5e3e`；打包产物 `.local/release/0.0.13/`（三文件 + SHA256SUMS + RELEASE_NOTES），发布说明草稿 `docs/RELEASE_NOTES_0.0.13.md`。历史：0.0.12 为内部候选（已装日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）；0.0.11 已 push 并发布 GitHub pre-release；尚无任何版本提交 Obsidian 社区目录。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`（0.0.13 沿用）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移；0.0.13 只改 HUD/样式，不改数据格式与交互契约。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+当前交付版本：**0.0.13**（UI/UX 打磨，本地候选，未 push/未发布，待用户日常库验收 UI-P1）。构建 `main.js` 332,529 B sha256 `ab00889a33f9ad7db295bcb0b022d15a8e6b7a12ff9ce35590bf8c484cea7b52`；打包产物 `.local/release/0.0.13/`（三文件 + SHA256SUMS + RELEASE_NOTES），发布说明草稿 `docs/RELEASE_NOTES_0.0.13.md`。历史：0.0.12 为内部候选（已装日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）；0.0.11 已 push 并发布 GitHub pre-release；尚无任何版本提交 Obsidian 社区目录。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`（0.0.13 沿用）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移；0.0.13 只改 HUD/样式，不改数据格式与交互契约。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
 
 首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
 

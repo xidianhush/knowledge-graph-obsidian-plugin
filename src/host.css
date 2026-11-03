@@ -21,14 +21,15 @@
 #layout-tools:not([hidden]) ~ #legend { max-height:calc(100% - 58px - var(--kg-band-h, 38px)); }
 #layout-mode[aria-pressed="true"] { background:rgba(230,191,125,.88); border-color:rgba(230,191,125,.88); color:#132435; }
 #layout-mode[aria-pressed="true"]:hover { background:rgba(230,191,125,.96); border-color:rgba(230,191,125,.96); }
-/* 顶栏常驻「重新构建」：重建入口从底部状态条移到这里，状态条不再常驻占画布。 */
-#rebuild { flex:0 0 auto; white-space:nowrap; }
+/* 顶栏动作按钮（重新构建 / 调整布局）固定为单字形图标：文字标签在宽窗口里也会被
+   挤成两行（2026-11-03 日常库实测「调整布局」→「调整布 局」+ 顶栏高度被撑），
+   固定 30px 图标 + title/aria-label 提示，任何宽度都不换行、不挤压「重置视角」。 */
+#rebuild, #layout-mode { flex:0 0 auto; white-space:nowrap; width:30px; padding:5px 0; text-align:center; }
 #rebuild[hidden] { display:none; }
 #rebuild:disabled { opacity:.55; cursor:default; }
 #rebuild:disabled:hover { background:rgba(255,255,255,.045); border-color:rgba(255,255,255,.10); }
-/* 顶栏动作按钮：宽容器显示文字，窄容器退化为单字形（title/aria-label 保留含义），
-   把 686px 这类「主窗口 + 左侧文件列表」的常见宽度重新收进一行，不再把「重置视角」挤出右缘。 */
-.kg-action-icon { display:none; font-size:15px; line-height:1; }
+.kg-action-icon { display:inline; font-size:16px; line-height:1; }
+.kg-action-label { display:none; }
 #rebuild.is-busy .kg-action-icon { animation:kg-spin 1s linear infinite; }
 @keyframes kg-spin { to { transform:rotate(360deg); } }
 /* Obsidian split panes can be far narrower than the standalone page.
@@ -42,12 +43,10 @@
   #topbar > input, #topbar > select, #topbar > button { flex-shrink: 0; }
   #legend { max-width: min(280px, calc(100cqw - 24px)); }
 }
-/* 窄容器（主窗口 + 左侧文件列表 ≈ 686px）：动作按钮只留字形、收紧间距与搜索框，
-   使顶栏继续是一行完整可见的控件，而不是把最右侧「重置视角」挤到滚动区外。 */
+/* 窄容器（主窗口 + 左侧文件列表 ≈ 686px）：收紧间距与搜索框，使顶栏继续是一行
+   完整可见的控件，而不是把最右侧「重置视角」挤到滚动区外。动作按钮已是固定图标，
+   这里只再收一次间距与搜索框宽度。 */
 @container (max-width: 880px) {
   #topbar { gap:6px; padding:0 8px; }
   #search { width:110px; }
-  #rebuild { width:30px; padding:5px 0; text-align:center; }
-  .kg-action-icon { display:inline; }
-  .kg-action-label { display:none; }
 }

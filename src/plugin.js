@@ -60,9 +60,12 @@ class KnowledgeGraphView extends ItemView {
     const busy = phase === 'building' || phase === 'waiting';
     button.disabled = busy;
     button.classList.toggle('is-busy', busy);
+    // 顶栏按钮只有字形（见 src/host.css），含义靠 title/aria-label 携带，构建中同步更新。
+    const name = busy ? '正在重新构建图谱' : '重新构建当前库的图谱（不用关开视图）';
+    button.setAttribute('title', name);
+    button.setAttribute('aria-label', name);
     const label = button.querySelector('.kg-action-label');
     if (label) label.textContent = busy ? '构建中…' : '重新构建';
-    else button.textContent = busy ? '构建中…' : '重新构建';
   }
   progress(message, phase = 'building') {
     this.buildState = { phase, message, updatedAt: Date.now() };
