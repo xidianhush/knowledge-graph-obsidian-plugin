@@ -21,7 +21,7 @@ node scripts/package.mjs            # 输出 .local/release/<version>/
 
 使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
 
-当前交付候选为 0.0.12（本地，未 push、未发布；0.0.11 已 push 并发布 pre-release；均未提交 Obsidian 社区目录）。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`，`main.js` 与 0.0.11 相同（sha256 `205b1bd0…`）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+当前交付版本：**0.0.12**（内部候选，已 push、未公开发布；已装用户日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）。下一版本为 **0.0.13**：只做 UI/UX 优化与发布准备（见 HANDOFF_NEXT.md「下一阶段交接」）。历史：0.0.11 已 push 并发布 GitHub pre-release；尚无任何版本提交 Obsidian 社区目录。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`，`main.js` 与 0.0.11 相同（sha256 `205b1bd0…`）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
 
 首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
 

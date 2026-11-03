@@ -1,11 +1,11 @@
 # 下一位 Coding Agent 交接入口
 
-交接日期：2026-11-01（Asia/Shanghai）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
+交接日期：2026-11-01（Asia/Shanghai），最后更新 **2026-11-03**（切入 0.0.13 UI/UX 与正式发布）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
 
 ## 先做什么
 
 1. 读 `AGENTS.md`、`TODO.md`、`README.md` 和 `DEVELOPMENT.md`，检查当前分支、工作区和 manifest；不要覆盖用户改动。
-2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 待 48-P1/P2 决定后跑最终回归。 2026-11-02 晚：48-P2 平台声明已落地到 **0.0.12 本地候选**（manifest 名称 Knowledge Map、minAppVersion 1.6.7、isDesktopOnly true；`main.js` 与 0.0.11 相同 `205b1bd0…`），48-A2 候选回归在 Obsidian 1.6.7 / 1.14.5 / 空白库通过，见 `DELIVERY_48A2_RESULT.md`；候选未 push、未发布、未装日常库；46-A3 90 分钟长时观测进行中。
+2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 最终回归已完成。 2026-11-02 晚：48-P2 平台声明已落地到 **0.0.12 本地候选**（manifest 名称 Knowledge Map、minAppVersion 1.6.7、isDesktopOnly true；`main.js` 与 0.0.11 相同 `205b1bd0…`），候选回归在 Obsidian 1.6.7 / 1.14.5 / 空白库通过，见 `DELIVERY_48A2_RESULT.md`；46-A3 90 分钟长时观测已完成（通过）。 2026-11-03：0.0.12 已按授权装入日常库，完成 1–2 天自用体验并通过（48-A2 完成），当前候选与文档已 push（HEAD `0564d84`）；功能层面用户确认符合预期，**下一阶段为 0.0.13 UI/UX + 正式发布**，见本文件「下一阶段交接」一节。
 3. 读 `LAYOUT_SCALE_RESULT.md`、`NATIVE_AB_RESULT.md`、`CONTINUOUS_EDIT_RESULT.md` 和 `DESKTOP_STABILITY_RESULT.md`。47-A3 的 schema3 已在本地 0.0.11 实现（commit `13933dc`，已发布 pre-release `v0.0.11`）并完成独立语义/规模复核、原生基本回归、30 分钟连续压力与冷启动，用户体验验收已完成；FB-006 已定因为测试驱动整页 reload 产物（非插件缺陷，详见 §2 与 `.local/evidence/fb006-repro/RESULT.md`），保持观察。
 4. 先建立本机合成独立库，再执行原生测试。原机器的 vault/profile、历史 ZIP、私有证据没有随 Git 传输；缺少环境不是测试通过。具体可运行/需准备的脚本见 DEVELOPMENT。
 5. 每轮按任务 ID 局部更新 TODO，记录实际测试、版本、日期和未完成项；产品体验验收由用户决定。
@@ -86,7 +86,51 @@
 - 平台回归：Obsidian 1.6.7（自带）插件加载、构建、拖动保存 rev1049→1050、Ctrl+Z、重建通过；Obsidian 1.14.5 拖动 rev1051→1052、撤销 rev1053、磁盘 schema3 rev1053/groups30/structures6；空白库五项 A–E 通过（md 0 起测）。证据 `.local/evidence/compat-matrix/{phase-167.json,drag-9252.json}` 与 `.local/evidence/delivery-48a1/blank-vault.json`，报告 `DELIVERY_48A2_RESULT.md`。
 - 用户 2026-11-02 决定：描述文案采用上述英文；**0.0.12 已按授权装入日常库用于 1–2 天自用体验**（仅替换三文件；`main.js` 与 0.0.11 完全相同、`data.json` 未改动，回执 `.local/daily-upgrade-0.0.12-receipt.json`、备份 `.local/backup-daily-0.0.11/`）；`id` 保持 `knowledge-graph-smoke`，无需迁移。
 - 用户 2026-11-03 完成日常库 1–2 天自用体验并给出验收：Node 4 重启后布局完整保留、Node 5 移动笔记后图谱自动更新、Node 6 改标题/正文后仅相应元素局部变化、Node 7 改章节加链接后位置大小不变、Node 8 调整子目录子元素位置仅内部变化，均“符合预期”；报告 `product-site-acceptance/product-site-acceptance-report/v0.0.12_PRODUCT_SITE_ACCEPTANCE_REPORT.md`（截图在 `product-site-acceptance/product-site-img-evidence/`，仅本地、已 gitignore）。**48-A2 完成**。
-- 边界：候选**未 push、未打 tag、未发布 Release、未提交社区目录**；描述已定稿；id 不改。剩余动作属 48-P3（公开发布与社区目录）待用户决定。
+- 边界：候选与文档已 push（HEAD `0564d84`），但**未打 tag、未发布 Release、未提交社区目录**；描述已定稿；id 不改。剩余动作属 48-P3（0.0.13 正式发布与社区目录），待用户决定。下一阶段（0.0.13 UI/UX）见本文件「下一阶段交接」。
+
+## 下一阶段交接：0.0.13 UI/UX + 正式发布（2026-11-03）
+
+### 当前基线（下一位从这开始）
+
+- HEAD `0564d84` 已由用户 push 到 `origin/main`（`git rev-parse origin/main` = `0564d84`）。
+- 版本状态：仓库内 `manifest.json`/`package.json` 为 **0.0.12（内部候选，从未公开发布）**，已装日常库完成 1–2 天自用体验（报告 `product-site-acceptance/product-site-acceptance-report/v0.0.12_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；GitHub 上现有的是 **v0.0.11 pre-release**。`main.js` 自 0.0.11 起未变（`205b1bd0…`，325,976 B）。
+- 功能状态：用户 2026-11-03 确认“功能层面完全符合预期”；本阶段**不做功能改动**（除非验收发现回归）。
+- 版本决策：0.0.12 不单独发布（DEC-005）；UI/UX 完成后升 **0.0.13**，做首次正式（非 pre-release）Release。`id` 首发保持 `knowledge-graph-smoke`（DEC-004），社区提交时再评估改名。
+
+### 用户明确的 UI/UX 需求（2026-11-03）
+
+1. 「重新构建」按钮与构建完成提示现常驻底部一整横栏，挤占图谱有效显示面积 → 把「重新构建」移到**顶部工具条、与「重置视角」并列**；构建完成提示改为约 **2 秒自动消失**（构建中/取消/失败状态仍需可见）。
+2. 「调整布局」按钮看看能否换位置；若能，图谱有效信息区就是一个完整矩形。若无更优位置可以保持不变——先做原型对比再定。
+3. 节奏：不着急，持续打磨，保持功能不变。
+
+### 实现位置（动手前先读）
+
+- 顶部工具条：`upstream/template.html`（`#reset`＝重置视角在 :319；构建时由 `scripts/build.mjs` 把 template 内联进 `main.js`）。改这里要同步 build 并记录在案。
+- HUD 增量 UI：`src/adapters/hud.js`（`:567` 创建 `.kg-layout-tools`；`:568` 内含 `#layout-mode`「调整布局」与选项；`:544-581` 订阅 layoutStore 状态）。已有 `toast()`/`.kg-toast` 可复用做 2 秒提示，注意与 `#layout-status`（操作结果，非构建提示）区分。
+- 浮动面板样式：`src/host.css`（`.kg-layout-tools { position:absolute; right:12px; top:54px; … }`）——移动「调整布局」时同步改。
+- 底部构建状态栏：`src/plugin.js` `progress()`（约 :51-75 创建 `.kg-build-status` 与「取消/重新构建」按钮；:140 构建完成文案）与 `styles.css:30` `.kg-build-status`（绝对定位 bottom:56px）。
+- 构建/测试/打包：`node scripts/build.mjs`、`node scripts/test.mjs`（10 脚本）、`node scripts/package.mjs` → `.local/release/<version>/`。
+
+### 约束
+
+- 不改布局数据格式或语义（schema3、capture/reconcile/apply 契约）；不改 `upstream/` 的渲染与物理逻辑，只允许调整 HUD 结构与样式。
+- 原生测试纪律：**不要对渲染页 `page.reload()`**（FB-006 根因）；每次 CDP 连接后 `Page.setWebLifecycleState active` + `Emulation.setFocusEmulationEnabled`；第三方弹窗先 `close_modals()`。
+- 不 push、不发布：由用户手动 push；发布前需要用户明确授权。每轮按任务 ID 更新 TODO 并写证据路径。
+- 隐私：`.local`、vault/profile、`data.json`、`product-site-acceptance/product-site-img-evidence` 截图不入公开仓库；不读 `Utilities/API Key.md`；不主动升级日常库——UI 先在独立测试库验证，再交用户在日常库体验。
+
+### 发布准备（UI 通过后）
+
+1. `manifest.json`/`package.json` 升 0.0.13；`node scripts/build.mjs` 记录 `main.js` sha256；`node scripts/package.mjs`。
+2. 打 tag `v0.0.13`（与 manifest 版本一致）+ 首次正式 Release（非 pre-release），资产 `main.js`/`manifest.json`/`styles.css`/`SHA256SUMS`/`RELEASE_NOTES.md`；说明含功能概览、0.0.12→0.0.13（UI）变更、已知限制（勿整页 reload、128 节点/5000 预算、撤销 50 步仅会话、仅桌面、悬停摘要口径）、安装/升级/回退链接 `docs/INSTALL.md`。
+3. 社区目录提交（等用户定）：官方要求仓库根 `manifest.json` + Release 资产三文件；建议**单仓库 + 根 manifest + Release 资产**，不把 `main.js`/`styles.css` 提交入库；若审核要求根文件再评估独立服务仓库/CI 同步。提交前核对 `id` 不变。
+4. 检查 GitHub 上 `v0.0.11` pre-release 的标注（可注明已被 v0.0.13 取代）。
+
+### 环境提示
+
+- Obsidian 1.14.5 在 `D:\Obsidian`；沙箱内直接启动会崩，需 `danger-full-access` 的 `powershell -NoProfile -Command "Start-Process ..."`（或 `cmd //c start`）；`--remote-debugging-port` 自定，`--enable-logging` 可拿宿主 stderr。
+- 可复用 CDP 脚本：`.local/native/cdp_lib.py`、`lead_matrix_phase1.py`、`lead_compat_167.py`、`lead_drag_114.py`。UI 改动至少覆盖：打开图谱、拖动保存、重建、Esc/撤销、分屏、浅色主题、空白库首用。
+- git 若遇 `.git/index.lock` 幻影锁：把 `.git/*.lock` 移到 `.git/locks-quarantine/` 后立即执行命令。
+- 用户验收方式：用户在日常库 `D:\obsidian_vault\hush-ob-bucket` 体验并在 `product-site-acceptance/` 写报告；agent 不替用户宣称通过。
 
 ## 权限与协作习惯
 
@@ -96,6 +140,6 @@
 - 不把 `.local`、vault/profile、data.json、截图或私有快照加入 Git。原始证据不可跨机器获得时，如实保留摘要与未复跑状态。
 - 网络中断后先读 TODO 和 git status，续接未完工作，不从历史交接重做已验收功能。
 
-## 可直接交给下一位的开场语
+## 可直接交给下一位的开场语（2026-11-03）
 
-请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线。本地 0.0.11 已 commit `13933dc` 并 push，GitHub pre-release `v0.0.11` 已发布：47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，用户体验验收已完成（日常库已于 2026-11-01 升级至 0.0.11，用户 13:50–15:39 验收通过，报告见 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；46-A3 的长期/资源边界继续追踪；FB-006 已定因为测试驱动整页 reload 产物（非插件）。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
+请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 npm test 核对基线（10 脚本应全过）。当前 HEAD `0564d84` 已 push；仓库版本 0.0.12 为内部候选、从未公开发布，已装用户日常库完成 1–2 天自用体验并通过（报告见 `product-site-acceptance/`），GitHub 上现有 v0.0.11 pre-release。**本轮任务是 0.0.13 的 UI/UX 打磨 + 正式发布准备**，见 HANDOFF_NEXT.md「下一阶段交接」：优先做 UI-A1（把「重新构建」按钮移入顶部工具条、构建完成提示 2 秒自动消失），再评估 UI-A2（「调整布局」按钮位置/有效显示区完整矩形）、UI-A3（细节打磨），完成后升版本 0.0.13、跑合成回归与打包，交由用户在 daily vault 验收；发布（tag/Release/社区目录）需用户明确授权。47-A3 schema3 多组共享的合成/独立复核/原生回归/30 分钟压力/冷启动均已完成，用户体验验收已完成（日常库已于 2026-11-01 升级至 0.0.11，用户 13:50–15:39 验收通过，报告见 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）；46-A3 的长期/资源边界继续追踪；FB-006 已定因为测试驱动整页 reload 产物（非插件）。先使用合成独立库，不自动升级日常库，不代替我确认体验验收。每轮更新 TODO 并说明实际测试和剩余边界。
