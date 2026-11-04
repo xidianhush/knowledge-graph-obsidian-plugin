@@ -1,4 +1,8 @@
-# Knowledge Graph Obsidian Plugin — 0.0.13（首个正式发布）
+# Knowledge Map
+
+Knowledge Map（仓库名仍为 `knowledge-graph-obsidian-plugin`，插件 id 仍为 `knowledge-graph-smoke`）是一个 Obsidian 桌面插件：把整个库渲染成可缩放的层级知识图谱，支持拖动布局，并在文件/标题改名、目录移动、笔记增删后保留已保存的布局。
+
+**English summary**: Knowledge Map is a desktop-only Obsidian plugin that renders a vault as a zoomable hierarchical knowledge map. Nodes are colored by top-level folder, sized by subtree, and linked by wiki-links; drag-and-drop layout is persisted per group and survives renames, folder moves, and unrelated edits. Requires Obsidian 1.6.7+ on desktop. The released `main.js` is a self-contained bundle built by `scripts/build.mjs` with no npm runtime dependencies, so there is no lockfile. Install from the [community directory](https://community.obsidian.md/plugins/knowledge-graph-smoke), or copy `main.js`, `manifest.json` and `styles.css` into `.obsidian/plugins/knowledge-graph-smoke/`.
 
 当前工作区：`D:/what_i_am_doing/Project/knowledge-graph-obsidian-plugin`（原开发机路径 `D:/Documents/ChatGPT/knoeledg-graph-obsidian-plugin` 仅作历史参考）。
 
@@ -32,7 +36,7 @@
 
 ## 使用
 
-**安装、升级、卸载、回退与已知限制见 [docs/INSTALL.md](docs/INSTALL.md)**（面向使用者，2026-11-03 更新，0.0.13）。发布说明草稿见 [docs/RELEASE_NOTES_0.0.13.md](docs/RELEASE_NOTES_0.0.13.md)。
+**安装、升级、卸载、回退与已知限制见 [docs/INSTALL.md](docs/INSTALL.md)**（面向使用者，0.0.13）。发布说明见 [docs/RELEASE_NOTES_0.0.13.md](docs/RELEASE_NOTES_0.0.13.md)。社区插件目录条目已上线：<https://community.obsidian.md/plugins/knowledge-graph-smoke>（自动评审已完成，仅余建议项）。
 
 **产品端验收报告见 [product-site-acceptance/](product-site-acceptance/)**：0.0.11 报告（Node 1–3，已更正 Node 1 表述）与 0.0.12 日常库自用体验报告（Node 4–8）；对应截图含真实库笔记标题，仅本地保存、不进公开仓库。
 

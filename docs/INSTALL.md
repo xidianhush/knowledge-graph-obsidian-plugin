@@ -10,7 +10,7 @@
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 实际验证环境 | 0.0.13 界面在 Obsidian 1.15.0（合成库 vault-012 与「日常库副本」vault-013）验证；0.0.12 及更早在 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
 | 平台声明 | `isDesktopOnly: true`，仅支持桌面版 Obsidian；移动端未验证、不在支持范围 |
-| 发布状态 | **0.0.13 已正式发布**：tag `0.0.13` + GitHub Release（https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13），资产 `main.js` 333,570 B sha256 `37589a6f…`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`；仓库含 `versions.json`。0.0.13 已修复日常库验收发现的两处问题（删除标题后整篇标题重排、编辑提示文案），并完成发布门禁 A/B/C（含同名空正文标题笔记重命名回退的同族修复）。0.0.11 仍为 GitHub pre-release。社区目录尚未收录：提交入口已改为官方门户 <https://community.obsidian.md>（GitHub PR 通道已禁用），需 Obsidian 账号登录提交 |
+| 发布状态 | **0.0.13 已正式发布**：tag `0.0.13` + GitHub Release（https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13），资产 `main.js` 333,570 B sha256 `37589a6f…`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`；仓库含 `versions.json`。0.0.13 已修复日常库验收发现的两处问题（删除标题后整篇标题重排、编辑提示文案），并完成发布门禁 A/B/C（含同名空正文标题笔记重命名回退的同族修复）。0.0.11 仍为 GitHub pre-release。社区目录条目已上线：<https://community.obsidian.md/plugins/knowledge-graph-smoke>（自动评审已完成，仅建议项；也可在 Obsidian 内「浏览」社区插件搜索 Knowledge Map） |
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 
