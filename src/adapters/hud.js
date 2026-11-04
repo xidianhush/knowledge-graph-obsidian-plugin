@@ -591,7 +591,7 @@ function mountHud(scope, surface, core, services = {}) {
     if(label)label.textContent=R.editMode?'结束调整':'调整布局';
     else $('layout-mode').textContent=R.editMode?'结束调整':'调整布局';
     editTools.hidden=!R.editMode;
-    if(R.editMode)layoutStatus.textContent='拖动圆或标题调整位置；改动自动保存，点「结束调整」退出';
+    if(R.editMode)layoutStatus.textContent='拖动圆或标题调整位置；改动自动保存，再次点击顶栏 ✥ 退出';
     syncInsets();
     hidePreview();hideTooltip();surface.focus({preventScroll:true});
   });

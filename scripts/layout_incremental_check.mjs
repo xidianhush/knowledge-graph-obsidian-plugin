@@ -71,6 +71,26 @@ const dm=createLayoutModel(dense,200);dense[1].y+=1;const dk=dm.groupKey('Q/0'),
 const grown=structuredClone(dense);grown.slice(1).forEach(n=>n.r=8);
 const startDense=performance.now(),denseModel=createLayoutModel(grown,200),denseRecords=denseModel.reconcile(dr);
 results.push({name:'128 circle bounded repair',ms:performance.now()-startDense,fallback:denseModel.apply(denseRecords).skipped>0});
+// Duplicate same-title headings with empty sections must not block repair after
+// an unrelated deletion elsewhere in the note (UI-P1 Node 11 regression).
+const dupText='# A\n## P\n### X\n### X\n## Q\nq-body\n## R\nr-body';
+const dupFiles=[{path:'Demo/D.md',text:dupText}];
+const dupGraph=build(dupFiles),dupModel=make(dupGraph),dupEditor=createLayoutEditor(dupGraph.nodes,dupGraph.meta.layout_root_radius);
+for(const id of ['Demo/D#A/P','Demo/D#A/R']){const n=dupGraph.nodes.find(n=>n.id===id);assert.equal(dupEditor.begin(id),null);dupEditor.move(n.x+18,n.y-12);dupEditor.commit();}
+const dupKey=dupModel.groupKey('Demo/D#A/P'),dupRecords={[dupKey]:dupModel.capture(dupKey)};assert.ok(dupRecords[dupKey]);
+const dupAfter=build([{path:'Demo/D.md',text:dupText.replace('## Q\nq-body\n','')}]),dupNext=make(dupAfter);
+const dupStore=createLayoutStore({schemaVersion:1,revision:1,groups:JSON.parse(JSON.stringify(dupRecords))},async()=>{});
+await dupStore.reconcile(dupNext);const dupOut=dupStore.state().groups[dupKey];
+assert.ok(dupOut&&dupOut.repair,'empty duplicate sections must not block repair');
+assert.equal(dupNext.apply(dupStore.state().groups).skipped,0);
+results.push({name:'empty duplicate sections keep repair after unrelated deletion',repair:dupOut.repair});
+// Deleting one of the duplicates changes the count: the record must fall back safely.
+const dupDrop=build([{path:'Demo/D.md',text:dupText.replace('### X\n### X','### X')}]),dupDropModel=make(dupDrop);
+const dupDropStore=createLayoutStore({schemaVersion:1,revision:1,groups:JSON.parse(JSON.stringify(dupRecords))},async()=>{});
+await dupDropStore.reconcile(dupDropModel);
+const dupDropOut=dupDropStore.state().groups[dupKey];
+assert.ok(!dupDropOut||!dupDropOut.repair,'duplicate deletion count change must not be repaired');
+results.push({name:'duplicate deletion keeps fallback',fallback:true});
 fs.mkdirSync('.local/evidence/layout-incremental',{recursive:true});
 fs.writeFileSync('.local/evidence/layout-incremental/core.json',JSON.stringify(results,null,2));
 console.log(JSON.stringify(results));

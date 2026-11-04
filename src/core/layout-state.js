@@ -226,7 +226,11 @@ function createLayoutModel(nodes, rootRadius) {
       for (const n of old) {
         const next = b.get(n.key); if (!next) continue;
         if (n.parent !== next.parent || n.level !== next.level || n.title !== next.title) return null;
-        if ((ac.get(n.title) > 1 || bc.get(n.title) > 1) && (ac.get(n.title) !== bc.get(n.title) || n.evidence !== next.evidence || !n.evidence || n.evidence.startsWith('0:'))) return null;
+        // Duplicate titles keep the same conservative evidence guard, but an
+        // empty section (evidence "0:...") is still a stable value: two equal
+        // empty duplicates stay interchangeable after unrelated edits, so only
+        // reject when the values themselves differ or are missing.
+        if ((ac.get(n.title) > 1 || bc.get(n.title) > 1) && (ac.get(n.title) !== bc.get(n.title) || typeof n.evidence !== 'string' || n.evidence !== next.evidence)) return null;
       }
       // No reuse of a duplicate suffix if a preceding equal heading was removed.
       for (const n of g.nodes) if (points.has(keys.get(n.id)) && !a.has(keys.get(n.id))) return null;
