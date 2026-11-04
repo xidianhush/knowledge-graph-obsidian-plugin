@@ -308,13 +308,26 @@ function createLayoutModel(nodes, rootRadius) {
         const counts = items => { const c = new Map(); for (const n of items) c.set(n.title, (c.get(n.title) || 0) + 1); return c; };
         const oldCounts = counts(old), newCounts = counts(current);
         const nonempty = n => typeof n.evidence === 'string' && !n.evidence.startsWith('0:');
+        const signatureCounts = items => {
+          const m = new Map();
+          for (const n of items) { const s = JSON.stringify([n.title, n.evidence]); m.set(s, (m.get(s) || 0) + 1); }
+          return m;
+        };
+        const oldSignatures = signatureCounts(old), newSignatures = signatureCounts(current);
         // Duplicate labels require distinct nonempty section evidence. Position
         // alone cannot distinguish equal headings after insertion or reordering.
+        // Identical *empty* duplicate sections are interchangeable, so a rename
+        // elsewhere in such a note may still migrate: index mapping stays stable
+        // as long as the counts of the identical signatures did not change.
         const distinguishable = items => {
           const titles = counts(items), signatures = new Set();
           for (const n of items) if (titles.get(n.title) > 1) {
             const signature = JSON.stringify([n.title, n.evidence]);
-            if (!nonempty(n) || signatures.has(signature)) return false;
+            if (!nonempty(n)) {
+              if ((oldSignatures.get(signature) || 0) !== (newSignatures.get(signature) || 0)) return false;
+              signatures.add(signature); continue;
+            }
+            if (signatures.has(signature)) return false;
             signatures.add(signature);
           }
           return true;

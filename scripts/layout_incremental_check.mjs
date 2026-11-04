@@ -91,6 +91,16 @@ await dupDropStore.reconcile(dupDropModel);
 const dupDropOut=dupDropStore.state().groups[dupKey];
 assert.ok(!dupDropOut||!dupDropOut.repair,'duplicate deletion count change must not be repaired');
 results.push({name:'duplicate deletion keeps fallback',fallback:true});
+// Renaming an unrelated heading in a note with identical empty duplicates must
+// still migrate the saved layout instead of falling back to automatic packing.
+const renText=dupText.replace('## R','## R2'),renGraph=build([{path:'Demo/D.md',text:renText}]),renModel=make(renGraph);
+const renStore=createLayoutStore({schemaVersion:1,revision:1,groups:JSON.parse(JSON.stringify(dupRecords))},async()=>{});
+await renStore.reconcile(renModel);
+const renOut=renStore.state().groups[dupKey];
+assert.ok(renOut&&!renOut.repair,'rename migration must keep the record without repair');
+assert.equal(renModel.apply(renStore.state().groups).skipped,0);
+geometry(renGraph);
+results.push({name:'rename migrates layout despite empty duplicate sections'});
 fs.mkdirSync('.local/evidence/layout-incremental',{recursive:true});
 fs.writeFileSync('.local/evidence/layout-incremental/core.json',JSON.stringify(results,null,2));
 console.log(JSON.stringify(results));
