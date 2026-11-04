@@ -227,6 +227,18 @@
 | UI-P1 | 产品 | 日常库体验 0.0.13 候选并验收 UI/UX | ✅ 用户已确认验收通过（2026-11-04：本轮修改后其项目验收全部通过，报告含 Node 12 复验删除标题场景符合预期）；此后门禁 C 又修了「同名空正文标题笔记重命名回退」同族边界，构建升级为 333,570 B `37589a6f…`，用户可按需替换三文件复验 | 候选：`manifest.json`/`package.json` 0.0.13，`main.js` 333,570 B sha256 `37589a6f32203026ff82a564ad83013b72dbb19c8a8180f7c04da67a49ba8ab5`；打包 `.local/release/0.0.13/`（三文件 + SHA256SUMS + RELEASE_NOTES）。技术验证：合成库 vault-012（宽/窄顶栏、胶囊、横带）与日常库副本 vault-013（Obsidian 1.15.0，修复后 H1 偏差 0.0px）完成。用户验收报告 `product-site-acceptance/product-site-acceptance-report/v0.0.13_PRODUCT_SITE_ACCEPTANCE_REPORT.md`（Node 9/10 符合预期；Node 11 已修复待复验）。**未 push、未发布**；日常库当前仍是修复前候选，需再次替换三文件。agent 不替用户宣称通过 |
 | 48-P3 | 产品 | 0.0.13 正式发布：tag、RELEASE_NOTES、三资产 Release，以及是否提交社区目录 | ✅ 已完成（2026-11-04：Release 已上线、社区目录条目已提交并通过自动评审） | 已完成：`main` push 至 `71e42cd`（含 `versions.json` `{"0.0.13":"1.6.7"}`）；annotated tag `0.0.13` 已推送（peeled `71e42cd`；不带 v 前缀，Obsidian 按 manifest 版本拼下载地址）；首次正式 Release 已上线 https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13 ，资产 main.js（333,570 B，sha256 `37589a6f…`）/manifest.json/styles.css/SHA256SUMS/RELEASE_NOTES.md 共 5 个。社区目录：`obsidianmd/obsidian-releases` 已禁用 PR（`GET /pulls` 404、GraphQL CreatePullRequest 报 FORBIDDEN），官方入口改为门户 <https://community.obsidian.md>（`/plugins/new` 可访问，需 Obsidian 账号登录）；已提前 fork 并追加 `community-plugins.json` 条目（commit `37f94e9c`，现无用途），待用户登录门户提交或授权代交。社区目录（2026-11-04 完成）：按官方新入口在 <https://community.obsidian.md> 用 Obsidian 账号登录 → 关联 GitHub（`xidianhush`）→ Plugins → New plugin，提交仓库 URL 后发布，条目 <https://community.obsidian.md/plugins/knowledge-graph-smoke> 已上线（manifest `Knowledge Map` 0.0.13）。自动评审 Completed，无阻断项，仅建议/警告：①Release 缺少 GitHub artifact attestations；②Release 含多余文件（RELEASE_NOTES.md、SHA256SUMS，Obsidian 不会下载）；③BEHAVIOR 建议（Vault Enumeration 读取全库路径、Local Storage 使用 localStorage/sessionStorage 而非插件 data API）；④CSS LINT 警告 `:has`（`src/host.css:15`）；⑤README 无英文文本且标题与 manifest 名称不一致（本轮已改：标题 `# Knowledge Map` + 英文摘要 + 说明无 npm 运行时依赖故无 lockfile）；⑥BUILD VERIFICATION 因无 lockfile 未运行（本仓库无依赖）。多余 fork `xidianhush/obsidian-releases` 已删除（commit `37f94e9c` 一并作废）。证据：`.local/release/publish.py`、`.local/release/publish_pr.py`、`.local/release/pr_steps.json`、`.local/native/evidence/shots/cu-submit2.png`、`cu-publish.png`、`cu-entry.png`。 |
 
+## 0.0.14 候选（社区评审建议，用户决定延后；2026-11-04 记录）
+
+来源：社区目录自动评审（2026-11-04 Completed）与发布复盘。均为建议/警告，不阻断当前 0.0.13；用户明确「等到 0.0.14 再处理」。
+
+| ID | 责任人 | 工作 | 状态 | 备注 / 完成标准 |
+| --- | --- | --- | --- | --- |
+| UI-A6 | 技术 | 用 JS 侧类切换替代 `:has` 选择器（评审警告：`src/host.css:15`，可能引发广泛失效的性能问题） | ⏳ 待开始（0.0.14） | 目标：移除 `:has` 后侧栏让位/横带避让行为不变；补原生回归（横带宽窄、侧栏开合、图例/命中避让） |
+| UI-A7 | 技术 | Release 精简为三资产（main.js/manifest.json/styles.css），SHA256SUMS/RELEASE_NOTES 改为 Release 正文或 docs 链接；可加 GitHub Actions 生成 artifact attestations | ⏳ 待开始（0.0.14） | 评审建议：多余文件 Obsidian 不会下载；attestations 可提升可信度。需用户确认是否接受 Actions 构建 |
+| UI-A8 | 技术 | 审查 `localStorage`/`sessionStorage` 使用（评审 BEHAVIOR 建议改插件 data API），并在文档说明持久化范围 | ⏳ 待开始（0.0.14） | 目标：明确哪些状态需要持久化；如迁移需保持 0.0.13 数据兼容 |
+| UI-A9 | 技术 | 目录 Overview 与发布页信息一致性巡检（README 标题、描述、分类、截图、Updates 页） | ⏳ 待开始（0.0.14 或发布后巡检） | 2026-11-04 已把 Overview 刷新为新 README（branch preview scan） |
+| UI-A10 | 技术 | 社区目录 in-app 安装验证（Obsidian「浏览」搜索 Knowledge Map → 安装 → 建图） | ⏳ 待开始（等目录 JSON 同步） | 2026-11-04 核对 `community-plugins.json` 仍为 9885 项、尚未含 `knowledge-graph-smoke`（Obsidian 定期同步门户条目）；同步后验证安装/更新路径 |
+
 ## 可选 Step — 移动端与阶段 5 语义增强
 
 | ID | 责任人 | 工作 | 状态 | 完成标准 / 证据 |
