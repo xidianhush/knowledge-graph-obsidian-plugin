@@ -1,4 +1,8 @@
-const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope } = require('obsidian');
+const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope, addIcon } = require('obsidian');
+const KNOWLEDGE_MAP_ICON_ID = 'knowledge-map';
+// Hub with three satellites: two links pass through the outer ring to the inner node,
+// the third stops at the ring. Single-color path so Obsidian can recolor it.
+const KNOWLEDGE_MAP_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"><circle cx="50" cy="50" r="24"/><path d="M21 50 H41"/><path d="M81 22.3 L56.7 44"/><path d="M78.2 76.5 L67.5 66.4"/><circle cx="50" cy="50" r="9"/><circle cx="13" cy="50" r="8"/><circle cx="87" cy="17" r="8"/><circle cx="84" cy="82" r="8"/></svg>';
 const VIEW_TYPE = 'knowledge-graph-smoke-view';
 const VAULT_VIEW_TYPE = 'knowledge-graph-vault-view';
 
@@ -24,7 +28,7 @@ class KnowledgeGraphView extends ItemView {
   }
   getViewType() { return this.source === 'vault' ? VAULT_VIEW_TYPE : VIEW_TYPE; }
   getDisplayText() { return this.source === 'vault' ? '知识图谱 · 当前库' : '知识图谱 · 冒烟'; }
-  getIcon() { return 'network'; }
+  getIcon() { return KNOWLEDGE_MAP_ICON_ID; }
   async onOpen() {
     this.closed = false;
     this.contentEl.classList.add('kg-smoke-content');
@@ -229,7 +233,8 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
     this.registerView(VAULT_VIEW_TYPE, leaf => new KnowledgeGraphView(leaf, this, 'vault'));
     this.addCommand({ id: 'open-graph-smoke', name: '打开知识图谱冒烟', callback: () => this.openGraph() });
     this.addCommand({ id: 'build-vault-graph', name: '从当前库构建知识图谱', callback: () => this.openGraph('vault', true) });
-    this.addRibbonIcon('network', '从当前库构建知识图谱', () => this.openGraph('vault', true));
+    addIcon(KNOWLEDGE_MAP_ICON_ID, KNOWLEDGE_MAP_ICON);
+    this.addRibbonIcon(KNOWLEDGE_MAP_ICON_ID, '从当前库构建知识图谱', () => this.openGraph('vault', true));
     this.addSettingTab(new KnowledgeGraphSettingsTab(this.app, this));
   }
   saveGraphSettings(draft) {
