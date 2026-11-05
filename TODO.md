@@ -238,6 +238,7 @@
 | UI-A8 | 技术 | 审查 `localStorage`/`sessionStorage` 使用（评审 BEHAVIOR 建议改插件 data API），并在文档说明持久化范围 | ⏳ 待开始（0.0.14） | 目标：明确哪些状态需要持久化；如迁移需保持 0.0.13 数据兼容 |
 | UI-A9 | 技术 | 目录 Overview 与发布页信息一致性巡检（README 标题、描述、分类、截图、Updates 页） | ⏳ 待开始（0.0.14 或发布后巡检） | 2026-11-04 已把 Overview 刷新为新 README（branch preview scan） |
 | UI-A10 | 技术 | 社区目录 in-app 安装验证（Obsidian「浏览」搜索 Knowledge Map → 安装 → 建图） | ⏳ 待开始（等目录 JSON 同步） | 2026-11-04 核对 `community-plugins.json` 仍为 9885 项、尚未含 `knowledge-graph-smoke`（Obsidian 定期同步门户条目）；同步后验证安装/更新路径 |
+| UI-A11 | 技术 | 国际化（i18n）：UI 文案中英双语，跟随 Obsidian 语言（非中文默认英文），设置页可覆盖 | ⏳ 待开始（0.0.14） | 现状中文硬编码：13 个文件共 223 条中文字符串（`src/adapters/hud.js` 96、`src/settings.js` 37、`src/plugin.js` 29、`obsidian-native.js` 14、`layout-state.js` 14…）+ `upstream/template.html` 约 1,584 汉字界面文案（图例整块）。方案：抽 `i18n.js`（en/zh 字典，跟随 `moment.locale()`/Obsidian 语言，非 zh 默认 en；设置项「跟随应用/中文/English」）；模板文案改为 key 注入。验收：中英两套下建图、布局编辑、设置、状态提示与图例均无中文残留/无溢出；新增合成检查或快照对照 |
 
 ## 可选 Step — 移动端与阶段 5 语义增强
 
