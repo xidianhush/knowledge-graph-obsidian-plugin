@@ -23,8 +23,9 @@
 
 ### 交接时的真实现状
 
-- **代码 HEAD 以最新 commit 为准**（0.0.14 交付改动可能就在该 commit 里）。
-- **0.0.13 已正式发布**：annotated tag `0.0.13`（peeled `71e42cd`，不带 v 前缀）、<https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13>（资产 `main.js` 333,570 B sha256 `37589a6f32203026ff82a564ad83013b72dbb19c8a8180f7c04da67a49ba8ab5`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`）；仓库根 `versions.json` = `{"0.0.13":"1.6.7"}`；0.0.11 仍为旧 pre-release。
+- **代码 HEAD 以 `git log --oneline -5` 为准**；0.0.14 的代码、文档、tag、Release、门户更新均已落地（见上节）。
+- **0.0.14 已正式发布**（tag `0.0.14` 指向 `740def8`；Release 三资产 + attestations；门户图标与 Overview 已由用户手动更新）。以下 0.0.13 信息保留作历史基线：
+- 0.0.13（历史）：annotated tag `0.0.13`：annotated tag `0.0.13`（peeled `71e42cd`，不带 v 前缀）、<https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13>（资产 `main.js` 333,570 B sha256 `37589a6f32203026ff82a564ad83013b72dbb19c8a8180f7c04da67a49ba8ab5`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`）；仓库根 `versions.json` = `{"0.0.13":"1.6.7"}`；0.0.11 仍为旧 pre-release。
 - **社区目录条目已上线并同步**：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；镜像 `community-plugins.json` 于 2026-11-05T13:20Z（commit `f23b14fe`）已含该 id（9,971 项），客户端「浏览」可搜到 Knowledge Map。Release 资产计数 main.js 11 / manifest.json 12 / styles.css 10，与门户 11 次下载吻合，判断已有真实安装（无遥测，只能按计数推断）。
 - **自动评审 Completed，无阻断**，剩余建议：Release 缺 GitHub artifact attestations；Release 含多余资产（`RELEASE_NOTES.md`/`SHA256SUMS`，客户端不会下载）；BEHAVIOR 建议（读取全库路径 Vault Enumeration、localStorage 持久化）；CSS LINT `:has`（`src/host.css:15`）；README 无英文（已修）；无 lockfile（本仓库无 npm 运行时依赖，构建不使用依赖）；BUILD VERIFICATION 未跑。
 - 0.0.13 之后有**已进入 0.0.14 的增量**：①图标 `src/plugin.js` 注册 `addIcon('knowledge-map', …)` 并用于 ribbon 与 `getIcon()`（G1 描边版，深/浅主题原生验证通过）；②本次文档/TODO。构建 `main.js` 334,284 B sha256 `9211f03133ac257bb596ebb48e4aecace6d3a43f29b5cf6dddd7e6849fff2245`，**未升版本、未打包发布**（`dist/` 不入库；要发布必须按 0.0.14 流程升版本）。
@@ -60,31 +61,62 @@
 1. ~~UI-A14 id 改名~~ → 已定：0.0.14 不做，后续再议（DEC-006）。
 2. ~~UI-A13 分镜/素材~~ → 已定并执行：主 GIF 18–22s（建图→逐层缩放→拖动调整→撤销/恢复）+ 布局横带、中英设置页两张截图；英文界面、合成库、无烧录字幕（2026-11-06 用户答复 A）。
 3. ~~是否现在替换门户图标~~ → 已定：随 0.0.14 发布一起上传（见上）。
-4. **0.0.14 的发布授权（tag/Release/门户刷新）**：尚未授权；Actions 生成 attestations 已获用户接受（2026-11-06 答复 A）。授权后：推 annotated tag `0.0.14`（裸版本）→ workflow 自动构建/发布 → 门户 Edit listing 上传 `docs/assets/knowledge-map-icon.png` 并刷新 Overview。
+4. ~~0.0.14 的发布授权（tag/Release/门户刷新）~~ → **已完成（2026-11-06）**：用户授权后推了 annotated tag `0.0.14`，workflow run 42164446268 全 10 步成功，Release 三资产 + attestations 已上线；门户图标与 Overview 由用户手动完成（门户图标是「图标名 + 背景色」，不支持上传本地 PNG）。
+5. **移动端范围（当前唯一 open 项）**：见下一节 `MOB-P1`——Android 优先还是 Android+iOS、最低系统版本、是否接受功能降级、性能目标机型。
 
-### 建议接手顺序
+### 建议接手顺序（0.0.15 移动端阶段）
 
-1. `npm test` 核对基线（应 **11** 个合成脚本全过），`git log --oneline -5` 确认 HEAD（0.0.14 交付提交，以最新为准），读 TODO 的 0.0.14 小节与本节。
-2. 0.0.14 代码、构建、文档均已完成但**未 tag / 未 Release**：先向用户确认验收与发布授权；授权后推 annotated tag `0.0.14`（裸版本），由 `.github/workflows/release.yml` 在 runner 上构建并发布（前提：Actions 已启用、Settings → Actions → General → Workflow permissions 为 read-write、仓库 public；无需 secret）。
-3. 发布后：门户 <https://community.obsidian.md> → Edit listing → 上传 `docs/assets/knowledge-map-icon.png`（512）并刷新 Overview/README（UI-A9 巡检）；日常库升级 0.0.14 仍需用户单独授权，不要自行替换或修改日常库。
+1. 读 `docs/MOBILE_PLAN.md`（实施蓝图）与本节「下一阶段交接：移动端支持」；`npm test` 核对基线（应 **11** 个合成脚本全过）；`git log --oneline -5` 确认 HEAD。
+2. **先问用户 `MOB-P1`**：Android 优先还是 Android+iOS、最低系统版本、是否接受功能降级（如移动端只支持单元素拖动/只读浏览）、性能目标机型。拿到答复前只做只读勘察与桌面侧准备，不改 `isDesktopOnly` 发布。
+3. 按 `MOB-A1 → A2/A5 → A3/A4 → A6/A7 → A8` 顺序实现；每步用 Android 真机（或可用模拟器）验证，桌面回归用现有 CDP 流程。
+4. 全部通过且用户验收后，按 `MOB-A9` 走 0.0.15 发布门禁；tag/Release/门户仍需用户明确授权，不 force push、不自动升级日常库。
 
-### 正式交接包（2026-11-06 更新：0.0.14 候选已完成，可直接交给下一位 agent）
+### 正式交接包（2026-11-06 更新：0.0.14 已发布；下一阶段 = 移动端支持 0.0.15）
 
 ```
 项目：D:\what_i_am_doing\Project\knowledge-graph-obsidian-plugin
 仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin
-交接 HEAD：以 git log 最新为准（0.0.14 交付提交）
-当前发布版：0.0.13（tag 0.0.13、五资产 Release、社区目录条目 knowledge-graph-smoke 已上线并同步）
-0.0.14 状态：代码/构建/文档完成，未 tag、未 Release、未刷新门户
-  构建 main.js 396,234 B sha256 b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5
-  versions.json {"0.0.13":"1.6.7","0.0.14":"1.6.7"}；npm test = 11 个合成脚本（含 scripts/i18n_check.mjs）
-本轮范围（均已完成）：i18n 中英双语、:has 改 JS 类、Release 三资产 + attestations、localStorage→data.json ui、in-app 安装验证、README 理念教程+动图；插件 id 改名（UI-A14）0.0.14 不做
-先读：AGENTS.md、HANDOFF_NEXT.md「本版交接：0.0.14」（含「本轮交付结果」）、TODO.md（UI-A6~A13）、DEVELOPMENT.md
-接手第一步：`npm test`（应 11 脚本全过）→ `git log --oneline -5` → 向用户确认 0.0.14 验收与 tag/Release/门户授权
-边界：不动 schema3/capture-reconcile-apply/upstream/；不升级或修改日常库；不推 tag/发 Release/刷新门户，除非用户明确授权
+交接 HEAD：以 git log 最新为准（0.0.14 发布与门户记录均已 push）
+当前发布版：0.0.14（tag 0.0.14 → 740def8；Release 三资产 main.js 396,234 B b022a4d8… / manifest.json 308 B / styles.css 2,400 B；attestation tlog 3709424080）
+  构建：node scripts/build.mjs → 396,234 B sha256 b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5
+  测试：npm test = 11 个合成脚本（build + core/pipeline/settings/layout×6 + i18n_check）
+  门户：条目 knowledge-graph-smoke，「图标名 + 背景色」图标与 Overview 已由用户更新
+下一阶段：移动端支持（0.0.15 候选）。计划 docs/MOBILE_PLAN.md；TODO 任务 MOB-P1 + MOB-A1…A10
+  当前状态：仅规划，未改任何源码；manifest.json 仍是 isDesktopOnly:true
+  第一步：问用户 MOB-P1（平台范围/最低系统/降级口径/性能机型），再动 MOB-A1
+先读：AGENTS.md、HANDOFF_NEXT.md「下一阶段交接：移动端支持」、docs/MOBILE_PLAN.md、TODO.md（MOB-*）、DEVELOPMENT.md
+边界：不动 schema3/capture-reconcile-apply/upstream/渲染物理；不改插件 id；不升级或修改日常库；不推 tag/发 Release/刷新门户，除非用户明确授权
 ```
 
+## 下一阶段交接：移动端支持（0.0.15 候选，2026-11-06）
+
+用户 2026-11-06 明确要求：把插件升级为移动端也可用，并把这部分交给下一位 coding agent。用户给出的预计工作项（原文要点）：① `isDesktopOnly` 改 false，重做移动端布局（顶栏 7 个控件在手机上放不下，需要折叠菜单）；② 触摸交互替代拖动/悬停/中键（双指缩放、长按拖动、无悬停时图例与提示降级）；③ 移动端性能与内存预算重测（现按桌面 5000 节点 / 128 子节点）；④ 手机端 Obsidian 插件 API 差异与安全区适配；⑤ 重走移动端兼容矩阵和发布门禁；⑥ 其他可能要做的事（可随机应变）。
+
+**完整实施蓝图见 `docs/MOBILE_PLAN.md`**（差距清单、交互与布局方案、性能预算、任务验收、验证矩阵、发布门禁、风险、建议顺序）。执行清单见 `TODO.md` 的 `MOB-P1` / `MOB-A1…A10`。
+
+### 当前基线（动手前必读）
+
+- 0.0.14 已发布（见上节），代码 HEAD 以 `git log` 为准；`npm test` 11 脚本全过；没有未提交改动。
+- `manifest.json:8` 是 `"isDesktopOnly": true`，源码无任何 `Platform` 检测；`src/plugin.js:1` 的 `require('obsidian')` 解构里需要加 `Platform`。
+- 交互现状（触摸会踩到）：悬停 tooltip 与 Ctrl+悬停预览（`src/adapters/hud.js:619`、`hud.js:713-860`）；滚轮缩放（`src/core/renderer.js:1713-1721`，`WHEEL_STEP 1.12`）；键盘快捷键（`src/adapters/hud.js:921-950`：Esc、Ctrl+Z/Y、方向键、Home、`[` `]`、`L`、`/`）；双击聚焦（`renderer.js:1801`）；鼠标键位/指针跟踪（`src/adapters/canvas-platform.js:16,22`、`src/adapters/hud-scope.js:55-62,104`）。
+- 布局现状：顶栏 9 个控件单行（`upstream/template.html:303-327`），已有容器查询 ≤1000px 横向滚动、≤880px 收紧（`src/host.css:38-53`），但手机 390–430px 仍不够用；侧栏 `min(360px,40vw)`（`template.html:114-126`）、预览 `700px / max-width:calc(100vw - 32px)`（`:251-263`）、布局横带 38px（`src/host.css:4-12`）。
+- 性能相关：DPR 直采（`src/adapters/canvas-platform.js:10`、`browser.js:56,65`）；Blob Worker（`src/adapters/vault-pipeline.js:14`）在 iOS 上可能不可用，必须降级；布局上限 128 兄弟 / 5000 子树（`src/core/layout-edit.js:28,39`）；可见边预算在 `src/core/renderer.js:1019` 附近。
+- 已就绪、不要重做：i18n 引擎与 209 key、`data.json` 的 `ui` 持久化、`:has` 已移除、Release CI 三资产 + attestations、桌面原生 CDP 流程。
+
+### 第一件事：问用户 MOB-P1
+
+不要先写代码。先确认：Android 优先还是必须覆盖 iOS；最低 Android/iOS 版本与目标机型；是否接受移动端功能降级（例如第一版只读浏览 + 单元素拖动，不做整组/选父级）；是否要求平板与分屏。答复直接决定 MOB-A2/A3/A6 的范围与工时。
+
+### 验证与发布纪律
+
+- 移动端证据：Android 真机/模拟器（`adb` + `chrome://inspect` 若可用，否则 logcat + 录屏）；**本机没有 macOS，iOS 只能请用户手动验证并如实标注「用户验证/未验证」**，不得写成 agent 已验证。
+- 桌面回归：`npm test` 11 脚本 + 现有 CDP 原生流程（`.local/native/cdp_lib.py`，端口 9248/9249/9251）。
+- 发布 0.0.15 需用户明确授权；不要自己改 `isDesktopOnly:false` 后立刻发版——该字段等于向社区目录宣布移动端可用。
+- 不动 schema3 / capture-reconcile-apply / upstream / 插件 id；不升级或修改日常库（需用户单独授权）。
+
 ## 先做什么
+
+> 2026-11-06 起，**当前阶段是移动端支持（0.0.15）**，先看上一节「下一阶段交接：移动端支持」与 `docs/MOBILE_PLAN.md`；下面 1–5 条是长期通用的接手纪律，其中提到的 0.0.11/0.0.12/0.0.13 版本状态均为历史背景。
 
 1. 读 `AGENTS.md`、`TODO.md`、`README.md` 和 `DEVELOPMENT.md`，检查当前分支、工作区和 manifest；不要覆盖用户改动。
 2. 用 Node 22+ 执行 `npm test`，确认干净 clone 可构建且合成回归通过。GitHub 交接基线为 **0.0.10**；本地已在基线之上实现 **0.0.11（schema3）** 并 commit `13933dc`，已于 2026-11-01 push 到 origin/main 并发布 GitHub pre-release `v0.0.11`（社区目录未提交）；原生拖/存/重建/Esc/撤销基本回归、30 分钟连续压力与 schema3 冷启动已完成；用户体验验收已于 2026-11-01 完成（47-P2/47-P3，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`），该版本为 pre-release，不是社区目录正式发布。 2026-11-02：47-A2 授权副本 30 分钟连续压力与结构/改名/泄漏验证完成（`REAL_VAULT_RESULT.md`），48-A1 文档/打包/空白库验证完成（`docs/INSTALL.md`、`scripts/package.mjs`、`.local/evidence/delivery-48a1/blank-vault.json`），48-A2 最终回归已完成。 2026-11-02 晚：48-P2 平台声明已落地到 **0.0.12 本地候选**（manifest 名称 Knowledge Map、minAppVersion 1.6.7、isDesktopOnly true；`main.js` 与 0.0.11 相同 `205b1bd0…`），候选回归在 Obsidian 1.6.7 / 1.14.5 / 空白库通过，见 `DELIVERY_48A2_RESULT.md`；46-A3 90 分钟长时观测已完成（通过）。 2026-11-03：0.0.12 已按授权装入日常库，完成 1–2 天自用体验并通过（48-A2 完成），当前候选与文档已 push（HEAD `0564d84`）；功能层面用户确认符合预期，**下一阶段为 0.0.13 UI/UX + 正式发布**，见本文件「下一阶段交接」一节。
@@ -225,6 +257,6 @@
 - 不把 `.local`、vault/profile、data.json、截图或私有快照加入 Git。原始证据不可跨机器获得时，如实保留摘要与未复跑状态。
 - 网络中断后先读 TODO 和 git status，续接未完工作，不从历史交接重做已验收功能。
 
-## 可直接交给下一位的开场语（2026-11-06 晚，0.0.14 候选完成后）
+## 可直接交给下一位的开场语（2026-11-06，0.0.15 移动端交接）
 
-请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 `npm test` 核对基线（**11** 个合成脚本应全过）。**0.0.14 候选已完成并已 commit/push**：i18n 中英双语、`:has` 改 JS 类、Release 三资产 + attestations、localStorage→`data.json` 的 `ui`、in-app 安装验证、README 理念教程 + 动图；构建 `main.js` 396,234 B sha256 `b022a4d8…`，versions.json 已含 0.0.14。**0.0.14 尚未 tag / 未 Release / 未刷新门户**（用户只授权了 commit+push 与 Actions 方案）。下一步：向用户确认 0.0.14 验收与发布授权；授权后推 annotated tag `0.0.14`，由 `.github/workflows/release.yml` 构建并发布（先确认仓库 Settings → Actions → General → Workflow permissions 为 read-write、仓库 public），随后门户上传 `docs/assets/knowledge-map-icon.png` 并刷新 Overview（UI-A9 巡检）。UI-A14（id 去 smoke）0.0.14 不做；不 force push、不自动升级日常库、不代替用户确认体验验收；每轮更新 TODO，说明实际测试和剩余边界。
+请先读 `AGENTS.md`、`HANDOFF_NEXT.md`「下一阶段交接：移动端支持」、`docs/MOBILE_PLAN.md`、`TODO.md`（`MOB-*`）和 `DEVELOPMENT.md`，然后运行 `npm test` 核对基线（**11** 个合成脚本应全过）并用 `git log --oneline -5` 确认 HEAD。背景：0.0.14 已 tag 并发布（Release 三资产 + attestations，门户图标/Overview 已由用户手动更新），桌面端暂无未完成项；用户要求下一阶段把插件升级为**移动端可用**并交给你做。当前只做了规划：`manifest.json` 仍 `isDesktopOnly: true`，源码未改，`TODO.md` 新增 `MOB-P1` 与 `MOB-A1…A10`。**第一件事不是写代码，而是先问用户 MOB-P1**：Android 优先还是必须覆盖 iOS、最低系统版本、是否接受功能降级（如移动端只读/单元素拖动）、性能目标机型。拿到答复后按 `docs/MOBILE_PLAN.md` §11 的顺序做：MOB-A1 平台检测与 `isDesktopOnly`（先在本地验证，不急着发布）→ A2 响应式布局 → A5 浮层 → A3 触摸 → A4 文案与快捷键等价 → A6/A7 性能与 worker 降级 → A8 矩阵 → A9 发布门禁（tag/Release/门户仍需用户明确授权）。未做真机测试不得写“已验证”，iOS 结果必须如实标注来源；不 force push、不自动升级日常库、不代替用户确认体验验收；每轮按任务 ID 更新 TODO 并写证据路径。
