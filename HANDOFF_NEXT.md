@@ -5,7 +5,9 @@
 
 ## 本版交接：0.0.14（2026-11-06，最新，先读这一节）
 
-### 本轮交付结果（2026-11-06，0.0.14 候选已就绪，未 tag / 未 Release）
+### 本轮交付结果（2026-11-06，0.0.14 已 tag 并发布）
+
+- 发布：tag `0.0.14`（annotated，指向 `740def8`）已推送；GitHub Actions `Release` 工作流 run [42164446268](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/42164446268) 全 10 步成功（Build/Validate/Package/Attest/Release/Verify）；GitHub Release [0.0.14](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.14) published 2026-11-06T04:46:21Z，资产**恰三项**：`main.js` 396,234 B `b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5`、`manifest.json` 308 B `aa3cc460b8e50a16b35ac72f9df5476de19c4a17df149382239b5eefb636b1e8`、`styles.css` 2,400 B `c14381d9c9844151ac037a6164bd25b606dfe21f7b51cc417c0dea19570a450b`；Release 正文含完整 notes、`## SHA-256 checksums` 与 notes/build run 链接（`SHA256SUMS` 不作为资产上传）；attestation 已生成（`GET /attestations/sha256:b022a4d8…` 返回 200，DSSE tlog index 3709424080，builder = `.github/workflows/release.yml@refs/tags/0.0.14`）。
 
 - 版本：`package.json`、`manifest.json` 已升 **0.0.14**，`versions.json` = `{"0.0.13":"1.6.7","0.0.14":"1.6.7"}`；manifest description 已改为 `Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures. UI in English or Chinese.`
 - 构建：`node scripts/build.mjs` → `{"bytes":396234,"sha256":"b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5","payloadIncluded":false}`；`node scripts/package.mjs --out .local/pkg-014` 三资产 + SHA256SUMS 一致（manifest 308 B、styles.css 2400 B）。
@@ -17,7 +19,7 @@
 - UI-A10：在 `.local/native/vault-a10` 空库（独立 profile、CDP 9261、Obsidian 1.15.0）走「设置 → 第三方插件 → 浏览 → 搜索 Knowledge Map → 安装 → 启用」原生流程：安装 Notice 成功、版本 0.0.13、commands 注册、空态 `phase=empty`、5 篇合成笔记 `ready nodes=10 edges=12`、关标签重开恢复、**重启进程**后仍启用且数据保留；console 插件相关异常 0。**重要披露**：宿主 Obsidian 下载 github.com release 资产返回 404（同一 URL 在沙箱 python 直连 200），安装下载阶段用本地 HTTPS 代理只替换该域名的 DNS/TLS，served 字节为官方 0.0.13 Release 原始字节（manifest/styles 与官方 sha256 相同；main.js 落盘多 18 字节，已定因为 Obsidian 写入时追加 `
 /* nosourcemap */`，剥离后一致）；无代理时 Obsidian 实际请求为 `download/0.0.13/*`，目录侧版本解析正常。证据：`.local/evidence/ui-a10/result.json` 与 `shots/`（均不入库）。
 - 文档：`docs/RELEASE_NOTES_0.0.14.md` 已写；`docs/INSTALL.md` 升 0.0.14（发布状态如实写明「0.0.13 为当前正式发布，0.0.14 候选未发布」，含语言设置与 `ui` 持久化说明）。
-- **仍未执行（需用户授权/验收）**：`git tag 0.0.14`、GitHub Release、**门户 512 图标上传（UI-A12，`docs/assets/knowledge-map-icon.png` 已就绪）**与门户刷新。推送 tag 前请确认 GitHub 仓库 Settings → Actions → General → Workflow permissions 为 **read and write**（否则 `gh release create` 会 403）；仓库需保持 public 才能用 attestations；本地校验 attestation 需 `gh` ≥ 2.49。本轮只 commit + push 源码与文档。
+- **仍未执行（需用户手动或可用浏览器）**：**门户 512 图标上传（UI-A12，`docs/assets/knowledge-map-icon.png`，512 方形紫底白字形）与 Overview 刷新**。2026-11-06 本机浏览器自动化不可用（wincu 桌面后端 `spawn powershell.exe ENOENT`，CDP 实例已全部关闭），因此未能代为操作；tag/Release 已完成，仓库保持 public 才能用 attestations；本地校验 attestation 需 `gh` ≥ 2.49。本轮只 commit + push 源码与文档。
 
 ### 交接时的真实现状
 
