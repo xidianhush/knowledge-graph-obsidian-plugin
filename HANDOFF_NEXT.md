@@ -8,7 +8,7 @@
 ### 本轮交付结果（2026-11-06，0.0.14 候选已就绪，未 tag / 未 Release）
 
 - 版本：`package.json`、`manifest.json` 已升 **0.0.14**，`versions.json` = `{"0.0.13":"1.6.7","0.0.14":"1.6.7"}`；manifest description 已改为 `Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures. UI in English or Chinese.`
-- 构建：`node scripts/build.mjs` → `{"bytes":396234,"sha256":"b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5","payloadIncluded":false}`；`node scripts/package.mjs --out .local/pkg-014` 三资产 + SHA256SUMS 一致（manifest 317 B、styles.css 2400 B）。
+- 构建：`node scripts/build.mjs` → `{"bytes":396234,"sha256":"b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5","payloadIncluded":false}`；`node scripts/package.mjs --out .local/pkg-014` 三资产 + SHA256SUMS 一致（manifest 308 B、styles.css 2400 B）。
 - UI-A11 i18n：新增 `src/i18n.js`（引擎）+ `src/i18n.core.js` / `src/i18n.ui.js` / `src/i18n.hud.js` / `src/i18n.obsidian.js`（四域字典，en/zh key 集合一致，共 209 key）；全部用户可见文案与 `upstream/template.html`（40 个 `data-i18n*` 绑定）走 `kgT()`；语言跟随 `moment.locale()`（非 zh 默认 en），设置页三选项「跟随应用 / 中文 / English」存 `settings.language`，缺字段视为 auto（0.0.13 兼容）；`scripts/i18n_check.mjs` 六项门禁；`npm test` 现在 11 个合成脚本。
 - UI-A6：`src/host.css` 的 `:has()` 已删，改 `.kg-surface.kg-sidebar-open .kg-layout-tools`，由 `hud.setSidebarOpen()` 同时切换 `#sidebar.open` 与 `kg-sidebar-open`；偏移值与原规则相同。
 - UI-A8：图例收起状态改存 `data.json` 顶层 `ui`（`{"kg.legendCollapsed":"0"}`，字符串值），首次加载从 `localStorage` 迁移一次后不再读写；写入失败只 `console.warn`；未扩大持久化范围（搜索、选中、层级、面板不持久化）。
@@ -26,7 +26,7 @@
 - **社区目录条目已上线并同步**：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；镜像 `community-plugins.json` 于 2026-11-05T13:20Z（commit `f23b14fe`）已含该 id（9,971 项），客户端「浏览」可搜到 Knowledge Map。Release 资产计数 main.js 11 / manifest.json 12 / styles.css 10，与门户 11 次下载吻合，判断已有真实安装（无遥测，只能按计数推断）。
 - **自动评审 Completed，无阻断**，剩余建议：Release 缺 GitHub artifact attestations；Release 含多余资产（`RELEASE_NOTES.md`/`SHA256SUMS`，客户端不会下载）；BEHAVIOR 建议（读取全库路径 Vault Enumeration、localStorage 持久化）；CSS LINT `:has`（`src/host.css:15`）；README 无英文（已修）；无 lockfile（本仓库无 npm 运行时依赖，构建不使用依赖）；BUILD VERIFICATION 未跑。
 - 0.0.13 之后有**已进入 0.0.14 的增量**：①图标 `src/plugin.js` 注册 `addIcon('knowledge-map', …)` 并用于 ribbon 与 `getIcon()`（G1 描边版，深/浅主题原生验证通过）；②本次文档/TODO。构建 `main.js` 334,284 B sha256 `9211f03133ac257bb596ebb48e4aecace6d3a43f29b5cf6dddd7e6849fff2245`，**未升版本、未打包发布**（`dist/` 不入库；要发布必须按 0.0.14 流程升版本）。
-- **日常库** `D:/obsidian_vault/hush-ob-bucket` 插件仍是 332,824 B `e568296b…`（0.0.13 发布前候选，缺「同名空正文标题旁重命名」修复）；用户 2026-11-04 明确先不替换，等 0.0.14。
+- **日常库** `D:/obsidian_vault/hush-ob-bucket`：2026-11-06 11:30 按用户当轮明确指示装入 **0.0.14 候选**（`main.js` 396,234 B `b022a4d8…`、`manifest.json` 308 B `aa3cc460…` version 0.0.14、`styles.css` 2,400 B `c14381d9…`）；替换前旧三文件 + `data.json` 备份在 `.local/daily-vault-backup-20261106/`（旧 `main.js` 332,824 B `e568296b…`，`data.json` 196,478 B `1303aadf…`）。安装前后 `data.json` 哈希未变；离线校验 `createLayoutStore` 读该库数据：schema 3、revision 422、15 组 / 5 structures、`unsupported:false`（0.0.13→0.0.14 无需迁移）。插件重载需用户操作（日常库实例未开 CDP，agent 无法代劳）。回滚：把备份目录的 main.js/manifest.json/styles.css 覆盖回插件目录即可。
 
 ### 0.0.14 范围（用户已确认）
 
