@@ -10,7 +10,7 @@
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 实际验证环境 | 0.0.13 界面在 Obsidian 1.15.0（合成库 vault-012 与「日常库副本」vault-013）验证；0.0.14 的原生验证环境与结果以 [TODO.md](../TODO.md) 的 UI-A6/A8/A10/A11/A13 行为准；0.0.12 及更早在 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
 | 平台声明 | `isDesktopOnly: true`，仅支持桌面版 Obsidian；移动端未验证、不在支持范围 |
-| 发布状态 | **0.0.14 是当前正式发布版本**（2026-11-06 发布）：tag `0.0.14` + GitHub Release <https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.14>，由 GitHub Actions `Release` 工作流（run 42164446268）在 runner 上构建并发布，资产**恰三项**：`main.js` 396,234 B sha256 `b022a4d8…`、`manifest.json` 308 B `aa3cc460…`、`styles.css` 2,400 B `c14381d9…`；`SHA256SUMS` 与发布说明在 Release 正文中，三资产带 GitHub Actions 构建来源证明（见 [RELEASE_CI.md](RELEASE_CI.md)）。上一版 0.0.13 的 Release 仍保留（五资产，含 `SHA256SUMS`/`RELEASE_NOTES.md`）。社区目录条目：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；门户 512 图标与 Overview 刷新待手动执行（截至 2026-11-06 未上传）。 |
+| 发布状态 | **0.0.14 是当前正式发布版本**（2026-11-06 发布）：tag `0.0.14` + GitHub Release <https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.14>，由 GitHub Actions `Release` 工作流（run 42164446268）在 runner 上构建并发布，资产**恰三项**：`main.js` 396,234 B sha256 `b022a4d8…`、`manifest.json` 308 B `aa3cc460…`、`styles.css` 2,400 B `c14381d9…`；`SHA256SUMS` 与发布说明在 Release 正文中，三资产带 GitHub Actions 构建来源证明（见 [RELEASE_CI.md](RELEASE_CI.md)）。上一版 0.0.13 的 Release 仍保留（五资产，含 `SHA256SUMS`/`RELEASE_NOTES.md`）。社区目录条目：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；门户条目图标与 Overview 已于 2026-11-06 由维护者在门户后台更新（门户图标由图标名 + 背景色组合，不支持上传仓库内 PNG/SVG）。 |
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 
