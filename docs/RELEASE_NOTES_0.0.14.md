@@ -51,11 +51,17 @@ unchanged.
 
 ### README rewritten as an introduction and tutorial
 
-The README now leads with what the map is for, then a short tutorial with a demo
-recording (synthetic vault, English UI), the layout toolbar, and the bilingual
-settings page. It also documents the real interaction model (single click selects,
-double click focuses, scroll moves between levels) instead of the older, inaccurate
-description.
+The README is now a product guide and a tutorial, built around three ideas:
+**see your knowledge layout** (containment has depth, links have a plane; pan, zoom
+through levels, Ctrl + hover to preview), **see how knowledge connects** (links form
+chains you can follow when debugging) and **arrange the map yourself** (drag the
+important regions to the middle and push details aside, then keep that arrangement).
+Each section pairs the idea with a short recording or screenshot from a synthetic
+demo vault (English UI): `knowledge-map-overview.png`, `knowledge-map-pan.gif`,
+`knowledge-map-zoom.gif`, `knowledge-map-preview.gif`, `knowledge-map-links.png` and
+`knowledge-map-layout.gif`. It also documents the real interaction model (single
+click selects, double click focuses, scroll moves between levels) instead of the
+older, inaccurate description.
 
 ## Fixes and internal changes
 
