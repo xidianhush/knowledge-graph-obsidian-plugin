@@ -207,10 +207,13 @@
 
 ### 环境提示
 
-- Obsidian 1.14.5 在 `D:\Obsidian`；沙箱内直接启动会崩，需 `danger-full-access` 的 `powershell -NoProfile -Command "Start-Process ..."`（或 `cmd //c start`）；`--remote-debugging-port` 自定，`--enable-logging` 可拿宿主 stderr。
+- Obsidian 实测为 1.15.0（窗口标题），安装在 `D:\Obsidian`；沙箱内直接启动会崩（`FATAL:platform_channel.cc(83) Check failed ... 拒绝访问`），需 `danger-full-access` 用 Python detached `Popen` 或 `powershell -NoProfile -Command "Start-Process ..."` 启动；`--remote-debugging-port` 自定，`--enable-logging` 可拿宿主 stderr。
+- **git push 的凭据问题（2026-11-06 实测）**：`origin` 是 HTTPS，但沙箱内 `git push` 拿不到凭据（`fatal: unable to get password from user`，GCM 无法交互）；本机 `~/.ssh/id_rsa` 已通过 GitHub 认证，所以推送用 `git push git@github.com:xidianhush/knowledge-graph-obsidian-plugin.git main`（不改 remote 配置也可）。推之前先 `GIT_TERMINAL_PROMPT=0 git ls-remote origin refs/heads/main` 核对远端 HEAD。
+- 宿主网络无法访问 `github.com` 的 release 资产下载（Obsidian 内 in-app 安装会 404，而沙箱 python 直连同一 URL 200）；需要验证安装时用 `.local/native/a10_launch_proxy.py` 的本地 HTTPS 代理只替换该域名的 DNS/TLS，并在结论里如实披露。
 - 可复用 CDP 脚本：`.local/native/cdp_lib.py`、`lead_matrix_phase1.py`、`lead_compat_167.py`、`lead_drag_114.py`。UI 改动至少覆盖：打开图谱、拖动保存、重建、Esc/撤销、分屏、浅色主题、空白库首用。
 - git 若遇 `.git/index.lock` 幻影锁：把 `.git/*.lock` 移到 `.git/locks-quarantine/` 后立即执行命令。
 - 用户验收方式：用户在日常库 `D:\obsidian_vault\hush-ob-bucket` 体验并在 `product-site-acceptance/` 写报告；agent 不替用户宣称通过。
+- 仓库根会反复出现 0 字节纯数字文件（Obsidian/Chromium 运行期日志与占位残留）；`.gitignore` 已加 `/[0-9][0-9][0-9]*`，关闭 Obsidian 后可直接 `rm`。
 
 ## 权限与协作习惯
 
