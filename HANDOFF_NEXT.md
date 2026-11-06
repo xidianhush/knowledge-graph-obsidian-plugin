@@ -19,7 +19,8 @@
 
 2026-11-06 用户新增：
 - **UI-A13 README 理念/教程 + 动图**：把当前英文 README 升级为「理念 + 上手教程 + 动图」；具体脚本、分镜、动图内容**等用户指令**，不要擅自定稿；图片/GIF 放 `docs/assets/`，控制体积（GIF 建议 ≤2–3 MB，用合成库录制，避免隐私内容）。
-- **UI-A14 插件 id / URL 去「smoke」**：当前 manifest `id` 为 `knowledge-graph-smoke`，导致社区 URL、安装目录、命令 id 都带 smoke，用户认为「草率、不像发布版本」。**动手前必须与用户确认方案**：manifest `id` 决定安装目录 `.obsidian/plugins/<id>/`、`data.json` 位置、更新匹配和社区条目身份；门户条目 id 在提交时固定，改 id 等于重新提交条目（旧条目下架/保留策略要定），且既有 0.0.13 安装会收不到更新。可行设计：新 id（如 `knowledge-map`）+ 新代码在 `data.json` 缺失时从旧目录 `.obsidian/plugins/knowledge-graph-smoke/data.json` 导入 `settings`/`layoutOverrides`（插件目录在 vault 内，可用 `app.vault.adapter` 读取）+ `docs/INSTALL.md` 迁移说明 + 门户重新提交与旧条目处理。`VIEW_TYPE`/命令 id 建议尽量保留以免破坏快捷键/脚本，但 `knowledge-graph-smoke:*` 命令名与 id 一致性需一并决定。原 DEC-004「首发 id 不变」被本轮需求推翻，需新决策（DEC-006）并由用户拍板。
+- **UI-A14 插件 id / URL 去「smoke」——已决定 0.0.14 不做**（用户 2026-11-06）：先维持 `knowledge-graph-smoke`，后续再看情况。若将来要做，方案与影响记录在 DEC-006：改 id 会改变安装目录 `.obsidian/plugins/<id>/`、`data.json` 位置、更新匹配与社区条目身份；门户条目 id 提交后固定，需要重新提交并处理旧条目；可行设计是新 id + 首次加载从旧目录导入 `settings`/`layoutOverrides` + `docs/INSTALL.md` 迁移说明 + 门户重提。**0.0.14 不要动 id。**
+- **门户图标上传并入 0.0.14 发布动作**（用户 2026-11-06）：`docs/assets/knowledge-map-icon.png`（512，紫底白字形）已就绪；发布 0.0.14 后登录 <https://community.obsidian.md> → Edit listing → Choose icon 上传（不再单独提前上传）。
 
 ### i18n 落点（UI-A11）
 
@@ -39,9 +40,9 @@
 
 ### 待用户决定（open）
 
-1. **UI-A14** id 改名方案与时机：新 id 取值、是否重新提交门户（旧条目如何处置）、是否做 data.json 自动迁移、是否保留旧命令别名。
+1. ~~UI-A14 id 改名~~ → 已定：0.0.14 不做，后续再议（DEC-006）。
 2. **UI-A13** README 理念/教程的具体内容与动图分镜（用户会边做边给指令）。
-3. 是否现在替换门户图标（需登录 <https://community.obsidian.md> → Edit listing → Choose icon；`docs/assets/knowledge-map-icon.png` 已就绪）。
+3. ~~是否现在替换门户图标~~ → 已定：随 0.0.14 发布一起上传（见上）。
 4. 0.0.14 的发布授权（tag/Release/门户刷新）与是否接受 GitHub Actions 生成 attestations。
 
 ### 建议接手顺序
@@ -49,6 +50,19 @@
 1. `npm test` 核对基线（应 10 脚本全过），`git log --oneline -5` 确认 HEAD `7e7cd96`，读 TODO 的 0.0.14 小节与本节。
 2. 先向用户确认上面的 open 项（尤其 UI-A14），再按 UI-A11 → UI-A6 → UI-A8 → UI-A7 → UI-A13 的顺序推进；每完成一项补回归与证据。
 3. 0.0.14 发布前做一轮发布门禁（打包一致性 + 空白库 in-app 安装 + 日常库副本 reconcile 场景），再交用户验收。
+
+### 正式交接包（2026-11-06，可直接交给下一位 agent）
+
+```
+项目：D:\what_i_am_doing\Project\knowledge-graph-obsidian-plugin
+仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin
+交接 HEAD：7e7cd96（图标）→ 随后 aa9e313/本次文档提交（以 git log 最新为准）
+当前发布版：0.0.13（tag 0.0.13、五资产 Release、社区目录条目 knowledge-graph-smoke 已上线并同步）
+本轮范围：0.0.14（i18n、:has、Release 精简+attestations、localStorage、in-app 安装验证、README 理念教程+动图、门户图标随发布上传）；插件 id 改名（UI-A14）0.0.14 不做
+先读：AGENTS.md、HANDOFF_NEXT.md「本版交接：0.0.14」、TODO.md（UI-A6~A13）、DEVELOPMENT.md
+接手第一步：`npm test`（应 10 脚本全过）→ `git log --oneline -5` → 向用户确认 UI-A13 动图分镜与 0.0.14 发布授权
+边界：不动 schema3/capture-reconcile-apply/upstream/；不升级或修改日常库；不 push/打 tag/发 Release/刷新门户，除非用户明确授权
+```
 
 ## 先做什么
 
