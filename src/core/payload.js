@@ -2,7 +2,7 @@
 function decodeGraphPayload(payload) {
   const data = typeof payload === 'string' ? JSON.parse(payload) : JSON.parse(JSON.stringify(payload));
   if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.edges) || !data.meta) {
-    throw new Error('图谱快照缺少 nodes / edges / meta');
+    throw new Error(kgT('core.payload.missingFields'));
   }
   const meta = data.meta;
   if (meta.codec && meta.codec !== 'idx1') throw new Error('Unsupported graph codec: ' + meta.codec);

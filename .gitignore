@@ -18,6 +18,8 @@ data.json
 *.key
 *.log
 *.pyc
+# Obsidian 在仓库根生成的 0 字节纯数字占位文件（反复出现，忽略即可）
+/[0-9][0-9][0-9]*
 # 产品端验收截图：含真实库笔记标题，仅本地保存，不进公开交付
 product-site-img-evidence/
 product-site-acceptance/product-site-img-evidence/

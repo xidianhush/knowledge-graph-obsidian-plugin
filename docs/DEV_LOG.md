@@ -1,6 +1,6 @@
 # Development log（历史开发与验收流水）
 
-> 这是 0.0.1–0.0.13 期间的开发/验收流水记录，原为根目录 `README.md` 正文（中文，含本机路径与本地证据引用，仅作历史参考）。面向使用者的说明见根目录 [README.md](../README.md)；当前任务、验收与证据见 [TODO.md](../TODO.md)；协作约定见 [AGENTS.md](../AGENTS.md)。
+> 这是 0.0.1–0.0.13 期间及 0.0.14 候选的开发/验收流水记录，原为根目录 `README.md` 正文（中文，含本机路径与本地证据引用，仅作历史参考）。面向使用者的说明见根目录 [README.md](../README.md)；当前任务、验收与证据见 [TODO.md](../TODO.md)；协作约定见 [AGENTS.md](../AGENTS.md)。
 
 ---
 
@@ -13,6 +13,8 @@ Knowledge Map（仓库名仍为 `knowledge-graph-obsidian-plugin`，插件 id �
 当前工作区：`D:/what_i_am_doing/Project/knowledge-graph-obsidian-plugin`（原开发机路径 `D:/Documents/ChatGPT/knoeledg-graph-obsidian-plugin` 仅作历史参考）。
 
 **2026-11-01 开发交接**：从 GitHub clone 后先读 [HANDOFF_NEXT.md](HANDOFF_NEXT.md)，按 [DEVELOPMENT.md](DEVELOPMENT.md) 执行 `npm test`。该入口使用合成输入，无需个人库。源码交接不等于正式发布；原机器路径、本地证据与安装状态均须与新环境区分。
+
+**2026-11-06：0.0.14 候选完成（未 tag / 未 Release）**。本轮按用户确认范围完成社区评审建议与新增需求：①UI-A11 i18n 中英双语——新增 `src/i18n.js` 引擎与 `src/i18n.core.js`/`i18n.ui.js`/`i18n.hud.js`/`i18n.obsidian.js` 四域字典（209 key，en/zh 集合一致），全部用户可见文案与 `upstream/template.html`（40 个 `data-i18n*` 绑定）改走 `kgT()`；语言跟随 `moment.locale()`（非中文默认英文），设置页新增「跟随应用 / 中文 / English」并存 `settings.language`（缺字段视为 auto，兼容 0.0.13）；切换后已打开的图谱与设置页立即刷新，命令面板 / ribbon 提示 / 标签页标题在重载插件后更新。②UI-A6 移除 `:has`：`src/host.css` 改 `.kg-surface.kg-sidebar-open .kg-layout-tools`，由 `hud.setSidebarOpen()` 同步类，偏移值与原规则相同。③UI-A7 Release 三资产 + attestations：新增 `.github/workflows/release.yml`（tag `0.0.*` 触发、runner 上构建、三段版本校验、只上传 main.js / manifest.json / styles.css、SHA256SUMS 与说明进 Release 正文、`attest-build-provenance@v2`）与 `docs/RELEASE_CI.md`；本地演练 7/7 通过。④UI-A8：图例收起状态改存 `data.json` 顶层 `ui`（首次从 localStorage 迁移一次），写失败仅 warn；未扩大持久化范围。⑤新增 `scripts/i18n_check.mjs` 六项门禁，`npm test` 由 10 个合成脚本增为 11 个且全过；schema3 差分检查的「写失败」场景改为真正触发写失败（原实现被单所有者守卫提前拒绝而空跑）。⑥UI-A13 README 重写为「理念 + 一分钟上手 + 图例含义 + 功能/安装/限制 + 中文简介」，配主 GIF（合成库录制）、布局横带与中英设置页截图。⑦版本升 0.0.14（`package.json`/`manifest.json`/`versions.json`），构建 `main.js` 396,234 B sha256 `b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5`；新增 `docs/RELEASE_NOTES_0.0.14.md`，`docs/INSTALL.md` 升版并补充语言与持久化说明。本轮仅 commit + push；**tag `0.0.14`、GitHub Release、门户 512 图标上传与 Overview 刷新均待用户验收后授权**（Actions attestations 方案用户已接受；推 tag 前需确认仓库 Settings → Actions → General → Workflow permissions 为 read-write）。
 
 2026-11-01：47-A3 首轮实现完成——布局存储升级为 **schema3**，同一笔记的所有分组共享一份 identity，`outline` 不再逐组重复；旧 schema1/2 数据在下次协调/写入时自动迁移，失败保留原数据。0.0.11 合成回归 10 个脚本全部通过；同机 5000 标题/10 组核心记录 11.50MB→0.88MB、模型+协调+JSON p50 472.5→93.1ms，见 [LAYOUT_SCALE_RESULT.md](LAYOUT_SCALE_RESULT.md)。2026-11-01 已 commit `13933dc`，push 到 origin/main 并发布 GitHub pre-release [v0.0.11](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/v0.0.11)；原生 0.0.11（Obsidian 1.14.5）拖/存/重建（dx=dy=0）/Esc/撤销、同笔记两组共享 1 条 structures、30 分钟连续压力（1161 轮 0 失败、重建 p50 0.400s、预览 151/151、隐藏恢复 151/151、busy 卡死 0）、schema3 冷启动（rev/几何一致）均已完成，见 `.local/evidence/native-011/LAYOUT_NATIVE_RESULT.md` 与 `.local/evidence/continuous-011/RESULT.md`。用户已于 2026-11-01 在日常库完成 0.0.11 体验验收（47-P2/47-P3，13:50–15:39，报告 `47-P3_PRODUCT_SITE_ACCEPTANCE_REPORT.md`）。2026-11-01 用户明确授权后，日常库已升级至 0.0.11（仅替换三个运行文件，data.json 保留 schema1 rev87、首次建图时迁移；0.0.6 四文件已备份，预期提示与回退步骤见 `.local/acceptance-daily-0.0.11.md`）。
 

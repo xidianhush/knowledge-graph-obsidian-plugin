@@ -303,31 +303,36 @@
 <header id="topbar">
   <span class="brand">__PAGE_TITLE__<small id="subtitle"></small></span>
   <div id="levelbar">
-    <button id="zoomout" title="缩小一层（[）">−</button>
+    <button id="zoomout" title="缩小一层（[）" data-i18n-title="ui.zoomOut">−</button>
+    <!-- #pills 的胶囊是 hud.js buildPills() 用 innerHTML 重建的（title 由 levelLabel 生成），
+         模板不绑定任何 data-i18n，交给 hud 流。 -->
     <span id="pills"></span>
-    <button id="zoomin" title="放大一层（]）">+</button>
+    <button id="zoomin" title="放大一层（]）" data-i18n-title="ui.zoomIn">+</button>
   </div>
   <span id="readout"></span>
   <span class="spacer"></span>
-  <input id="search" type="search" placeholder="搜索笔记 / 标题…">
-  <select id="domain"><option value="all">全部学科</option></select>
-  <select id="labels" title="标签的显示策略（自动 = 按屏幕密度竞争）">
-    <option value="auto">自动</option>
-    <option value="all">全部显示</option>
-    <option value="selected">只显示选中</option>
+  <input id="search" type="search" placeholder="搜索笔记 / 标题…" data-i18n-placeholder="ui.search.placeholder">
+  <select id="domain"><option value="all" data-i18n="ui.domain.all">全部学科</option></select>
+  <select id="labels" title="标签的显示策略（自动 = 按屏幕密度竞争）" data-i18n-title="ui.labels.title">
+    <option value="auto" data-i18n="ui.labels.auto">自动</option>
+    <option value="all" data-i18n="ui.labels.all">全部显示</option>
+    <option value="selected" data-i18n="ui.labels.selected">只显示选中</option>
   </select>
-  <button id="rebuild" title="重新构建当前库的图谱（不用关开视图）" aria-label="重新构建当前库的图谱" hidden><span class="kg-action-icon" aria-hidden="true">↻</span><span class="kg-action-label">重新构建</span></button>
-  <button id="layout-mode" title="进入/退出布局调整：拖动节点、调整整组" aria-label="调整布局" aria-pressed="false"><span class="kg-action-icon" aria-hidden="true">✥</span><span class="kg-action-label">调整布局</span></button>
-  <button id="reset" title="回到该层默认视角">重置视角</button>
+  <!-- #rebuild 的 title/aria-label/.kg-action-label 在构建阶段会被 plugin.js syncRebuildButton()
+       改写（busy 态）；#layout-mode 的 aria-label/label 在切换编辑态时会被 hud.js 改写。
+       模板这里只绑定常态文案，动态态由 plugin/hud 流用各自字典覆盖。 -->
+  <button id="rebuild" title="重新构建当前库的图谱（不用关开视图）" aria-label="重新构建当前库的图谱" data-i18n-title="ui.rebuild.title" data-i18n-aria-label="ui.rebuild.aria" hidden><span class="kg-action-icon" aria-hidden="true">↻</span><span class="kg-action-label" data-i18n="ui.rebuild.label">重新构建</span></button>
+  <button id="layout-mode" title="进入/退出布局调整：拖动节点、调整整组" aria-label="调整布局" aria-pressed="false" data-i18n-title="ui.layoutMode.title" data-i18n-aria-label="ui.layoutMode.aria"><span class="kg-action-icon" aria-hidden="true">✥</span><span class="kg-action-label" data-i18n="ui.layoutMode.label">调整布局</span></button>
+  <button id="reset" title="回到该层默认视角" data-i18n="ui.reset.label" data-i18n-title="ui.reset.title">重置视角</button>
 </header>
 
 <div id="layout-tools" class="kg-layout-tools" hidden>
   <div id="layout-options">
-    <button id="layout-parent">选父级</button>
-    <button id="layout-undo">撤销</button>
-    <button id="layout-redo">重做</button>
-    <button id="layout-reset-group" title="恢复所选元素及其同父兄弟；保留内部子组调整">恢复此组</button>
-    <button id="layout-reset-all" title="清除本库全部已保存的布局调整；本会话可撤销">全库恢复自动布局</button>
+    <button id="layout-parent" data-i18n="ui.layout.parent">选父级</button>
+    <button id="layout-undo" data-i18n="ui.layout.undo">撤销</button>
+    <button id="layout-redo" data-i18n="ui.layout.redo">重做</button>
+    <button id="layout-reset-group" title="恢复所选元素及其同父兄弟；保留内部子组调整" data-i18n="ui.layout.resetGroup.label" data-i18n-title="ui.layout.resetGroup.title">恢复此组</button>
+    <button id="layout-reset-all" title="清除本库全部已保存的布局调整；本会话可撤销" data-i18n="ui.layout.resetAll.label" data-i18n-title="ui.layout.resetAll.title">全库恢复自动布局</button>
     <span id="layout-status" role="status"></span>
   </div>
 </div>
@@ -337,32 +342,35 @@
 
 <div id="legend">
   <div id="legend-head">
-    <span class="t">图例</span>
+    <span class="t" data-i18n="ui.legend.title">图例</span>
+    <!-- 按钮文字（收起/展开）由 hud.js applyLegendCollapsed() 按折叠状态重写，属于 hud 动态文案，
+         模板这里只留中文兜底、不绑 data-i18n（绑了启动时也会被覆盖）；title 是静态的，绑上。 -->
     <button id="legend-toggle" type="button" aria-expanded="true" aria-controls="legend-body"
-            title="收起 / 展开图例（快捷键 L）">收起</button>
+            title="收起 / 展开图例（快捷键 L）" data-i18n-title="ui.legend.toggleTitle">收起</button>
   </div>
   <div id="legend-body">
   <section>
-    <h4>学科（顶层目录）</h4>
+    <h4 data-i18n="ui.legend.domainsHeading">学科（顶层目录）</h4>
+    <!-- 学科行是 hud.js buildLegend() 用 innerHTML 重建的（含空库兜底行），模板不绑 data-i18n。 -->
     <div id="legend-domains"></div>
   </section>
   <section id="legend-rel">
-    <h4>关系（每处 [[链接]] 各画一条细线，任何尺度都在）</h4>
-    <div class="row"><span class="sw" style="background:linear-gradient(90deg,#5B8FCC,#4FAFA8)"></span><span class="tx">链接<strong>颜色 = 学科色</strong>：同一学科内同色，跨学科链接两端渐变；存储粒度（整篇级/标题级）不参与配色，类型看线型与端点标记</span></div>
-    <div class="row"><span class="sw" style="height:2px;background:repeating-linear-gradient(90deg,#7FB2E8 0 5px,transparent 5px 9px)"></span><span class="tx">并列/对比（方向未知）—— 虚线段，两端都只标圆点</span></div>
-    <div class="row"><svg width="24" height="10" viewBox="0 0 24 10" style="flex:none"><circle cx="3.2" cy="5" r="2.6" fill="#C7D5E2"/><line x1="5.5" y1="5" x2="15" y2="5" stroke="#AFC6DA" stroke-width="2"/><path d="M23 5 L14.5 1.4 L14.5 8.6 Z" fill="#C7D5E2"/></svg><span class="tx">链接线的两端：圆点 = 出发点，箭头 = 指向处（线在两个圆的边界处截断，不插进圆心）</span></div>
-    <div class="row"><span class="tx"><b>同一对元素之间线的条数 = 关联强度</b>：缩到文件级时两篇笔记之间那一束细线，就是它们互相引用的分量</span></div>
-    <div class="row"><span class="tx">缩放<b>只改线的长度和形状</b>，不改颜色、不改浓淡、不减少条数 —— 链接本来就是从一个标题指向一个标题的，不该因为缩小而消失</span></div>
-    <div class="row"><span class="sw" style="background:#d6dbe4;height:0;border-top:1.5px dotted rgba(214,219,228,.55)"></span><span class="tx">包含：不画成网，悬停/选中时只用灰色<b>点线</b>画出祖先链 —— 点线是「你在哪」，实线才是「谁链接谁」</span></div>
+    <h4 data-i18n="ui.legend.relationsHeading">关系（每处 [[链接]] 各画一条细线，任何尺度都在）</h4>
+    <div class="row"><span class="sw" style="background:linear-gradient(90deg,#5B8FCC,#4FAFA8)"></span><span class="tx" data-i18n-html="ui.legend.linkColor">链接<strong>颜色 = 学科色</strong>：同一学科内同色，跨学科链接两端渐变；存储粒度（整篇级/标题级）不参与配色，类型看线型与端点标记</span></div>
+    <div class="row"><span class="sw" style="height:2px;background:repeating-linear-gradient(90deg,#7FB2E8 0 5px,transparent 5px 9px)"></span><span class="tx" data-i18n="ui.legend.parallel">并列/对比（方向未知）—— 虚线段，两端都只标圆点</span></div>
+    <div class="row"><svg width="24" height="10" viewBox="0 0 24 10" style="flex:none"><circle cx="3.2" cy="5" r="2.6" fill="#C7D5E2"/><line x1="5.5" y1="5" x2="15" y2="5" stroke="#AFC6DA" stroke-width="2"/><path d="M23 5 L14.5 1.4 L14.5 8.6 Z" fill="#C7D5E2"/></svg><span class="tx" data-i18n="ui.legend.endpoints">链接线的两端：圆点 = 出发点，箭头 = 指向处（线在两个圆的边界处截断，不插进圆心）</span></div>
+    <div class="row"><span class="tx" data-i18n-html="ui.legend.strength"><b>同一对元素之间线的条数 = 关联强度</b>：缩到文件级时两篇笔记之间那一束细线，就是它们互相引用的分量</span></div>
+    <div class="row"><span class="tx" data-i18n-html="ui.legend.zoom">缩放<b>只改线的长度和形状</b>，不改颜色、不改浓淡、不减少条数 —— 链接本来就是从一个标题指向一个标题的，不该因为缩小而消失</span></div>
+    <div class="row"><span class="sw" style="background:#d6dbe4;height:0;border-top:1.5px dotted rgba(214,219,228,.55)"></span><span class="tx" data-i18n-html="ui.legend.contains">包含：不画成网，悬停/选中时只用灰色<b>点线</b>画出祖先链 —— 点线是「你在哪」，实线才是「谁链接谁」</span></div>
   </section>
   <section>
-    <h4>节点（一律实心圆）</h4>
-    <div class="row"><span class="dot" style="background:#5B8FCC"></span><span class="tx">颜色 = 学科（顶层目录）</span></div>
-    <div class="row"><span class="dot" style="background:#5B8FCC;width:16px;height:16px"></span><span class="tx">大小 = 规模（下辖元素越多越大）</span></div>
-    <div class="row"><span class="dot" style="background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.35)"></span><span class="tx">黄色光环 = 搜索命中</span></div>
-    <div class="row"><span class="dot" style="background:#5B8FCC;box-shadow:0 0 0 2px #7FB2E8"></span><span class="tx">蓝色圆环 = 与选中元素直接相连（含其内部子元素的链接，出入向都算）</span></div>
+    <h4 data-i18n="ui.legend.nodesHeading">节点（一律实心圆）</h4>
+    <div class="row"><span class="dot" style="background:#5B8FCC"></span><span class="tx" data-i18n="ui.legend.nodeColor">颜色 = 学科（顶层目录）</span></div>
+    <div class="row"><span class="dot" style="background:#5B8FCC;width:16px;height:16px"></span><span class="tx" data-i18n="ui.legend.nodeSize">大小 = 规模（下辖元素越多越大）</span></div>
+    <div class="row"><span class="dot" style="background:#ffd166;box-shadow:0 0 0 3px rgba(255,209,102,.35)"></span><span class="tx" data-i18n="ui.legend.nodeSearch">黄色光环 = 搜索命中</span></div>
+    <div class="row"><span class="dot" style="background:#5B8FCC;box-shadow:0 0 0 2px #7FB2E8"></span><span class="tx" data-i18n="ui.legend.nodeConnected">蓝色圆环 = 与选中元素直接相连（含其内部子元素的链接，出入向都算）</span></div>
   </section>
-  <div class="hint">
+  <div class="hint" data-i18n-html="ui.legend.hint">
     光标放在节点上<b>向上滚 = 逐层深入</b>，向下滚 = 回到更粗的层级 · 拖拽平移，
     或用<b>方向键</b>平移（按住 <b>Shift</b> 快 4 倍，不用点任何东西、不会改选中）·
     单击看详情（<b>只留下与它相关的连线</b>，其余淡到近乎消失；相连的元素亮蓝环）·
@@ -374,7 +382,9 @@
 
 <div id="tooltip"></div>
 <div id="toast"></div>
-<div id="preview" role="dialog" aria-label="笔记预览"></div>
+<div id="preview" role="dialog" aria-label="笔记预览" data-i18n-aria-label="ui.preview.aria"></div>
+<!-- footer 文案由 hud.js updateStats() 在运行时重写（第一行读数 + 第二行 kgT('ui.footer', {generated})），
+     模板这里只保留中文兜底、不加 data-i18n（加了会被运行时覆盖）。 -->
 <footer id="footer">
   生成于 __GENERATED__ · 数据来自 Obsidian vault（本地构建，无服务器）
 </footer>

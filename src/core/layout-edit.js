@@ -22,21 +22,21 @@ function createLayoutEditor(nodes, rootRadius) {
   function begin(id) {
     if (tx) cancel();
     const node = byId.get(id);
-    if (!node) return '元素已不存在';
+    if (!node) return kgT('core.layout.edit.elementGone');
     const parent = byId.get(node.parent) || root;
     const siblings = parent===root?roots:kids.get(parent.id);
-    if (siblings.length > 128) return '此组超过 128 个元素，当前候选暂不支持调整';
+    if (siblings.length > 128) return kgT('core.layout.edit.tooManyElements');
     const group = siblings.map(n => ({id:n.id,x:(n.x-parent.x)/parent.r,y:(n.y-parent.y)/parent.r,r:n.r/parent.r}));
     // Payload rounding is in world units. Do not force a gap into tangent packing.
     const tolerance = Math.max(1e-8, 0.002 / parent.r);
-    if (tolerance > 0.002 || !valid(group,tolerance)) return '此组初始几何不适合安全调整';
+    if (tolerance > 0.002 || !valid(group,tolerance)) return kgT('core.layout.edit.unsafeGeometry');
     const branches = new Map(), before = new Map();
     for (const sibling of siblings) {
       const stack=[sibling], branch=[];
       while(stack.length) {const n=stack.pop();branch.push(n);before.set(n.id,{x:n.x,y:n.y});stack.push(...(kids.get(n.id)||[]));}
       branches.set(sibling.id,branch);
     }
-    if (before.size > 5000) return '此组子树超过 5000 个元素，当前候选暂不支持调整';
+    if (before.size > 5000) return kgT('core.layout.edit.subtreeTooLarge');
     tx={id,parent,group,initial:group.map(n=>({...n})),before,branches,tolerance};
     return null;
   }

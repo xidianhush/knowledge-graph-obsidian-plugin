@@ -41,10 +41,11 @@ const safe=build();const badResult=createLayoutModel(safe.nodes,safe.meta.layout
 check('Corrupt geometry is never applied',()=>{assert.ok(badResult.skipped>0);assert.ok(safe.nodes.every(n=>Number.isFinite(n.x+n.y)));});
 const beforeFailure=JSON.stringify(store.state().groups);fail=true;
 await assert.rejects(store.command(owner,'reset-all'),/disk full/);
-check('Write failure preserves committed state and releases the lock',()=>{assert.equal(JSON.stringify(store.state().groups),beforeFailure);assert.equal(store.state().busy,false);assert.ok(store.acquire(other));store.release(other);});fail=false;
+check('Write failure preserves committed state and releases the lock',()=>{assert.equal(JSON.stringify(store.state().groups),beforeFailure);assert.equal(store.state().busy,false);assert.equal(store.state().messageKey,'layout.saveFailed');assert.ok(store.acquire(other));store.release(other);});fail=false;
 assert.ok(store.acquire(owner));
 check('Only one view can own a transaction',()=>assert.equal(store.acquire(other),false));
-await assert.rejects(store.command(other,'reset-all'),/另一视图/);store.release(owner);
+// 语言无关：拒绝原因用稳定错误码判断（message 会随界面语言变化）。
+await assert.rejects(store.command(other,'reset-all'),error=>error?.code==='layout.busyOtherView');assert.equal(store.state().messageKey,'layout.saveFailed');store.release(owner);
 let resolveWrite;const delayed=createLayoutStore(null,()=>new Promise(r=>resolveWrite=r));
 const pending=delayed.command(owner,'edit','root',{test:1});await Promise.resolve();await Promise.resolve();
 check('Pending write does not publish durable state',()=>{assert.equal(delayed.state().revision,0);assert.equal(delayed.acquire(other),false);});
@@ -59,7 +60,7 @@ const folder=build(files.map((f,i)=>({...f,path:i?f.path.replace('Demo/','Rename
 check('Folder rename migrates descendant groups',()=>assert.equal(createLayoutModel(folder.nodes,folder.meta.layout_root_radius).apply(store.state().groups).skipped,0));
 await store.changePath('RenamedFolder/Renamed.md',null,false);
 check('Deletion removes deleted parent groups but retains surviving sibling record for repair',()=>{const groups=store.state().groups;assert.equal(Object.keys(groups).length,1);assert.ok(!Object.keys(groups).some(k=>k.includes('Renamed.md')));});
-check('Future schemas disable writes without destroying data',()=>assert.equal(createLayoutStore({schemaVersion:99,groups:{}},async()=>{}).acquire(owner),false));
+check('Future schemas disable writes without destroying data',()=>{const future=createLayoutStore({schemaVersion:99,groups:{}},async()=>{});assert.equal(future.acquire(owner),false);assert.equal(future.state().messageKey,'layout.unsupported');assert.equal(future.state().unsupported,true);});
 const emptyHistory=createLayoutStore(null,async()=>{});
 await emptyHistory.command(owner,'edit','root',{test:1});await emptyHistory.command(owner,'reset-all');
 await emptyHistory.changePath('Unrepresented.md','Renamed.md',false);

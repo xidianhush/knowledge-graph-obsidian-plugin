@@ -69,7 +69,7 @@ function createHudScope(host, shadow, surface) {
     // Snapshot smoke must not navigate the host or open the author's real vault.
     location: { set href(value) {
       const toast = shadow.getElementById('toast');
-      toast.textContent = '当前为快照冒烟，原笔记跳转将在正式适配层接入';
+      toast.textContent = kgT('core.browser.snapshotToast');
       toast.classList.add('show');
       setTimer(() => toast.classList.remove('show'), 2600);
     } },

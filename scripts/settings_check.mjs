@@ -2,10 +2,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 const read = name => fs.readFileSync(new URL('../' + name, import.meta.url), 'utf8');
+const notices = [];
 const context = vm.createContext({ structuredClone, console, module: {},
-  require: () => ({ Plugin: class {}, ItemView: class {}, PluginSettingTab: class {}, Setting: class {} }) });
-vm.runInContext(['src/pipeline/defaults.js','src/pipeline/input.js','src/settings.js','src/plugin.js'].map(read).join('\n') + '\nthis.api={graphSettingsDraft,validateGraphSettings,graphPathAllowed};', context);
-const { graphSettingsDraft, validateGraphSettings, graphPathAllowed } = context.api;
+  require: () => ({ Plugin: class {}, ItemView: class {}, PluginSettingTab: class {}, Setting: class {},
+    Notice: class { constructor(message) { notices.push(message); } }, moment: { locale: () => 'en' } }) });
+vm.runInContext(['src/i18n.js','src/i18n.obsidian.js','src/pipeline/defaults.js','src/pipeline/input.js','src/settings.js','src/plugin.js'].map(read).join('\n')
+  + '\nthis.api={graphSettingsDraft,validateGraphSettings,graphPathAllowed,kgT,kgI18nPreference};', context);
+const { graphSettingsDraft, validateGraphSettings, graphPathAllowed, kgT, kgI18nPreference } = context.api;
 const legacy = { unrelated: { keep: 42 }, pipeline: { config: { include: ['Course/**'], layout: { padding: 1.3 }, preview: { total_chars_budget: 1234 } }, annotations: { manual: 1 }, candidates: { accepted: [1] } } };
 const original = JSON.stringify(legacy), migrated = validateGraphSettings(legacy);
 assert.equal(JSON.stringify(legacy), original);
@@ -37,4 +40,19 @@ const writes=[]; plugin.saveData=async data=>{writes.push(data.settings.debounce
 const second=graphSettingsDraft(changed); second.settings.debounceMs=500;
 await Promise.all([plugin.saveGraphSettings(changed),plugin.saveGraphSettings(second)]);
 assert.deepEqual(writes,[350,500]); assert.equal(plugin.graphSettings.autoUpdate,false); assert.equal(plugin.graphSettings.debounceMs,500); assert.equal(applied,2);
-console.log('SETTINGS_CHECK: legacy defaults, preservation, validation, exclusions, save failure and serialized persistence passed');
+// UI language: auto default, only auto/zh/en accepted, save switches dictionaries and surfaces.
+assert.equal(graphSettingsDraft().settings.language, 'auto');
+assert.equal(migrated.settings.language, 'auto');
+const invalidLanguage = graphSettingsDraft();
+invalidLanguage.settings.language = 'fr';
+assert.throws(() => validateGraphSettings(invalidLanguage));
+assert.equal(kgI18nPreference(), 'auto');
+const switched = graphSettingsDraft(plugin.savedData);
+switched.settings.language = 'zh';
+await plugin.saveGraphSettings(switched);
+assert.equal(plugin.savedData.settings.language, 'zh');
+assert.equal(kgI18nPreference(), 'zh');
+assert.equal(kgT('settings.title'), '知识图谱设置');
+assert.ok(notices.some(message => message.includes('语言已应用')));
+assert.equal(applied, 3);
+console.log('SETTINGS_CHECK: legacy defaults, preservation, validation, exclusions, language switch, save failure and serialized persistence passed');

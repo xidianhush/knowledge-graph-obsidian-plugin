@@ -324,7 +324,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       if (!nodeDrag) return false;
       layout.cancel(); nodeDrag = null; dragging = false; dragMoved = 6;
       if (hooks.onLayoutEnd) hooks.onLayoutEnd();
-      invalidate(); layoutNotice('已取消本次调整'); return true;
+      invalidate(); layoutNotice(kgT('core.renderer.cancelled')); return true;
     }
     function editHandle() {
       var n = byId.get(selectedId);
@@ -340,7 +340,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       var p=layout.parent;
       if(p){ctx.beginPath();ctx.arc(w2sx(p.x),w2sy(p.y),p.r*cam.zoom,0,TAU);ctx.stroke();}
       var h=editHandle();
-      if(h){ctx.fillStyle='#233b50';ctx.beginPath();ctx.arc(h.x,h.y,10,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='12px '+FONT;ctx.textAlign='center';ctx.fillText('移动整组',h.x,h.y-16);}
+      if(h){ctx.fillStyle='#233b50';ctx.beginPath();ctx.arc(h.x,h.y,10,0,TAU);ctx.fill();ctx.stroke();ctx.fillStyle='#e6edf3';ctx.font='12px '+FONT;ctx.textAlign='center';ctx.fillText(kgT('core.renderer.moveGroup'),h.x,h.y-16);}
       ctx.restore();
     }
     var textW = new Map();
@@ -693,7 +693,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
         // 即往上滚放大），也可能是放大到极端（连最小的圆都铺满视口 → maxzoom 停画，
         // 要往下滚）。原来只写「向下滚」在缩太远时是反的。
         var cc0 = contentCenter();
-        ctx.fillText('此处没有内容 · 往回滚一点，或按 Home / 双击空白回到默认视角',
+        ctx.fillText(kgT('core.renderer.emptyViewport'),
                      cc0[0], cc0[1]);
         ctx.textAlign = 'left';
       }
@@ -1736,7 +1736,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
           while(ancestor){if(ancestor.id===selectedId){hit=ancestor;break;}ancestor=byId.get(ancestor.parent);}
         }
         if(hit) {
-          var error=hooks.onLayoutBegin && !hooks.onLayoutBegin() ? '另一视图正在调整或保存布局，请稍后重试' : layout.begin(hit.id);
+          var error=hooks.onLayoutBegin && !hooks.onLayoutBegin() ? kgT('core.layout.busyOtherView') : layout.begin(hit.id);
           if(error && hooks.onLayoutEnd)hooks.onLayoutEnd();
           nodeDrag={id:hit.id,startX:e.clientX,startY:e.clientY,offsetX:(p[0]-cam.panX)/cam.zoom-hit.x,offsetY:(p[1]-cam.panY)/cam.zoom-hit.y,started:false,error:error};
           dragging=false;dragMoved=0;tween=null;
@@ -1757,10 +1757,10 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
         if(Math.hypot(e.clientX-nodeDrag.startX,e.clientY-nodeDrag.startY)<5 && !nodeDrag.started)return;
         dragMoved=6;
         if(nodeDrag.error)return;
-        if(!nodeDrag.started){nodeDrag.started=true;selectedId=nodeDrag.id;layoutNotice('开始调整');}
+        if(!nodeDrag.started){nodeDrag.started=true;selectedId=nodeDrag.id;layoutNotice(kgT('core.renderer.adjustingStart'));}
         var blocked=layout.move((p[0]-cam.panX)/cam.zoom-nodeDrag.offsetX,(p[1]-cam.panY)/cam.zoom-nodeDrag.offsetY);
         canvas.style.cursor='grabbing';invalidate();
-        layoutNotice(blocked?'这里放不下，已保留有效位置':'调整中 · Esc 取消');return;
+        layoutNotice(kgT(blocked?'core.renderer.adjustBlocked':'core.renderer.adjustingHint'));return;
       }
       if (dragging) {
         var dx = e.clientX - lastX, dy = e.clientY - lastY;

@@ -1,4 +1,4 @@
-# 安装、升级、卸载与已知限制（0.0.13）
+# 安装、升级、卸载与已知限制（0.0.14）
 
 本文面向**使用者**，说明如何把插件装进一个 Obsidian 库、升级、回退与卸载，以及当前版本的已知限制。开发与回归说明见 [DEVELOPMENT.md](../DEVELOPMENT.md)，当前进度与验收记录见 [TODO.md](../TODO.md)。
 
@@ -6,11 +6,11 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 插件版本 | 0.0.13（`manifest.json`） |
+| 插件版本 | 0.0.14（`manifest.json`；GitHub Release 仍以 0.0.13 为最新正式版本，0.0.14 的 tag/Release 待用户验收后授权） |
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
-| 实际验证环境 | 0.0.13 界面在 Obsidian 1.15.0（合成库 vault-012 与「日常库副本」vault-013）验证；0.0.12 及更早在 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
+| 实际验证环境 | 0.0.13 界面在 Obsidian 1.15.0（合成库 vault-012 与「日常库副本」vault-013）验证；0.0.14 的原生验证环境与结果以 [TODO.md](../TODO.md) 的 UI-A6/A8/A10/A11/A13 行为准；0.0.12 及更早在 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
 | 平台声明 | `isDesktopOnly: true`，仅支持桌面版 Obsidian；移动端未验证、不在支持范围 |
-| 发布状态 | **0.0.13 已正式发布**：tag `0.0.13` + GitHub Release（https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13），资产 `main.js` 333,570 B sha256 `37589a6f…`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`；仓库含 `versions.json`。0.0.13 已修复日常库验收发现的两处问题（删除标题后整篇标题重排、编辑提示文案），并完成发布门禁 A/B/C（含同名空正文标题笔记重命名回退的同族修复）。0.0.11 仍为 GitHub pre-release。社区目录条目已上线：<https://community.obsidian.md/plugins/knowledge-graph-smoke>（自动评审已完成，仅建议项；也可在 Obsidian 内「浏览」社区插件搜索 Knowledge Map） |
+| 发布状态 | **0.0.13 是当前正式发布版本**：tag `0.0.13` + GitHub Release（https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13），资产 `main.js` 333,570 B sha256 `37589a6f…`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`；社区目录条目已上线：<https://community.obsidian.md/plugins/knowledge-graph-smoke>。**0.0.14 候选已构建但尚未发布**：`main.js` 396,234 B sha256 `b022a4d8…`，`manifest.json` / `package.json` 已升 0.0.14，`versions.json` 增 `"0.0.14":"1.6.7"`；tag、GitHub Release 与门户刷新待用户验收后授权。0.0.14 起 Release 只保留 `main.js`/`manifest.json`/`styles.css` 三资产，`SHA256SUMS` 与发布说明改放 Release 正文，三资产附带 GitHub Actions 构建来源证明（见 [RELEASE_CI.md](RELEASE_CI.md)） |
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 
@@ -41,6 +41,8 @@
 6. 0.0.11 → 0.0.12 仅涉及 manifest 名称/平台声明与版本号变化，`main.js` 与布局数据格式不变，升级后无需迁移，保留 `data.json` 即可。
 7. 0.0.12 → 0.0.13 只改界面（顶栏重建按钮、构建完成提示 2 秒消失、布局工具横带），布局数据仍为 schema3，升级无需迁移，保留 `data.json` 即可。
 8. 0.0.13 候选期间修复了「删除标题后整篇笔记标题重排」与布局编辑提示文案；重新安装只需再次替换 `main.js`/`manifest.json`/`styles.css` 三文件，`data.json` 保留，无需迁移。
+9. 0.0.13 → 0.0.14 只改界面与发布方式：界面中英双语、布局工具条不再依赖 CSS `:has()`、图例收起状态改存 `data.json` 的 `ui` 字段（首次加载会把旧 `localStorage` 值迁移过去）。布局数据仍为 schema3，`data.json` 直接沿用，无需迁移。
+10. **语言设置**：0.0.14 新增「设置 → 第三方插件 → Knowledge Map → 语言」，可选「跟随应用 / 中文 / English」。默认跟随 Obsidian 语言，非中文环境显示英文。切换后已打开的图谱与设置页立即刷新；命令面板、ribbon 悬停提示与标签页标题在重载插件后更新（保存时会提示）。
 
 ### 回退
 
@@ -60,10 +62,11 @@ Obsidian 卸载插件时会连同插件目录删除 `data.json`，**已保存的
 
 - 仅**读取**库内 Markdown 文件用于建图，**不修改笔记**。
 - 布局与设置只保存在本库 `.obsidian/plugins/knowledge-graph-smoke/data.json`，**不含笔记正文**。
+- 0.0.14 起，插件持久化的界面状态只有「图例是否收起」一项，存在同一 `data.json` 的顶层 `ui` 对象（值形如 `{"kg.legendCollapsed":"0"}`）；旧版写在 `localStorage` 里的值会在首次加载时迁移一次，之后不再读写 `localStorage`。搜索词、选中节点、层级、面板开关都不持久化。
 - 笔记节点在悬停/预览时会显示正文摘要（最多 220 字符），这是既有交互的一部分；该摘要只在内存渲染，不写入 `data.json`、不写入日志或状态消息。
 - 插件不发送网络请求、不上传笔记内容、不采集遥测。
 
-## 6. 已知限制（0.0.13）
+## 6. 已知限制（0.0.14）
 
 - 单组同级节点超过 128 个，或受影响节点超过修复预算（5000）时，该组回退为自动布局，不能手动调整。
 - 图谱画布固定深色，不跟随 Obsidian 浅色主题；宿主界面变浅时画布仍为深色（DEC-001，已决定维持）。
@@ -82,12 +85,12 @@ node scripts/build.mjs     # 生成 dist/
 node scripts/package.mjs   # 白名单三文件 + SHA256SUMS -> .local/release/<version>/
 ```
 
-`scripts/package.mjs` 会校验 `manifest.json` 与 `package.json` 版本一致、拒绝把 `smoke-payload.json` / `data.json` 打进包，并输出 `main.js` 的字节数与 SHA-256。
+`scripts/package.mjs` 会校验 `manifest.json` 与 `package.json` 版本一致、拒绝把 `smoke-payload.json` / `data.json` 打进包，并输出 `main.js` 的字节数与 SHA-256。0.0.14 起发布由 [.github/workflows/release.yml](../.github/workflows/release.yml) 在 tag push 时自动完成（构建 → 三资产 → SHA256SUMS 进正文 → attestations → `gh release create`），本地复刻与验证方法见 [RELEASE_CI.md](RELEASE_CI.md)。
 
 ## 8. 反馈模板
 
 ```
-版本：0.0.13 / Obsidian 1.6.7 或 1.14.5 / 操作系统
+版本：0.0.14 / Obsidian 1.6.7 或 1.15.0 / 操作系统
 场景：
 操作步骤：
 实际表现：

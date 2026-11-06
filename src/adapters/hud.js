@@ -34,22 +34,15 @@ function mountHud(scope, surface, core, services = {}) {
   const EDGES = DATA.edges;
 
   const domainColor = (d) => (THEME.domains && THEME.domains[d]) || THEME.fallback || '#8B949E';
-  const TYPE_LABEL = { prerequisite: '前置', derives: '引用', contrast: '并列', contains: '包含' };
-  const TYPE_HINT = {
-    prerequisite: 'source 是 target 的前置',
-    derives: 'source 引用了 target',
-    contrast: '并列/对比，方向未知',
-    contains: '层级包含',
-  };
-  const ORIGIN_LABEL = {
-    wiki: '来自笔记正文的 [[wikilink]]',
-    annotation: '来自 annotations.yaml 手工标注',
-    frontmatter: '来自笔记 frontmatter',
-    candidate: '启发式候选（未人工确认）',
-    hierarchy: '文件夹/标题的包含结构',
-    mixed: '多种来源合并',
-  };
-  const KIND_LABEL = { folder: '文件夹', note: '笔记', heading: '知识点' };
+  // 边类型 / 来源 / 节点种类都是有限枚举（UI-A11）：文案在调用时查 kgT，
+  // 语言切换后由 applyI18n() 重建的 DOM 自然拿到新语言；未知值原样显示，不能丢。
+  const EDGE_TYPES = { prerequisite: 1, derives: 1, contrast: 1, contains: 1 };
+  const ORIGIN_KINDS = { wiki: 1, annotation: 1, frontmatter: 1, candidate: 1, hierarchy: 1, mixed: 1 };
+  const NODE_KINDS = { folder: 1, note: 1, heading: 1 };
+  const edgeLabel = (type) => (EDGE_TYPES[type] ? kgT('hud.edgeType.' + type) : type);
+  const edgeHint = (type) => (EDGE_TYPES[type] ? kgT('hud.edgeHint.' + type) : '');
+  const originLabel = (origin) => (ORIGIN_KINDS[origin] ? kgT('hud.origin.' + origin) : '');
+  const kindLabel = (kind) => (NODE_KINDS[kind] ? kgT('hud.kind.' + kind) : kind);
 
   // 父子索引：过滤时要「留下这篇笔记的全部标题」，得能顺着往下走
   const KIDS = new Map();
@@ -71,8 +64,13 @@ function mountHud(scope, surface, core, services = {}) {
   let searchQ = '';
   let labelMode = 'auto';      // 'auto' | 'on' | 'off' | 'selected'，与渲染器同词汇
 
-  // 用户选的图例收起状态要记住：这份 HTML 是 file:// 直接打开的，Chrome 下
-  // localStorage 可能抛 SecurityError，所以两个方向都整段兜住，失败就退回默认值。
+  // 图例收起状态要记住（UI-A8）：优先走宿主注入的 services.uiStorage（Obsidian 侧
+  // 落 data.json，由 i18n-obsidian 流注入）；没有注入时回退 localStorage —— 这份 HTML
+  // 也能 file:// 直接打开，Chrome 下 localStorage 可能抛 SecurityError，两个方向都整段兜住。
+  const LEGEND_STORAGE_KEY = 'kg.legendCollapsed';
+  const uiStorage = services.uiStorage && typeof services.uiStorage.get === 'function'
+    ? services.uiStorage : null;
+
   function readStored(key, fallback) {
     try {
       const v = window.localStorage.getItem(key);
@@ -84,8 +82,38 @@ function mountHud(scope, surface, core, services = {}) {
     try { window.localStorage.setItem(key, value); } catch (err) { /* 存不下就算了 */ }
   }
 
-  function toast(msg) {
-    toastEl.textContent = msg;
+  // 一次性迁移：宿主 uiStorage 还没有这个键时，把老用户 localStorage 里的状态搬过去；
+  // 用户从没设置过（读不到）就保持默认展开。
+  function loadLegendCollapsed() {
+    if (uiStorage) {
+      let value = null;
+      try { value = uiStorage.get(LEGEND_STORAGE_KEY, null); } catch (err) { value = null; }
+      if (value == null) {
+        const legacy = readStored(LEGEND_STORAGE_KEY, null);
+        if (legacy != null) {
+          value = legacy;
+          try { uiStorage.set(LEGEND_STORAGE_KEY, legacy); } catch (err) { /* 下次再迁移 */ }
+        }
+      }
+      return value === '1';
+    }
+    return readStored(LEGEND_STORAGE_KEY, '0') === '1';
+  }
+
+  function saveLegendCollapsed(collapsed) {
+    const value = collapsed ? '1' : '0';
+    if (uiStorage) {
+      try { uiStorage.set(LEGEND_STORAGE_KEY, value); return; } catch (err) { /* 退回 localStorage */ }
+    }
+    writeStored(LEGEND_STORAGE_KEY, value);
+  }
+
+  // toast 也走字典：记住最后一次的 key/vars，语言切换时 applyI18n() 能重填文字
+  // （只重填，不重置 2.6s 的自动消失计时，别让切换语言把提示「续命」）。
+  let toastState = null;
+  function toast(key, vars) {
+    toastState = { key: key, vars: vars || null };
+    toastEl.textContent = kgT(key, vars);
     toastEl.classList.add('show');
     clearTimeout(toast._t);
     toast._t = setTimeout(() => toastEl.classList.remove('show'), 2600);
@@ -123,9 +151,11 @@ function mountHud(scope, surface, core, services = {}) {
   // 屏幕上真正的连线数由右下角页脚的「关系 N」报（stats.edges，落笔口径）。
   function levelCounts(lv) {
     const row = LEVELS[String(lv)] || {};
-    return '文件夹 ' + (row.folders == null ? '-' : row.folders) +
-      ' · 笔记 ' + (row.notes == null ? '-' : row.notes) +
-      ' · 标题 ' + (row.headings == null ? '-' : row.headings);
+    return kgT('hud.levelCounts', {
+      folders: row.folders == null ? '-' : row.folders,
+      notes: row.notes == null ? '-' : row.notes,
+      headings: row.headings == null ? '-' : row.headings,
+    });
   }
 
   function levelLabel(lv) {
@@ -151,32 +181,43 @@ function mountHud(scope, surface, core, services = {}) {
       ' · ' + levelCounts(lv);
     // 第 11 带（第五轮：圆即入口）：不占层级数字（enter[] 仍是 10 项），只在提示位说一句。
     // 药丸层已删除 → 文案必须教会用户「Ctrl + 悬停标题圆」，否则功能等于不存在。
-    let hint;
-    const pvHint = 'Ctrl + 悬停标题圆可预览正文';
-    if (lv < MAX_DEPTH) {
-      hint = ' <span style="color:#7e879a">— 继续向上滚可深入 · ' + pvHint + '</span>';
-    } else {
-      hint = ' <span style="color:#7e879a">— ' + pvHint + '</span>';
-    }
+    // 提示按「一整句」进字典，不再拼中英碎片；span 是我们自己的可信常量，
+    // 文案只是普通文本，仍 escapeHtml 一道，保证以后字典改动也进不了 XSS 通道。
+    const hintKey = lv < MAX_DEPTH ? 'hud.readout.deeperHint' : 'hud.readout.previewHint';
+    const hint = ' <span style="color:#7e879a">' + escapeHtml(kgT(hintKey)) + '</span>';
     if (text !== lastReadout) {
       lastReadout = text;
       $('readout').innerHTML = text + hint;
     }
   }
 
-  let lastStats = '';
-  function updateStats(stats) {
+  // 页脚两行：第一行是读数（整句一个 key，有选中焦点时换另一句），第二行是生成
+  // 时间 + 数据来源（key 约定 ui.footer，{generated} 由这里给，字典在模板流那边）。
+  function statsText(stats) {
     // 选中一个元素时把焦点读数亮出来：「相关的有几条 / 一共几条 · 相邻几个元素」。
     // 没选中、或全都相关时保持原样 —— 读数不该在无事发生时也跟着变。
     const rel = stats.focusEdges;
-    const edgeTxt = (R.selected && rel != null && rel < stats.edges)
-      ? '关系 ' + rel + '/' + stats.edges + ' · 相邻 ' + (stats.focusNeighbors || 0)
-      : '关系 ' + stats.edges;
-    const text = '节点 ' + stats.nodes + ' · ' + edgeTxt + ' · 标签 ' + stats.labels;
+    const focused = !!(R.selected && rel != null && rel < stats.edges);
+    return kgT(focused ? 'hud.stats.focus' : 'hud.stats', {
+      nodes: stats.nodes,
+      edges: stats.edges,
+      related: rel,
+      neighbors: stats.focusNeighbors || 0,
+      labels: stats.labels,
+    });
+  }
+
+  function footerHtml(stats) {
+    return statsText(stats) + '<br>' +
+      kgT('ui.footer', { generated: escapeHtml(META.generated || '') });
+  }
+
+  let lastStats = '';
+  function updateStats(stats) {
+    const text = statsText(stats);
     if (text === lastStats) return;
     lastStats = text;
-    $('footer').innerHTML = text +
-      '<br>生成于 ' + escapeHtml(META.generated || '') + ' · 数据来自 Obsidian vault（本地构建，无服务器）';
+    $('footer').innerHTML = footerHtml(stats);
   }
 
   function buildPills() {
@@ -219,7 +260,7 @@ function mountHud(scope, surface, core, services = {}) {
       row.appendChild(sw);
       const label = document.createElement('span');
       label.className = 'tx';
-      label.textContent = '未分学科（这个库没有学科目录，或笔记直接放在根目录）';
+      label.textContent = kgT('hud.legend.noDomain');
       row.appendChild(label);
       box.appendChild(row);
       return;
@@ -255,15 +296,15 @@ function mountHud(scope, surface, core, services = {}) {
   function showTooltip(node, sx, sy) {
     const bits = [];
     if (node.kind === 'note') {
-      bits.push('笔记 · ' + (node.heading_count || 0) + ' 个标题');
+      bits.push(kgT('hud.tip.note', { count: node.heading_count || 0 }));
     } else if (node.kind === 'folder') {
-      bits.push('文件夹 · ' + (node.note_count || 0) + ' 篇笔记');
+      bits.push(kgT('hud.tip.folder', { count: node.note_count || 0 }));
     } else {
-      bits.push('知识点 · h' + node.level + ' · L' + node.line);
+      bits.push(kgT('hud.tip.heading', { level: node.level, line: node.line }));
     }
-    bits.push('第 ' + node.depth + ' 层');
+    bits.push(kgT('hud.depth', { depth: node.depth }));
     const parent = node.parent ? NODE.get(node.parent) : null;
-    if (parent) bits.push('属于：' + parent.label);
+    if (parent) bits.push(kgT('hud.tip.parent', { label: parent.label }));
     const size = R.size();
     tooltip.innerHTML =
       '<b>' + escapeHtml(node.label) + '</b>' +
@@ -305,21 +346,32 @@ function mountHud(scope, surface, core, services = {}) {
         '<span class="arrow">' + (dir === 'in' ? '←' : '→') + '</span>' +
         escapeHtml(name) +
         '<span class="tag" title="' +
-        escapeHtml([TYPE_HINT[e.type], ORIGIN_LABEL[e.origin]].filter(Boolean).join(' · ')) + '">' +
-        escapeHtml(TYPE_LABEL[e.type] || e.type) + ' ×' + (e.hits || 1) + '</span></li>';
+        escapeHtml([edgeHint(e.type), originLabel(e.origin)].filter(Boolean).join(' · ')) + '">' +
+        escapeHtml(edgeLabel(e.type) || e.type) + ' ×' + (e.hits || 1) + '</span></li>';
     });
     if (list.length > 60) {
-      html += '<li style="color:#7e879a">…另有 ' + (list.length - 60) + ' 条</li>';
+      html += '<li style="color:#7e879a">' + escapeHtml(kgT('hud.more.items', { count: list.length - 60 })) + '</li>';
     }
     html += '</ul>';
     return html;
+  }
+
+  // UI-A6：侧栏让位原来靠 CSS 结构选择器（依赖 DOM 关系），现在改成 surface 上的显式类。
+  // 三处开合都走这个 helper，保证「sidebar .open」与「surface .kg-sidebar-open」永不脱节；
+  // syncInsets 仍由 sidebar 的 MutationObserver 盯着，横带/图例/命中列表避让不变。
+  function setSidebarOpen(open) {
+    const side = $('sidebar');
+    if (!side) return;
+    const next = !!open;
+    side.classList.toggle('open', next);
+    surface.classList.toggle('kg-sidebar-open', next);
   }
 
   function renderSidebar(id) {
     const side = $('sidebar');
     const d = NODE.get(id);
     if (!d) {
-      side.classList.remove('open');
+      setSidebarOpen(false);
       return;
     }
     const kind = d.kind;
@@ -336,21 +388,21 @@ function mountHud(scope, surface, core, services = {}) {
     html += '<h2>' + escapeHtml(d.label) + '</h2>';
     html += '<div class="path">' + escapeHtml(d.path || id) + '</div>';
     html += '<div class="meta">';
-    html += '<span class="chip">' + escapeHtml(KIND_LABEL[kind] || kind) + '</span>';
+    html += '<span class="chip">' + escapeHtml(kindLabel(kind) || kind) + '</span>';
     if (d.domain) {
       html += '<span class="chip" style="border-color:' + domainColor(d.domain) + '">' +
         escapeHtml(d.domain) + '</span>';
     }
-    html += '<span class="chip">第 ' + d.depth + ' 层</span>';
+    html += '<span class="chip">' + escapeHtml(kgT('hud.depth', { depth: d.depth })) + '</span>';
     if (isHeading) {
       html += '<span class="chip">h' + d.level + '</span>';
       html += '<span class="chip">L' + d.line + '</span>';
     } else if (isNote) {
-      html += '<span class="chip">' + heads.length + ' 个标题</span>';
+      html += '<span class="chip">' + escapeHtml(kgT('hud.count.headings', { count: heads.length })) + '</span>';
     } else {
-      html += '<span class="chip">' + (d.note_count || 0) + ' 篇笔记</span>';
+      html += '<span class="chip">' + escapeHtml(kgT('hud.count.notes', { count: d.note_count || 0 })) + '</span>';
     }
-    if (desc) html += '<span class="chip">下辖 ' + desc + ' 个元素</span>';
+    if (desc) html += '<span class="chip">' + escapeHtml(kgT('hud.sidebar.descendants', { count: desc })) + '</span>';
     html += '</div>';
 
     // 面包屑：文件夹 / 笔记 / 标题都是「人为规定的存储结构」，但它是唯一能把
@@ -368,20 +420,20 @@ function mountHud(scope, surface, core, services = {}) {
     }
 
     html += '<div class="actions">';
-    html += '<button data-act="focus">居中</button>';
-    html += '<button data-act="drill">深入下一层</button>';
-    if (isNote || isHeading) html += '<button data-act="obsidian">在 Obsidian 打开</button>';
+    html += '<button data-act="focus">' + escapeHtml(kgT('hud.action.focus')) + '</button>';
+    html += '<button data-act="drill">' + escapeHtml(kgT('hud.action.drill')) + '</button>';
+    if (isNote || isHeading) html += '<button data-act="obsidian">' + escapeHtml(kgT('hud.action.openObsidian')) + '</button>';
     html += '</div>';
 
     if (isNote && d.excerpt) {
       html += '<div class="excerpt">' + escapeHtml(d.excerpt) + '</div>';
     }
-    html += '<h3>入边 · 谁指向它（' + inc.length + '）</h3>' + edgeListHtml(inc, 'in', id);
-    html += '<h3>出边 · 它指向谁（' + out.length + '）</h3>' + edgeListHtml(out, 'out', id);
+    html += '<h3>' + escapeHtml(kgT('hud.sidebar.incoming', { count: inc.length })) + '</h3>' + edgeListHtml(inc, 'in', id);
+    html += '<h3>' + escapeHtml(kgT('hud.sidebar.outgoing', { count: out.length })) + '</h3>' + edgeListHtml(out, 'out', id);
 
     if (isNote && heads.length) {
       heads.sort((a, b) => a.line - b.line);
-      html += '<h3>知识点（笔记内标题，' + heads.length + ' 个）</h3>';
+      html += '<h3>' + escapeHtml(kgT('hud.sidebar.topics', { count: heads.length })) + '</h3>';
       html += '<ul class="elist hlist">';
       heads.slice(0, 60).forEach((h) => {
         html += '<li data-target="' + escapeHtml(h.id) + '">' +
@@ -389,13 +441,13 @@ function mountHud(scope, surface, core, services = {}) {
           '<span class="tag">L' + h.line + '</span></li>';
       });
       if (heads.length > 60) {
-        html += '<li style="color:#7e879a">…另有 ' + (heads.length - 60) + ' 个，向上滚可见</li>';
+        html += '<li style="color:#7e879a">' + escapeHtml(kgT('hud.more.topics', { count: heads.length - 60 })) + '</li>';
       }
       html += '</ul>';
     }
 
     side.innerHTML = html;
-    side.classList.add('open');
+    setSidebarOpen(true);
 
     side.querySelectorAll('button[data-act]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -431,7 +483,7 @@ function mountHud(scope, surface, core, services = {}) {
     if (!d) return;
     if (services.openNote) { services.openNote(d); return; }
     if (d.kind === 'heading') d = NODE.get(d.note) || d;   // 标题没有自己的文件
-    if (!d.path) { toast('这个元素没有对应的文件'); return; }
+    if (!d.path) { toast('hud.toast.noFile'); return; }
     const file = d.path.replace(/\.md$/i, '');
     const url = 'obsidian://open?vault=' + encodeURIComponent(VAULT) + '&file=' + encodeURIComponent(file);
     window.location.href = url;
@@ -443,7 +495,7 @@ function mountHud(scope, surface, core, services = {}) {
       renderSidebar(id);
       if (focus) R.focusOn(id, 1.25);
     } else {
-      $('sidebar').classList.remove('open');
+      setSidebarOpen(false);
     }
   }
 
@@ -475,10 +527,10 @@ function mountHud(scope, surface, core, services = {}) {
   function applyFilters() {
     const set = computeFilterSet();
     R.filterSet = set;
-    if (!set) { toast('已取消过滤'); return; }
+    if (!set) { toast('hud.toast.filterCleared'); return; }
     let notes = 0;
     set.forEach((id) => { if ((NODE.get(id) || {}).kind === 'note') notes += 1; });
-    toast(notes ? '过滤后保留 ' + notes + ' 篇笔记及其标题' : '没有笔记符合这个条件');
+    toast(notes ? 'hud.toast.filterKept' : 'hud.toast.filterNone', { count: notes });
   }
 
   // ── 搜索 ──────────────────────────────────────────────────────────────
@@ -491,7 +543,7 @@ function mountHud(scope, surface, core, services = {}) {
   const SEARCH_HIT_CAP = 2000;
   let searchTimer = 0;
 
-  function runSearch(q) {
+  function runSearch(q, quiet) {
     searchQ = q;
     const matchSet = new Set();
     const hits = $('hits');
@@ -513,11 +565,11 @@ function mountHud(scope, surface, core, services = {}) {
       let why;
       if (n.kind === 'heading') {
         const note = NODE.get(n.note) || {};
-        why = '知识点 · 在《' + (note.label || n.note) + '》h' + n.level;
+        why = kgT('hud.search.whyHeading', { note: note.label || n.note, level: n.level });
       } else if (n.kind === 'note') {
-        why = '笔记 · ' + (n.parent || '');
+        why = kgT('hud.search.whyNote', { parent: n.parent || '' });
       } else {
-        why = '文件夹 · ' + (n.note_count || 0) + ' 篇笔记';
+        why = kgT('hud.search.whyFolder', { count: n.note_count || 0 });
       }
       out.push({ id: n.id, label: n.label, why: why });
     }
@@ -526,13 +578,14 @@ function mountHud(scope, surface, core, services = {}) {
     hits.innerHTML = out.slice(0, 30).map((h) =>
       '<div class="hit" data-id="' + escapeHtml(h.id) + '">' +
       escapeHtml(h.label) + '<div class="why">' + escapeHtml(h.why) + '</div></div>').join('')
-      || '<div class="hit" style="color:#7e879a">没有匹配</div>';
+      || '<div class="hit" style="color:#7e879a">' + escapeHtml(kgT('hud.search.noMatch')) + '</div>';
     hits.style.display = 'block';
     hits.querySelectorAll('.hit[data-id]').forEach((el) => {
       el.addEventListener('click', () => select(el.dataset.id, true));
     });
-    toast('匹配 ' + matchSet.size + ' 个元素' + (truncated ? '（已到上限，只高亮前 '
-      + SEARCH_HIT_CAP + ' 个）' : '') + '，列出前 ' + Math.min(30, out.length) + ' 个');
+    if (!quiet) toast(truncated ? 'hud.search.summaryCapped' : 'hud.search.summary', {
+      count: matchSet.size, cap: SEARCH_HIT_CAP, shown: Math.min(30, out.length),
+    });
   }
 
   function searchSoon(value) {
@@ -544,7 +597,14 @@ function mountHud(scope, surface, core, services = {}) {
   const layoutStore = services.layoutStore || createLayoutStore(null, async () => {});
   const layoutOwner = {};
   const layoutCommand = (kind, key, value) => layoutStore.command(layoutOwner,kind,key,value).catch(error => {
-    layoutStatus.textContent=layoutStore.state().message.startsWith('布局保存失败')?layoutStore.state().message:error.message;
+    // 保存失败时 layout-store 的 message = 本地化前缀 + error.message。判断依据是稳定的
+    // messageKey（i18n-core 提供 'layout.saveFailed'），不再比对文案；万一还没提供，
+    // 退而用「message 包含原始错误信息」识别 —— 两种方式都与语言无关。
+    const state = layoutStore.state() || {};
+    const message = String(state.message || '');
+    const failedToSave = state.messageKey === 'layout.saveFailed'
+      || (message && error && error.message && message.indexOf(error.message) >= 0);
+    setLayoutStatusText(failedToSave ? message : ((error && error.message) || message));
   });
   const R = core.mount({
     onLayoutBegin: () => layoutStore.acquire(layoutOwner),
@@ -552,7 +612,7 @@ function mountHud(scope, surface, core, services = {}) {
     onLayoutCommit: (key,value) => { void layoutCommand('edit',key,value); },
     onLayout: (message) => {
       hideTooltip();hidePreview();
-      if (layoutStatus) layoutStatus.textContent=message;
+      setLayoutStatusText(message);
     },
     onHover: (id, node, sx, sy) => {
       // Ctrl 模式下不弹 hover 气泡：那时是「预览模式」，气泡和预览浮层会打架
@@ -566,10 +626,35 @@ function mountHud(scope, surface, core, services = {}) {
 
   const editTools=$('layout-tools');
   const layoutStatus=$('layout-status');
+
+  // 布局状态行有两种来源：布局流给的整句（原样显示）、hud 自己的提示（走字典并
+  // 记下 key，语言切换时 applyI18n() 据此重翻）。layoutStatusKey 只对后者有效。
+  let layoutStatusKey = null;
+  function setLayoutStatusText(text) {
+    layoutStatusKey = null;
+    if (layoutStatus) layoutStatus.textContent = text;
+  }
+  function setLayoutStatusKey(key, vars) {
+    layoutStatusKey = { key: key, vars: vars || null };
+    if (layoutStatus) layoutStatus.textContent = kgT(key, vars);
+  }
+  // 「调整布局 / 结束调整」的 aria-label 与文字标签。常态复用模板流的 ui.layoutMode.*
+  // （ui.* 只写在 src/i18n.ui.js），只有编辑态用 hud 自己的 key。
+  function syncLayoutModeLabels() {
+    const btn = $('layout-mode');
+    if (!btn) return;
+    btn.setAttribute('aria-label', R.editMode ? kgT('hud.action.endEditing') : kgT('ui.layoutMode.aria'));
+    const label = btn.querySelector('.kg-action-label');
+    const text = R.editMode ? kgT('hud.action.endEditingShort') : kgT('ui.layoutMode.label');
+    if (label) label.textContent = text;
+    else btn.textContent = text;
+  }
+
   scope.cleanup(layoutStore.subscribe(state=>{
     let result={skipped:0};
     if(!state.busy)result=R.applyLayout(state.groups);
-    layoutStatus.textContent=(services.layoutStore?state.message:'仅本次页面会话')+(result.skipped?' · '+result.skipped+' 组结构或几何已变化，使用自动布局':'');
+    setLayoutStatusText((services.layoutStore?state.message:kgT('hud.layout.sessionOnly'))
+      +(result.skipped?' · '+kgT('hud.layout.skipped',{count:result.skipped}):''));
     $('layout-undo').disabled=state.busy||!state.canUndo;
     $('layout-redo').disabled=state.busy||!state.canRedo;
     $('layout-reset-group').disabled=state.busy||state.unsupported;
@@ -580,25 +665,22 @@ function mountHud(scope, surface, core, services = {}) {
   function runLayoutCommand(kind) {
     R.cancelLayout();
     const key=R.layoutModel.groupKey(R.selected);
-    if(kind==='reset-group' && !key){layoutStatus.textContent='先选择要恢复的组内元素';return;}
+    if(kind==='reset-group' && !key){setLayoutStatusKey('hud.layout.selectFirst');return;}
     hidePreview();hideTooltip();void layoutCommand(kind,key,null);surface.focus({preventScroll:true});
   }
   for(const kind of ['undo','redo','reset-group','reset-all'])scope.listen($('layout-'+kind),'click',()=>runLayoutCommand(kind));
   scope.listen($('layout-mode'),'click',()=>{
     R.setEditMode(!R.editMode);$('layout-mode').setAttribute('aria-pressed',String(R.editMode));
-    $('layout-mode').setAttribute('aria-label',R.editMode?'结束布局调整':'调整布局');
-    const label=$('layout-mode').querySelector('.kg-action-label');
-    if(label)label.textContent=R.editMode?'结束调整':'调整布局';
-    else $('layout-mode').textContent=R.editMode?'结束调整':'调整布局';
+    syncLayoutModeLabels();
     editTools.hidden=!R.editMode;
-    if(R.editMode)layoutStatus.textContent='拖动圆或标题调整位置；改动自动保存，再次点击顶栏 ✥ 退出';
+    if(R.editMode)setLayoutStatusKey('hud.layout.editHint');
     syncInsets();
     hidePreview();hideTooltip();surface.focus({preventScroll:true});
   });
   scope.listen($('layout-parent'),'click',()=>{
     R.cancelLayout();const n=NODE.get(R.selected),p=NODE.get(n?.parent);
-    if(p){R.selected=p.id;layoutStatus.textContent='拖动标记为“移动整组”的手柄';}
-    else layoutStatus.textContent=n?'已是顶层，可直接拖圆或拖移动手柄':'先选择一个文件夹、笔记或知识点';
+    if(p){R.selected=p.id;setLayoutStatusKey('hud.layout.moveHandleHint');}
+    else setLayoutStatusKey(n?'hud.layout.topLevel':'hud.layout.selectElement');
     surface.focus({preventScroll:true});
   });
 
@@ -663,7 +745,7 @@ function mountHud(scope, surface, core, services = {}) {
   function buildPreviewHtml(note) {
     if (pvCache.has(note.id)) return pvCache.get(note.id);
     PV.innerHTML = '<div class="pv-crumbs"></div>' + note.preview +
-      '<div class="pv-hint">单击标题圆固定预览（Esc 关闭）· Ctrl + 悬停临时预览 · 浮层内链接可点</div>';
+      '<div class="pv-hint">' + escapeHtml(kgT('hud.preview.hint')) + '</div>';
     if (window.renderMathInElement) {
       try {
         window.renderMathInElement(PV, {
@@ -763,9 +845,7 @@ function mountHud(scope, surface, core, services = {}) {
     hidePreview();
     if (hintNode !== node.id) {
       hintNode = node.id;
-      toast(node.kind === 'folder'
-        ? '这一层是文件夹，还没到标题 —— 继续放大到标题圆'
-        : '这是笔记本身，还没到标题 —— 继续放大到标题圆');
+      toast(node.kind === 'folder' ? 'hud.preview.folderHint' : 'hud.preview.noteHint');
     }
   }
 
@@ -861,7 +941,7 @@ function mountHud(scope, surface, core, services = {}) {
       return;
     }
     // Home = 回到默认视角。自由缩放之后「缩丢了」变得可能，键盘操作时不该逼人去摸鼠标。
-    if (evt.key === 'Home') { evt.preventDefault(); R.resetView(); toast('已回到默认视角'); return; }
+    if (evt.key === 'Home') { evt.preventDefault(); R.resetView(); toast('hud.toast.resetView'); return; }
     if (evt.key === ']' || evt.key === '+' || evt.key === '=') stepLevel(1);
     else if (evt.key === '[' || evt.key === '-' || evt.key === '_') stepLevel(-1);
     else if (evt.key === 'l' || evt.key === 'L') toggleLegend();
@@ -871,7 +951,7 @@ function mountHud(scope, surface, core, services = {}) {
 
   scope.listen($('zoomin'), 'click', () => stepLevel(1));
   scope.listen($('zoomout'), 'click', () => stepLevel(-1));
-  scope.listen($('reset'), 'click', () => { R.resetView(); toast('已回到默认视角'); });
+  scope.listen($('reset'), 'click', () => { R.resetView(); toast('hud.toast.resetView'); });
   // 重新构建入口常驻顶栏（宿主只在「当前库」视图注入 onRebuild）。
   // 按钮的文案/禁用态由插件按构建阶段同步，这里只负责“点了要重建”。
   const rebuildButton = $('rebuild');
@@ -886,7 +966,7 @@ function mountHud(scope, surface, core, services = {}) {
   scope.listen($('domain'), 'change', (e) => { filterDomain = e.target.value; applyFilters(); });
   scope.listen($('labels'), 'change', (e) => {
     const v = e.target.value;
-    // 2026-10-24 阶段 2.1：'只显示选中' 以前被映射成 'off'（一个标签都不画，选中也不画），
+    // 2026-10-24 阶段 2.1：模式「只显示选中」以前被映射成 off（一个标签都不画，选中也不画），
     // 语义是错的。现在是独立模式 'selected'：选中项 + 邻居 + 悬停项才挂标签。
     labelMode = v === 'all' ? 'on'
       : v === 'selected' ? 'selected'
@@ -901,28 +981,72 @@ function mountHud(scope, surface, core, services = {}) {
   function applyLegendCollapsed(collapsed) {
     $('legend').classList.toggle('collapsed', collapsed);
     const btn = $('legend-toggle');
-    btn.textContent = collapsed ? '展开' : '收起';
+    btn.textContent = kgT(collapsed ? 'hud.legend.expand' : 'hud.legend.collapse');
     btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
   }
 
   function toggleLegend() {
     const next = !$('legend').classList.contains('collapsed');
     applyLegendCollapsed(next);
-    writeStored('kg.legendCollapsed', next ? '1' : '0');
+    saveLegendCollapsed(next);
   }
 
   scope.listen($('legend-toggle'), 'click', toggleLegend);
 
   // ── 启动 ──────────────────────────────────────────────────────────────
-  $('subtitle').textContent = META.note_count + ' 篇笔记 · ' + META.heading_total + ' 个标题';
+  function renderSubtitle() {
+    $('subtitle').textContent = kgT('hud.subtitle', {
+      notes: META.note_count, headings: META.heading_total,
+    });
+  }
+
+  renderSubtitle();
   buildPills();
   buildLegend();
   // 图例收起状态：默认展开（老行为和截图基线都不变），只有用户自己收过才记住。
-  applyLegendCollapsed(readStored('kg.legendCollapsed', '0') === '1');
+  // 读的时候顺带做 uiStorage ← localStorage 的一次性迁移（见 loadLegendCollapsed）。
+  applyLegendCollapsed(loadLegendCollapsed());
   buildFilters();
+  // #footer 先按字典填「生成于 …」一行（不闪模板里的中文兜底）；第一帧后由
+  // updateStats 换成「读数 + 生成信息」两行。
+  $('footer').innerHTML = kgT('ui.footer', { generated: escapeHtml(META.generated || '') });
   updateHud();
 
-  setTimeout(() => toast('光标放在目标区域向上滚 = 逐层深入（学科 → 子学科 → 课程 → 笔记 → 知识点），向下滚 = 回到更粗的层级'), 700);
+  setTimeout(() => toast('hud.toast.scrollHint'), 700);
+
+  // 语言切换时重建 hud 动态 DOM；detach 挂进 scope.cleanup，视图销毁时一并摘掉。
+  scope.cleanup(kgI18nOnChange(applyI18n));
+
+  // ── 语言切换（UI-A11）──────────────────────────────────────────────────
+  // 模板静态文案由 kgI18nApply 重新 apply；hud 动态生成的 DOM 全在这里重建。
+  // 只重填已存在的 DOM（不新开侧栏、不弹新 toast），别让切语言顺手改用户状态。
+  function applyI18n() {
+    lastReadout = '';
+    lastLevel = -1;
+    lastStats = '';
+    pvCache.clear();                  // 预览 HTML 里嵌着提示行，缓存必须作废
+    renderSubtitle();
+    buildPills();
+    buildLegend();
+    updateHud();
+    updateStats(R.stats || { nodes: 0, edges: 0, labels: 0, focusEdges: 0, focusNeighbors: 0 });
+    if (R.selected && NODE.has(R.selected) && $('sidebar').classList.contains('open')) {
+      renderSidebar(R.selected);
+    }
+    applyLegendCollapsed($('legend').classList.contains('collapsed'));
+    syncLayoutModeLabels();
+    if (layoutStatusKey) layoutStatus.textContent = kgT(layoutStatusKey.key, layoutStatusKey.vars);
+    if ($('hits').style.display !== 'none' && $('search').value.trim()) {
+      runSearch($('search').value.trim(), true);
+    }
+    const pvHint = PV.querySelector('.pv-hint');
+    if (pvHint) pvHint.textContent = kgT('hud.preview.hint');
+    if (toastState && toastEl.classList.contains('show')) {
+      toastEl.textContent = kgT(toastState.key, toastState.vars);
+    }
+    hideTooltip();
+    syncInsets();
+  }
 
   // 调试 / 自动化验证入口 —— 也可以直接在浏览器控制台里用 KG.state() 查状态
   return {
@@ -957,6 +1081,7 @@ function mountHud(scope, surface, core, services = {}) {
     previewState: pvState,
     runSearch: runSearch,
     applyFilters: applyFilters,
+    applyI18n: applyI18n,
     setLevel: (lv) => R.zoomToDepth(lv),
     zoomToDepth: (lv) => R.zoomToDepth(lv),
     revealOf: (id) => R.revealOf(id),

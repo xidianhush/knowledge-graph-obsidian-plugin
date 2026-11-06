@@ -11,8 +11,9 @@
 #layout-options[hidden] { display:none; }
 #layout-status { color:#8a98a2; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 /* 侧栏（对象详情）打开时它从 top:46 起覆盖右侧；工具条让出同一宽度，别压住侧栏头部。
-   :has 在 Obsidian 的 Chromium 124 上可用，无需 JS 同步。 */
-.kg-surface:has(#sidebar.open) .kg-layout-tools { right:min(360px, 40cqw); }
+   不用结构性选择器：开合状态本来就在 hud 手里（setSidebarOpen 一处同步类），surface
+   上的 .kg-sidebar-open 是显式信号 —— 不依赖选择器引擎，也不怕以后 DOM 结构再挪。 */
+.kg-surface.kg-sidebar-open .kg-layout-tools { right:min(360px, 40cqw); }
 /* 工具条展开时把搜索命中列表压到它下面，避免两条横带重叠。实际高度由 hud 写进
    --kg-band-h（窄容器里提示文案会换行，横带不止 38px，写死会重新叠上）。 */
 #layout-tools:not([hidden]) + #hits { top:calc(46px + var(--kg-band-h, 38px) + 8px); }

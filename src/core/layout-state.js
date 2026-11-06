@@ -422,19 +422,44 @@ function createLayoutModel(nodes, rootRadius) {
 
 // One owner and one durable history per plugin, shared by all its views.
 // write() must merge the supplied field into the latest settings in the host queue.
+// 状态文案不缓存已翻译文本：store 只存稳定的 messageKey，state() 读取时再按当前语言
+// 生成 message。这样语言切换后重新 state() 就是新语言，测试/宿主也能用 messageKey
+// 做语言无关判断（messageKey 与字典 key 刻意解耦，见 LAYOUT_I18N_KEYS）。
+const LAYOUT_I18N_KEYS = {
+  'layout.idle': 'core.layout.message.idle',
+  'layout.unsupported': 'core.layout.message.unsupported',
+  'layout.saving': 'core.layout.message.saving',
+  'layout.invalidated': 'core.layout.message.invalidated',
+  'layout.unchanged': 'core.layout.message.unchanged',
+  'layout.savedRepaired': 'core.layout.message.savedRepaired',
+  'layout.saved': 'core.layout.message.saved',
+  'layout.saveFailed': 'core.layout.message.saveFailed',
+  'layout.busySaving': 'core.layout.message.busySaving',
+  'layout.graphChanged': 'core.layout.message.graphChanged',
+  'layout.busyOtherView': 'core.layout.busyOtherView',
+};
+function layoutMessageText(messageKey, vars) {
+  return kgT(LAYOUT_I18N_KEYS[messageKey] || messageKey, vars);
+}
+function layoutError(messageKey) {
+  return Object.assign(new Error(layoutMessageText(messageKey)), { code: messageKey });
+}
 function createLayoutStore(initial, write) {
   const usable = initial != null && [1, 2, 3].includes(initial.schemaVersion) && initial.groups &&
     typeof initial.groups === 'object' && !Array.isArray(initial.groups);
   let data = usable ? structuredClone(initial) : { schemaVersion: 3, revision: 0, groups: {}, structures: {} };
   if (!Object.hasOwn(data, 'groups')) data.groups = {};
-  let owner = null, busy = 0, tail = Promise.resolve(), message = '拖动后自动保存';
+  let owner = null, busy = 0, tail = Promise.resolve();
+  let messageKey = 'layout.idle', messageVars = null;
+  const setMessage = (key, vars = null) => { messageKey = key; messageVars = vars; };
   const undo = [], redo = [], listeners = new Set();
   const unsupported = initial != null && !usable;
-  if (unsupported) message = '布局数据版本不受支持，调整已禁用；原数据保留';
+  if (unsupported) messageKey = 'layout.unsupported';
   const revision = value => Number.isSafeInteger(value) ? value : 0;
   function state() {
     return { schemaVersion: data.schemaVersion, revision: data.revision, groups: structuredClone(data.groups),
-      busy: busy > 0, locked: owner !== null, canUndo: undo.length > 0, canRedo: redo.length > 0, message, unsupported };
+      busy: busy > 0, locked: owner !== null, canUndo: undo.length > 0, canRedo: redo.length > 0,
+      message: layoutMessageText(messageKey, messageVars), messageKey, unsupported };
   }
   function emit() { for (const fn of listeners) fn(state()); }
   function acquire(token) {
@@ -443,14 +468,14 @@ function createLayoutStore(initial, write) {
   }
   function release(token) { if (owner === token) owner = null; }
   function run(token, transform, mode = 'edit') {
-    if (unsupported) return Promise.reject(new Error(message));
-    busy++; message = '正在保存布局…'; emit();
+    if (unsupported) return Promise.reject(layoutError('layout.unsupported'));
+    busy++; setMessage('layout.saving'); emit();
     const operation = tail.catch(() => {}).then(async () => {
       const current = layoutCanonical(data);
       const result = transform(structuredClone(current));
       if (result == null) {
-        if (mode === 'invalidate') { undo.length = 0; redo.length = 0; message = '笔记结构已更新；撤销记录已清空'; }
-        else message = '布局未改变';
+        if (mode === 'invalidate') { undo.length = 0; redo.length = 0; setMessage('layout.invalidated'); }
+        else setMessage('layout.unchanged');
         return;
       }
       const next = layoutTrimStructures({
@@ -458,8 +483,8 @@ function createLayoutStore(initial, write) {
         structures: result.structures && typeof result.structures === 'object' && !Array.isArray(result.structures) ? result.structures : {},
       }, [...undo, ...redo]);
       if (data.schemaVersion === 3 && JSON.stringify(next) === JSON.stringify(current)) {
-        if (mode === 'invalidate') { undo.length = 0; redo.length = 0; message = '笔记结构已更新；撤销记录已清空'; }
-        else message = '布局未改变';
+        if (mode === 'invalidate') { undo.length = 0; redo.length = 0; setMessage('layout.invalidated'); }
+        else setMessage('layout.unchanged');
         return;
       }
       const updated = { schemaVersion: 3, revision: revision(data.revision) + 1, groups: next.groups, structures: next.structures };
@@ -469,16 +494,16 @@ function createLayoutStore(initial, write) {
       else if (mode === 'invalidate' || mode === 'migrate') { undo.length = 0; redo.length = 0; }
       else { undo.push(current); if (undo.length > 50) undo.shift(); redo.length = 0; }
       data = updated;
-      message = mode === 'migrate' && Object.values(next.groups).some(g => g?.repair)
-        ? '布局已保存；已局部适配结构变化，撤销记录已清空'
-        : mode === 'invalidate' ? '笔记结构已更新；撤销记录已清空' : '布局已保存';
-    }).catch(error => { message = '布局保存失败，已恢复上次保存的位置：' + error.message; throw error; })
+      setMessage(mode === 'migrate' && Object.values(next.groups).some(g => g?.repair)
+        ? 'layout.savedRepaired'
+        : mode === 'invalidate' ? 'layout.invalidated' : 'layout.saved');
+    }).catch(error => { setMessage('layout.saveFailed', { message: error.message }); throw error; })
       .finally(() => { busy--; release(token); emit(); });
     tail = operation; return operation;
   }
   function command(token, kind, key, value) {
-    if (owner !== token && !acquire(token)) return Promise.reject(new Error('另一视图正在调整或保存布局，请稍后重试'));
-    if (busy) { release(token); return Promise.reject(new Error('布局正在保存，请稍后重试')); }
+    if (owner !== token && !acquire(token)) return Promise.reject(layoutError('layout.busyOtherView'));
+    if (busy) { release(token); return Promise.reject(layoutError('layout.busySaving')); }
     return run(token, layout => {
       if (kind === 'undo') return undo.at(-1) || null;
       if (kind === 'redo') return redo.at(-1) || null;
@@ -536,6 +561,6 @@ function createLayoutStore(initial, write) {
     reconcile(model, valid = () => true) { return unsupported ? Promise.resolve() : run(null, layout => valid() ? model.reconcile(layout) : null, 'migrate'); },
     settled: () => tail.catch(() => {}),
     subscribe(fn) { listeners.add(fn); fn(state()); return () => listeners.delete(fn); },
-    clearHistory() { undo.length = 0; redo.length = 0; message = '图谱结构已变化；撤销记录已清空'; emit(); },
+    clearHistory() { undo.length = 0; redo.length = 0; setMessage('layout.graphChanged'); emit(); },
   };
 }

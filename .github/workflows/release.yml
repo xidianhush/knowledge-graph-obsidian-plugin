@@ -1,0 +1,225 @@
+# Build the plugin on a GitHub-hosted runner when a release tag is pushed,
+# attach build provenance attestations to the three runtime files, and publish a
+# Release that contains ONLY those three assets. Flow, prerequisites and
+# verification commands are documented in docs/RELEASE_CI.md.
+#
+# Tag convention: `0.0.<patch>` (no `v` prefix, e.g. `0.0.14`). A `v0.0.14`
+# tag does not match this trigger and must not be used.
+#
+# This repository has no npm runtime dependencies and no lockfile. The build is
+# a single Node script, so there is deliberately NO `npm ci` / `npm install`
+# step here. Do not add one unless dependencies are introduced.
+name: Release
+
+on:
+  push:
+    tags:
+      - '0.0.*'
+  # Manual runs are dry runs (build + validate + attestation check only); they
+  # never create or modify a Release, even when dispatched from a tag ref.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag/version to validate in this dry run (defaults to the manifest.json version)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+# Never let two runs for the same tag race while creating/updating a Release.
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and publish release artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Check out the release ref
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate tag against manifest and package versions
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+
+          manifest_version="$(node -p "require('./manifest.json').version")"
+          package_version="$(node -p "require('./package.json').version")"
+
+          if [ "$manifest_version" != "$package_version" ]; then
+            echo "::error title=Version mismatch::manifest.json is ${manifest_version} but package.json is ${package_version}. Bump both before tagging."
+            exit 1
+          fi
+
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            tag="$GITHUB_REF_NAME"
+            echo "Triggered by tag push: ${tag}"
+          else
+            tag="${INPUT_TAG:-$manifest_version}"
+            echo "Manual dry run (workflow_dispatch): validating tag/version '${tag}'. No Release will be created."
+          fi
+
+          if ! printf '%s' "$tag" | grep -Eq '^0\.0\.[0-9]+$'; then
+            echo "::error title=Invalid tag format::'${tag}' must look like 0.0.<patch> (no 'v' prefix, no suffix)."
+            exit 1
+          fi
+
+          if [ "$tag" != "$manifest_version" ]; then
+            echo "::error title=Tag/version mismatch::tag '${tag}' does not match manifest.json version '${manifest_version}'. Fix the version commit before tagging."
+            exit 1
+          fi
+
+          echo "TAG=${tag}" >> "$GITHUB_ENV"
+          echo "Validated ${tag}: manifest.json ${manifest_version}, package.json ${package_version}."
+
+      - name: Build the plugin bundle
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+
+      - name: Package and stage the three release assets
+        run: |
+          set -euo pipefail
+
+          notes_src="docs/RELEASE_NOTES_${TAG}.md"
+          rm -rf release
+
+          if [ -f "$notes_src" ]; then
+            node scripts/package.mjs --out release/package --notes "$notes_src"
+          else
+            echo "::warning title=Missing release notes::${notes_src} not found; the Release body will use a minimal fallback."
+            node scripts/package.mjs --out release/package
+          fi
+
+          # Staging dir for uploads/attestation: exactly the three runtime files.
+          mkdir -p release/assets
+          for name in main.js manifest.json styles.css; do
+            test -f "release/package/${name}"
+            cp "release/package/${name}" "release/assets/${name}"
+          done
+
+          # Hard guard against the local smoke snapshot, data.json or any other
+          # file slipping into the Release. Only the whitelist may exist here.
+          unexpected="$(find release/assets -mindepth 1 -maxdepth 1 ! -name main.js ! -name manifest.json ! -name styles.css -print)"
+          if [ -n "$unexpected" ]; then
+            echo "::error title=Unexpected release assets::${unexpected}"
+            exit 1
+          fi
+          for forbidden in smoke-payload.json data.json; do
+            if [ -e "release/assets/${forbidden}" ]; then
+              echo "::error title=Private file staged::release/assets/${forbidden} must never be published."
+              exit 1
+            fi
+          done
+
+          # Hash the bytes that will actually be uploaded, and cross-check them
+          # against the hashes package.mjs computed from dist/. `--text` forces
+          # the plain "<hash>  <name>" format (no `*` binary marker), so the
+          # comparison below and in the Release body is stable across runners.
+          ( cd release/assets && sha256sum --text main.js manifest.json styles.css > ../SHA256SUMS )
+          diff -u <(sort release/package/SHA256SUMS) <(sort release/SHA256SUMS)
+          cat release/SHA256SUMS
+
+          {
+            echo "### Release candidate ${TAG}"
+            echo
+            echo "| asset | bytes | sha256 |"
+            echo "| --- | --- | --- |"
+            while read -r hash name; do
+              bytes="$(wc -c < "release/assets/${name}" | tr -d ' ')"
+              echo "| \`${name}\` | ${bytes} | \`${hash}\` |"
+            done < release/SHA256SUMS
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Assemble the Release body
+        run: |
+          set -euo pipefail
+
+          notes_src="docs/RELEASE_NOTES_${TAG}.md"
+          body="$RUNNER_TEMP/release-body.md"
+
+          if [ -f "$notes_src" ]; then
+            cp "$notes_src" "$body"
+          else
+            printf '# Knowledge Map %s\n\nBuilt by GitHub Actions from tag `%s`.\n' "$TAG" "$TAG" > "$body"
+          fi
+
+          {
+            printf '\n---\n\n## SHA-256 checksums\n\n```\n'
+            cat release/SHA256SUMS
+            printf '```\n'
+            if [ -f "$notes_src" ]; then
+              printf '\nRelease notes source: [docs/RELEASE_NOTES_%s.md](%s/%s/blob/%s/%s)\n' \
+                "$TAG" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$TAG" "$notes_src"
+            fi
+            printf '\nBuild run: %s/%s/actions/runs/%s\n' \
+              "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID"
+          } >> "$body"
+
+          echo "RELEASE_BODY=${body}" >> "$GITHUB_ENV"
+          echo "Release body written to ${body}"
+
+      - name: Generate build provenance attestation for the three assets
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            release/assets/main.js
+            release/assets/manifest.json
+            release/assets/styles.css
+
+      - name: Create or update the GitHub Release (tag pushes only)
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          asset_dir="release/assets"
+          assets=("${asset_dir}/main.js" "${asset_dir}/manifest.json" "${asset_dir}/styles.css")
+          title="Knowledge Map ${TAG}"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release ${TAG} already exists; updating notes and re-uploading assets with --clobber."
+            gh release edit "$TAG" --title "$title" --notes-file "$RELEASE_BODY"
+            gh release upload "$TAG" "${assets[@]}" --clobber
+          else
+            echo "Creating Release ${TAG}."
+            gh release create "$TAG" --verify-tag --title "$title" --notes-file "$RELEASE_BODY" "${assets[@]}"
+          fi
+
+      - name: Verify the Release has exactly the three whitelisted assets
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          expected="$(printf '%s\n' main.js manifest.json styles.css | sort)"
+          actual="$(gh release view "$TAG" --json assets --jq '.assets[].name' | sort)"
+
+          echo "Release assets:"
+          printf '%s\n' "$actual"
+
+          if [ "$actual" != "$expected" ]; then
+            echo "::error title=Unexpected release assets::a 0.0.x Release must contain exactly main.js, manifest.json and styles.css."
+            exit 1
+          fi

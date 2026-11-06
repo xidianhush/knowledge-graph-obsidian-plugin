@@ -5,12 +5,27 @@
 
 ## 本版交接：0.0.14（2026-11-06，最新，先读这一节）
 
+### 本轮交付结果（2026-11-06，0.0.14 候选已就绪，未 tag / 未 Release）
+
+- 版本：`package.json`、`manifest.json` 已升 **0.0.14**，`versions.json` = `{"0.0.13":"1.6.7","0.0.14":"1.6.7"}`；manifest description 已改为 `Vault-wide knowledge map with drag-and-drop layout that survives file renames and folder restructures. UI in English or Chinese.`
+- 构建：`node scripts/build.mjs` → `{"bytes":396234,"sha256":"b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5","payloadIncluded":false}`；`node scripts/package.mjs --out .local/pkg-014` 三资产 + SHA256SUMS 一致（manifest 317 B、styles.css 2400 B）。
+- UI-A11 i18n：新增 `src/i18n.js`（引擎）+ `src/i18n.core.js` / `src/i18n.ui.js` / `src/i18n.hud.js` / `src/i18n.obsidian.js`（四域字典，en/zh key 集合一致，共 209 key）；全部用户可见文案与 `upstream/template.html`（40 个 `data-i18n*` 绑定）走 `kgT()`；语言跟随 `moment.locale()`（非 zh 默认 en），设置页三选项「跟随应用 / 中文 / English」存 `settings.language`，缺字段视为 auto（0.0.13 兼容）；`scripts/i18n_check.mjs` 六项门禁；`npm test` 现在 11 个合成脚本。
+- UI-A6：`src/host.css` 的 `:has()` 已删，改 `.kg-surface.kg-sidebar-open .kg-layout-tools`，由 `hud.setSidebarOpen()` 同时切换 `#sidebar.open` 与 `kg-sidebar-open`；偏移值与原规则相同。
+- UI-A8：图例收起状态改存 `data.json` 顶层 `ui`（`{"kg.legendCollapsed":"0"}`，字符串值），首次加载从 `localStorage` 迁移一次后不再读写；写入失败只 `console.warn`；未扩大持久化范围（搜索、选中、层级、面板不持久化）。
+- UI-A7：新增 `.github/workflows/release.yml` + `docs/RELEASE_CI.md`；tag `0.0.*` 触发，runner 构建、三段版本校验、只上传三资产、SHA256SUMS/notes 进正文、`attest-build-provenance@v2`、末步回读资产恰三项；本地演练 `.local/ci-dry-run/` 7/7 通过。
+- UI-A13：README 已重写为「理念 + 一分钟上手 + 图例含义 + 功能/安装/限制 + 中文简介 + 开发」，动图与截图素材由 `.local/demo-vault`（25 篇合成英文笔记，图谱 134 节点 203 边）录制，放 `docs/assets/`（`knowledge-map-demo.gif`、`knowledge-map-layout-toolbar.png`、`knowledge-map-settings-en.png`、`knowledge-map-settings-zh.png`）。
+- UI-A10：在 `.local/native/vault-a10` 空库（独立 profile、CDP 9261、Obsidian 1.15.0）走「设置 → 第三方插件 → 浏览 → 搜索 Knowledge Map → 安装 → 启用」原生流程：安装 Notice 成功、版本 0.0.13、commands 注册、空态 `phase=empty`、5 篇合成笔记 `ready nodes=10 edges=12`、关标签重开恢复、**重启进程**后仍启用且数据保留；console 插件相关异常 0。**重要披露**：宿主 Obsidian 下载 github.com release 资产返回 404（同一 URL 在沙箱 python 直连 200），安装下载阶段用本地 HTTPS 代理只替换该域名的 DNS/TLS，served 字节为官方 0.0.13 Release 原始字节（manifest/styles 与官方 sha256 相同；main.js 落盘多 18 字节，已定因为 Obsidian 写入时追加 `
+/* nosourcemap */`，剥离后一致）；无代理时 Obsidian 实际请求为 `download/0.0.13/*`，目录侧版本解析正常。证据：`.local/evidence/ui-a10/result.json` 与 `shots/`（均不入库）。
+- 文档：`docs/RELEASE_NOTES_0.0.14.md` 已写；`docs/INSTALL.md` 升 0.0.14（发布状态如实写明「0.0.13 为当前正式发布，0.0.14 候选未发布」，含语言设置与 `ui` 持久化说明）。
+- **仍未执行（需用户授权/验收）**：`git tag 0.0.14`、GitHub Release、**门户 512 图标上传（UI-A12，`docs/assets/knowledge-map-icon.png` 已就绪）**与门户刷新。推送 tag 前请确认 GitHub 仓库 Settings → Actions → General → Workflow permissions 为 **read and write**（否则 `gh release create` 会 403）；仓库需保持 public 才能用 attestations；本地校验 attestation 需 `gh` ≥ 2.49。本轮只 commit + push 源码与文档。
+
 ### 交接时的真实现状
 
+- **代码 HEAD 以最新 commit 为准**（0.0.14 交付改动可能就在该 commit 里）。
 - **0.0.13 已正式发布**：annotated tag `0.0.13`（peeled `71e42cd`，不带 v 前缀）、<https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13>（资产 `main.js` 333,570 B sha256 `37589a6f32203026ff82a564ad83013b72dbb19c8a8180f7c04da67a49ba8ab5`、`manifest.json`、`styles.css`、`SHA256SUMS`、`RELEASE_NOTES.md`）；仓库根 `versions.json` = `{"0.0.13":"1.6.7"}`；0.0.11 仍为旧 pre-release。
 - **社区目录条目已上线并同步**：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；镜像 `community-plugins.json` 于 2026-11-05T13:20Z（commit `f23b14fe`）已含该 id（9,971 项），客户端「浏览」可搜到 Knowledge Map。Release 资产计数 main.js 11 / manifest.json 12 / styles.css 10，与门户 11 次下载吻合，判断已有真实安装（无遥测，只能按计数推断）。
 - **自动评审 Completed，无阻断**，剩余建议：Release 缺 GitHub artifact attestations；Release 含多余资产（`RELEASE_NOTES.md`/`SHA256SUMS`，客户端不会下载）；BEHAVIOR 建议（读取全库路径 Vault Enumeration、localStorage 持久化）；CSS LINT `:has`（`src/host.css:15`）；README 无英文（已修）；无 lockfile（本仓库无 npm 运行时依赖，构建不使用依赖）；BUILD VERIFICATION 未跑。
-- **代码 HEAD `7e7cd96`**（已 push，工作区干净）。0.0.13 之后有**未发布增量**：①图标 `src/plugin.js` 注册 `addIcon('knowledge-map', …)` 并用于 ribbon 与 `getIcon()`（G1 描边版，深/浅主题原生验证通过）；②本次文档/TODO。构建 `main.js` 334,284 B sha256 `9211f03133ac257bb596ebb48e4aecace6d3a43f29b5cf6dddd7e6849fff2245`，**未升版本、未打包发布**（`dist/` 不入库；要发布必须按 0.0.14 流程升版本）。
+- 0.0.13 之后有**已进入 0.0.14 的增量**：①图标 `src/plugin.js` 注册 `addIcon('knowledge-map', …)` 并用于 ribbon 与 `getIcon()`（G1 描边版，深/浅主题原生验证通过）；②本次文档/TODO。构建 `main.js` 334,284 B sha256 `9211f03133ac257bb596ebb48e4aecace6d3a43f29b5cf6dddd7e6849fff2245`，**未升版本、未打包发布**（`dist/` 不入库；要发布必须按 0.0.14 流程升版本）。
 - **日常库** `D:/obsidian_vault/hush-ob-bucket` 插件仍是 332,824 B `e568296b…`（0.0.13 发布前候选，缺「同名空正文标题旁重命名」修复）；用户 2026-11-04 明确先不替换，等 0.0.14。
 
 ### 0.0.14 范围（用户已确认）
@@ -30,7 +45,7 @@
 
 ### 验证与操作纪律（务必遵守）
 
-- 每次改源码：`npm test` 必须 10 脚本全过（含 layout-incremental 15 条）；`node scripts/build.mjs` 记录 bytes/sha256；发布用 `node scripts/package.mjs --notes docs/RELEASE_NOTES_0.0.14.md` → `.local/release/0.0.14/`。
+- 当前验证纪律：`npm test` 必须 **11** 个合成脚本全过（build + 10 checks + `i18n_check`，含 layout-incremental 15 条）；`node scripts/build.mjs` 记录 bytes/sha256；发布用 `node scripts/package.mjs --notes docs/RELEASE_NOTES_0.0.14.md` → `.local/release/0.0.14/`（或直接推 tag 让 `.github/workflows/release.yml` 在 runner 上构建并发布）。
 - 原生环境：Obsidian **1.15.0** 在 `D:\Obsidian`；测试库 `.local/native/vault-012`（9 篇合成）、`vault-013`（日常库副本 162 md + data.json rev344/345）、`vault-gate-blank`（空白库，装打包三文件）；profile 同名目录；启动 `.local/native/ui_launch.py 9248` / `ui_launch13.py 9249` / `.local/native/gate_b_blank.py`（9251），均需 `danger-full-access`（`powershell Start-Process`；直接启动会崩）。
 - CDP：`.local/native/cdp_lib.py`（`Cdp(port, page_url_prefix='app://')`；`js/wait_js/screenshot/errors/take_events`）；连接后先 `Page.setWebLifecycleState active` + `Emulation.setFocusEmulationEnabled`；**不要对渲染页 `page.reload()`**（FB-006 根因，禁用/启用插件或 Restart 代替）；`Emulation.setDeviceMetricsOverride` 必须 `mobile:false`；局部放大截图用 `Page.captureScreenshot` 的 `clip`。
 - 发布：tag 与 manifest 同版本（`0.0.14`，不带 v）；0.0.14 起 Release 只放三资产，`SHA256SUMS`/`RELEASE_NOTES` 改放正文或 docs；`versions.json` 增 `"0.0.14":"1.6.7"`；发布前跑门禁（`.local/release_gate/gate_a.mjs` 思路）；**push / tag / Release / 门户刷新都需用户明确授权**（上一轮授权只到 0.0.13），不要 force push。
@@ -41,27 +56,30 @@
 ### 待用户决定（open）
 
 1. ~~UI-A14 id 改名~~ → 已定：0.0.14 不做，后续再议（DEC-006）。
-2. **UI-A13** README 理念/教程的具体内容与动图分镜（用户会边做边给指令）。
+2. ~~UI-A13 分镜/素材~~ → 已定并执行：主 GIF 18–22s（建图→逐层缩放→拖动调整→撤销/恢复）+ 布局横带、中英设置页两张截图；英文界面、合成库、无烧录字幕（2026-11-06 用户答复 A）。
 3. ~~是否现在替换门户图标~~ → 已定：随 0.0.14 发布一起上传（见上）。
-4. 0.0.14 的发布授权（tag/Release/门户刷新）与是否接受 GitHub Actions 生成 attestations。
+4. **0.0.14 的发布授权（tag/Release/门户刷新）**：尚未授权；Actions 生成 attestations 已获用户接受（2026-11-06 答复 A）。授权后：推 annotated tag `0.0.14`（裸版本）→ workflow 自动构建/发布 → 门户 Edit listing 上传 `docs/assets/knowledge-map-icon.png` 并刷新 Overview。
 
 ### 建议接手顺序
 
-1. `npm test` 核对基线（应 10 脚本全过），`git log --oneline -5` 确认 HEAD `7e7cd96`，读 TODO 的 0.0.14 小节与本节。
-2. 先向用户确认上面的 open 项（尤其 UI-A14），再按 UI-A11 → UI-A6 → UI-A8 → UI-A7 → UI-A13 的顺序推进；每完成一项补回归与证据。
-3. 0.0.14 发布前做一轮发布门禁（打包一致性 + 空白库 in-app 安装 + 日常库副本 reconcile 场景），再交用户验收。
+1. `npm test` 核对基线（应 **11** 个合成脚本全过），`git log --oneline -5` 确认 HEAD（0.0.14 交付提交，以最新为准），读 TODO 的 0.0.14 小节与本节。
+2. 0.0.14 代码、构建、文档均已完成但**未 tag / 未 Release**：先向用户确认验收与发布授权；授权后推 annotated tag `0.0.14`（裸版本），由 `.github/workflows/release.yml` 在 runner 上构建并发布（前提：Actions 已启用、Settings → Actions → General → Workflow permissions 为 read-write、仓库 public；无需 secret）。
+3. 发布后：门户 <https://community.obsidian.md> → Edit listing → 上传 `docs/assets/knowledge-map-icon.png`（512）并刷新 Overview/README（UI-A9 巡检）；日常库升级 0.0.14 仍需用户单独授权，不要自行替换或修改日常库。
 
-### 正式交接包（2026-11-06，可直接交给下一位 agent）
+### 正式交接包（2026-11-06 更新：0.0.14 候选已完成，可直接交给下一位 agent）
 
 ```
 项目：D:\what_i_am_doing\Project\knowledge-graph-obsidian-plugin
 仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin
-交接 HEAD：7e7cd96（图标）→ 随后 aa9e313/本次文档提交（以 git log 最新为准）
+交接 HEAD：以 git log 最新为准（0.0.14 交付提交）
 当前发布版：0.0.13（tag 0.0.13、五资产 Release、社区目录条目 knowledge-graph-smoke 已上线并同步）
-本轮范围：0.0.14（i18n、:has、Release 精简+attestations、localStorage、in-app 安装验证、README 理念教程+动图、门户图标随发布上传）；插件 id 改名（UI-A14）0.0.14 不做
-先读：AGENTS.md、HANDOFF_NEXT.md「本版交接：0.0.14」、TODO.md（UI-A6~A13）、DEVELOPMENT.md
-接手第一步：`npm test`（应 10 脚本全过）→ `git log --oneline -5` → 向用户确认 UI-A13 动图分镜与 0.0.14 发布授权
-边界：不动 schema3/capture-reconcile-apply/upstream/；不升级或修改日常库；不 push/打 tag/发 Release/刷新门户，除非用户明确授权
+0.0.14 状态：代码/构建/文档完成，未 tag、未 Release、未刷新门户
+  构建 main.js 396,234 B sha256 b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5
+  versions.json {"0.0.13":"1.6.7","0.0.14":"1.6.7"}；npm test = 11 个合成脚本（含 scripts/i18n_check.mjs）
+本轮范围（均已完成）：i18n 中英双语、:has 改 JS 类、Release 三资产 + attestations、localStorage→data.json ui、in-app 安装验证、README 理念教程+动图；插件 id 改名（UI-A14）0.0.14 不做
+先读：AGENTS.md、HANDOFF_NEXT.md「本版交接：0.0.14」（含「本轮交付结果」）、TODO.md（UI-A6~A13）、DEVELOPMENT.md
+接手第一步：`npm test`（应 11 脚本全过）→ `git log --oneline -5` → 向用户确认 0.0.14 验收与 tag/Release/门户授权
+边界：不动 schema3/capture-reconcile-apply/upstream/；不升级或修改日常库；不推 tag/发 Release/刷新门户，除非用户明确授权
 ```
 
 ## 先做什么
@@ -202,6 +220,6 @@
 - 不把 `.local`、vault/profile、data.json、截图或私有快照加入 Git。原始证据不可跨机器获得时，如实保留摘要与未复跑状态。
 - 网络中断后先读 TODO 和 git status，续接未完工作，不从历史交接重做已验收功能。
 
-## 可直接交给下一位的开场语（2026-11-06）
+## 可直接交给下一位的开场语（2026-11-06 晚，0.0.14 候选完成后）
 
-请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 `npm test` 核对基线（10 脚本应全过）。当前 HEAD `7e7cd96` 已 push；**0.0.13 已正式发布**（tag/Release 已上线、社区目录条目已通过评审并在客户端可搜到），日常库仍停在发布前候选、用户决定等 0.0.14。**本轮任务是 0.0.14**：先读 HANDOFF_NEXT.md「本版交接：0.0.14」，按用户确认的范围推进——i18n 中英双语（UI-A11）、`:has` 改 JS 类切换（UI-A6）、Release 精简三资产 + attestations（UI-A7）、localStorage 审查（UI-A8）、in-app 安装验证（UI-A10）、README 理念教程+动图（UI-A13）、插件 id/URL 去 smoke（UI-A14）。**UI-A14 动手前必须与用户确认方案**（改 id 会影响既有安装的更新与 data.json，需迁移与门户重提）；UI-A13 的具体内容听用户指令。发布（tag/Release/门户/推送）需用户明确授权；不 force push、不自动升级日常库、不代替用户确认体验验收。每轮更新 TODO，说明实际测试和剩余边界。
+请读取 AGENTS.md、TODO.md、README.md、DEVELOPMENT.md 和 HANDOFF_NEXT.md，先运行 `npm test` 核对基线（**11** 个合成脚本应全过）。**0.0.14 候选已完成并已 commit/push**：i18n 中英双语、`:has` 改 JS 类、Release 三资产 + attestations、localStorage→`data.json` 的 `ui`、in-app 安装验证、README 理念教程 + 动图；构建 `main.js` 396,234 B sha256 `b022a4d8…`，versions.json 已含 0.0.14。**0.0.14 尚未 tag / 未 Release / 未刷新门户**（用户只授权了 commit+push 与 Actions 方案）。下一步：向用户确认 0.0.14 验收与发布授权；授权后推 annotated tag `0.0.14`，由 `.github/workflows/release.yml` 构建并发布（先确认仓库 Settings → Actions → General → Workflow permissions 为 read-write、仓库 public），随后门户上传 `docs/assets/knowledge-map-icon.png` 并刷新 Overview（UI-A9 巡检）。UI-A14（id 去 smoke）0.0.14 不做；不 force push、不自动升级日常库、不代替用户确认体验验收；每轮更新 TODO，说明实际测试和剩余边界。

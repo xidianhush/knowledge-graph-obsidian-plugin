@@ -1,10 +1,20 @@
-const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope, addIcon } = require('obsidian');
+const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope, addIcon, moment } = require('obsidian');
 const KNOWLEDGE_MAP_ICON_ID = 'knowledge-map';
 // Hub with three satellites: two links pass through the outer ring to the inner node,
 // the third stops at the ring. Single-color path so Obsidian can recolor it.
 const KNOWLEDGE_MAP_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"><circle cx="50" cy="50" r="24"/><path d="M21 50 H41"/><path d="M81 22.3 L56.7 44"/><path d="M78.2 76.5 L67.5 66.4"/><circle cx="50" cy="50" r="9"/><circle cx="13" cy="50" r="8"/><circle cx="87" cy="17" r="8"/><circle cx="84" cy="82" r="8"/></svg>';
 const VIEW_TYPE = 'knowledge-graph-smoke-view';
 const VAULT_VIEW_TYPE = 'knowledge-graph-vault-view';
+// Layout-store failures carry a stable `code` (layout.saveFailed / layout.busyOtherView / …);
+// those messages are already localized, so only unknown host errors get a translated prefix.
+// Matching the zh/en prefix keeps old stores (no code) from being prefixed twice.
+function layoutFailureText(error) {
+  const message = error?.message ?? String(error);
+  const code = error?.code ? String(error.code) : '';
+  if (code.startsWith('layout.')) return message;
+  if (/^(?:布局保存失败|Could not save the layout)/.test(message)) return message;
+  return kgT('plugin.layout.saveFailedShort', { message });
+}
 
 class KnowledgeGraphView extends ItemView {
   constructor(leaf, plugin, source = 'snapshot') {
@@ -27,7 +37,7 @@ class KnowledgeGraphView extends ItemView {
     }
   }
   getViewType() { return this.source === 'vault' ? VAULT_VIEW_TYPE : VIEW_TYPE; }
-  getDisplayText() { return this.source === 'vault' ? '知识图谱 · 当前库' : '知识图谱 · 冒烟'; }
+  getDisplayText() { return this.source === 'vault' ? kgT('plugin.view.vaultTitle') : kgT('plugin.view.smokeTitle'); }
   getIcon() { return KNOWLEDGE_MAP_ICON_ID; }
   async onOpen() {
     this.closed = false;
@@ -52,7 +62,7 @@ class KnowledgeGraphView extends ItemView {
       const win = this.contentEl.ownerDocument.defaultView;
       win.clearTimeout(this.updateTimer);
       delete this.contentEl.dataset.pipelineUpdating;
-      this.progress('笔记已变更，等待自动更新…', 'waiting');
+      this.progress(kgT('plugin.build.waiting'), 'waiting');
       this.updateTimer = win.setTimeout(() => { this.updateTimer = null; void this.rebuild(); }, this.plugin.graphSettings.debounceMs ?? 350);
     };
     for (const name of ['create', 'modify', 'delete', 'rename']) this.watchEvents.push(vault.on(name, changed));
@@ -65,11 +75,13 @@ class KnowledgeGraphView extends ItemView {
     button.disabled = busy;
     button.classList.toggle('is-busy', busy);
     // 顶栏按钮只有字形（见 src/host.css），含义靠 title/aria-label 携带，构建中同步更新。
-    const name = busy ? '正在重新构建图谱' : '重新构建当前库的图谱（不用关开视图）';
-    button.setAttribute('title', name);
-    button.setAttribute('aria-label', name);
+    // Idle labels reuse the template's static ui.rebuild.* bindings; busy labels are plugin.*.
+    const title = busy ? kgT('plugin.rebuild.busyTitle') : kgT('ui.rebuild.title');
+    const aria = busy ? title : kgT('ui.rebuild.aria');
+    button.setAttribute('title', title);
+    button.setAttribute('aria-label', aria);
     const label = button.querySelector('.kg-action-label');
-    if (label) label.textContent = busy ? '构建中…' : '重新构建';
+    if (label) label.textContent = busy ? kgT('plugin.rebuild.busyLabel') : kgT('ui.rebuild.label');
   }
   progress(message, phase = 'building') {
     this.buildState = { phase, message, updatedAt: Date.now() };
@@ -91,7 +103,7 @@ class KnowledgeGraphView extends ItemView {
       const busy = ['building', 'waiting'].includes(phase);
       if (busy || !this.session) {
         const button = this.statusEl.appendChild(this.contentEl.ownerDocument.createElement('button'));
-        button.textContent = busy ? '取消' : '重新构建';
+        button.textContent = busy ? kgT('plugin.build.cancel') : kgT('plugin.rebuild.label');
         button.onclick = () => busy ? this.cancelBuild() : void this.rebuild();
       }
     }
@@ -107,7 +119,7 @@ class KnowledgeGraphView extends ItemView {
     ++this.generation; this.buildController?.abort(); this.buildController = null;
     this.contentEl.ownerDocument.defaultView.clearTimeout(this.updateTimer); this.updateTimer = null;
     delete this.contentEl.dataset.pipelineUpdating;
-    this.progress('本次构建已取消' + (this.session ? '（仍显示上次成功的图谱）' : '') + '；后续变动仍按自动更新设置处理。', 'cancelled');
+    this.progress(kgT(this.session ? 'plugin.build.cancelledKept' : 'plugin.build.cancelled'), 'cancelled');
   }
   applySettings() {
     this.nativeServices?.preview.hide();
@@ -124,7 +136,7 @@ class KnowledgeGraphView extends ItemView {
     this.nativeServices?.preview.hide();
     const controller = this.buildController = new AbortController();
     this.contentEl.dataset.pipelineUpdating = 'true';
-    this.progress(this.source === 'vault' ? '正在读取当前库…' : '正在载入图谱快照…');
+    this.progress(this.source === 'vault' ? kgT('plugin.build.readingVault') : kgT('plugin.build.loadingSnapshot'));
     const layoutEpoch=this.plugin.layoutEpoch;
     let nextSession, nextServices;
     try {
@@ -138,7 +150,7 @@ class KnowledgeGraphView extends ItemView {
       if (generation !== this.generation || this.closed) return;
       if (this.source === 'vault' && !payload.nodes.length) {
         this.releaseSession(); this.contentEl.replaceChildren();
-        this.progress('当前范围内没有可显示的 Markdown 笔记。请检查设置中的包含与排除范围。', 'empty');
+        this.progress(kgT('plugin.build.empty'), 'empty');
         this.contentEl.dataset.pipelineEmpty = 'true'; return;
       }
       const state = this.graph?.captureState();
@@ -171,12 +183,18 @@ class KnowledgeGraphView extends ItemView {
       this.contentEl.dataset.smokeReady = 'true';
       this.contentEl.dataset.graphRevision = String(generation);
       if (this.source === 'vault') {
-        this.progress('构建完成 · ' + payload.meta.note_count + ' 篇笔记 · ' + payload.nodes.length + ' 个节点 · ' + payload.edges.length + ' 条边 · ' + ((win.performance.now() - started) / 1000).toFixed(2) + ' 秒' + (this.plugin.graphSettings.autoUpdate === false ? ' · 自动更新已关闭' : ''), 'ready');
+        const summary = {
+          notes: payload.meta.note_count,
+          nodes: payload.nodes.length,
+          edges: payload.edges.length,
+          seconds: ((win.performance.now() - started) / 1000).toFixed(2),
+        };
+        this.progress(kgT(this.plugin.graphSettings.autoUpdate === false ? 'plugin.build.readyNoAuto' : 'plugin.build.ready', summary), 'ready');
       }
     } catch (error) {
       nextSession?.dispose(); nextServices?.dispose();
       if (generation !== this.generation || this.closed || controller.signal.aborted) return;
-      this.progress('图谱更新失败：' + error.message + (this.session ? '（仍显示上次成功的图谱）' : ''), 'error');
+      this.progress(kgT(this.session ? 'plugin.build.failedKept' : 'plugin.build.failed', { message: error.message }), 'error');
       console.error('[knowledge-graph-smoke]', error);
     } finally {
       if (generation === this.generation) {
@@ -207,6 +225,10 @@ class KnowledgeGraphView extends ItemView {
 module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
   async onload() {
     const saved = await this.loadData();
+    // i18n must be ready before registerView/addCommand/addRibbonIcon: those strings are
+    // captured at onload and only refresh after a reload when the language changes.
+    kgI18nSetAutoLocale(typeof moment?.locale === 'function' ? moment.locale() : 'en');
+    kgI18nSetPreference(saved?.settings?.language ?? 'auto');
     this.savedData = graphSettingsDraft(saved || {});
     this.pipelineSettings = this.savedData.pipeline;
     this.graphSettings = this.savedData.settings;
@@ -216,7 +238,7 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
     this.layoutStore = createLayoutStore(this.savedData.layoutOverrides, layout => {
       const operation=this.settingsSaveQueue.catch(()=>{}).then(async()=>{
         const data={...this.savedData,layoutOverrides:layout};
-        try { await this.saveData(data); } catch(error) { new Notice('布局保存失败，已恢复上次保存的位置：'+error.message); throw error; }
+        try { await this.saveData(data); } catch(error) { new Notice(kgT('plugin.layout.saveFailed', { message: error.message })); throw error; }
         this.savedData=data;
       });
       this.settingsSaveQueue=operation;return operation;
@@ -226,16 +248,18 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
       if(!folder && !/\.md$/i.test(file.path) && !/\.md$/i.test(oldPath||''))return;
       for(const leaf of this.app.workspace.getLeavesOfType(VAULT_VIEW_TYPE))leaf.view.graph?.renderer.cancelInteraction();
       void this.layoutStore.changePath(oldPath||file.path,event==='rename'?file.path:null,folder,
-        !(this.pipelineSettings.config.remap||[]).length).catch(error=>new Notice('布局保存失败：'+error.message));
+        !(this.pipelineSettings.config.remap||[]).length).catch(error=>new Notice(layoutFailureText(error)));
     }));
     this.pipelineResources = { active: 0, started: 0, stopped: 0 };
     this.registerView(VIEW_TYPE, leaf => new KnowledgeGraphView(leaf, this));
     this.registerView(VAULT_VIEW_TYPE, leaf => new KnowledgeGraphView(leaf, this, 'vault'));
-    this.addCommand({ id: 'open-graph-smoke', name: '打开知识图谱冒烟', callback: () => this.openGraph() });
-    this.addCommand({ id: 'build-vault-graph', name: '从当前库构建知识图谱', callback: () => this.openGraph('vault', true) });
+    this.addCommand({ id: 'open-graph-smoke', name: kgT('plugin.command.openSmoke'), callback: () => this.openGraph() });
+    this.addCommand({ id: 'build-vault-graph', name: kgT('plugin.command.buildVault'), callback: () => this.openGraph('vault', true) });
     addIcon(KNOWLEDGE_MAP_ICON_ID, KNOWLEDGE_MAP_ICON);
-    this.addRibbonIcon(KNOWLEDGE_MAP_ICON_ID, '从当前库构建知识图谱', () => this.openGraph('vault', true));
-    this.addSettingTab(new KnowledgeGraphSettingsTab(this.app, this));
+    this.addRibbonIcon(KNOWLEDGE_MAP_ICON_ID, kgT('plugin.command.buildVault'), () => this.openGraph('vault', true));
+    // Keep the tab instance so a language change can re-render it in place.
+    this.settingTab = new KnowledgeGraphSettingsTab(this.app, this);
+    this.addSettingTab(this.settingTab);
   }
   saveGraphSettings(draft) {
     const data = validateGraphSettings(draft);
@@ -243,9 +267,22 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
       // Settings drafts may predate a drag. Always merge the latest layout here.
       if(Object.hasOwn(this.savedData,'layoutOverrides'))data.layoutOverrides=this.savedData.layoutOverrides;
       else delete data.layoutOverrides;
+      // UI-A8: HUD state keeps writing to data.json, so a settings draft must not drop it.
+      if(Object.hasOwn(this.savedData,'ui'))data.ui=this.savedData.ui;
+      else delete data.ui;
+      const previousLanguage = this.savedData.settings?.language ?? 'auto';
       // A failed disk write leaves the running configuration and graph untouched.
       await this.saveData(data);
       this.savedData = data; this.pipelineSettings = data.pipeline; this.graphSettings = data.settings;
+      const nextLanguage = data.settings.language ?? 'auto';
+      if (nextLanguage !== previousLanguage) {
+        // Report both preference and app locale, then re-render surfaces in the new language.
+        kgI18nSetAutoLocale(typeof moment?.locale === 'function' ? moment.locale() : 'en');
+        kgI18nSetPreference(nextLanguage);
+        try { if (this.settingTab?.containerEl?.isConnected) this.settingTab.display(); } catch (error) { console.warn('[knowledge-graph-smoke]', error); }
+        // Command palette entries, ribbon tooltip and tab titles were captured at onload.
+        new Notice(kgT('settings.languageApplied'));
+      }
       for (const leaf of this.app.workspace.getLeavesOfType(VAULT_VIEW_TYPE)) void leaf.view.applySettings();
     });
     this.settingsSaveQueue = operation;
@@ -259,7 +296,7 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
       await leaf.setViewState({ type, active: true });
       if (existing && rebuild) await leaf.view.rebuild();
       await this.app.workspace.revealLeaf(leaf);
-    } catch (error) { new Notice('无法打开知识图谱：' + error.message); }
+    } catch (error) { new Notice(kgT('plugin.openFailed', { message: error.message })); }
   }
   onunload() { this.app.workspace.detachLeavesOfType(VIEW_TYPE); this.app.workspace.detachLeavesOfType(VAULT_VIEW_TYPE); }
 };

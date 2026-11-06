@@ -28,15 +28,52 @@ function prepareNativePreview(body, targetLine, marker, requestedLimit) {
   return { markdown, truncated };
 }
 
+/** UI-A8: HUD-owned UI state (legend collapsed, ...) persisted with the plugin data.json.
+ *  The HUD calls get(key, fallback) / set(key, value) with string keys. A failed disk write
+ *  keeps the in-memory value and only logs a warning, so the graph is never interrupted. */
+function createNativeUiStorage(plugin) {
+  const currentUi = () => {
+    const ui = plugin?.savedData?.ui;
+    return ui && typeof ui === 'object' && !Array.isArray(ui) ? ui : {};
+  };
+  const queue = () => plugin?.settingsSaveQueue && typeof plugin.settingsSaveQueue.then === 'function'
+    ? plugin.settingsSaveQueue : Promise.resolve();
+  return {
+    get(key, fallback) {
+      const ui = currentUi();
+      if (!key || !Object.hasOwn(ui, key)) return fallback;
+      const value = ui[key];
+      return value === undefined || value === null ? fallback : value;
+    },
+    set(key, value) {
+      if (!plugin || !key || value === undefined || typeof plugin.saveData !== 'function') return Promise.resolve();
+      const text = String(value);
+      // Update memory first: the UI must agree with the user's action even if the write fails.
+      plugin.savedData = { ...(plugin.savedData || {}), ui: { ...currentUi(), [key]: text } };
+      const operation = queue().catch(() => {}).then(async () => {
+        const data = { ...(plugin.savedData || {}), ui: { ...currentUi(), [key]: text } };
+        try {
+          await plugin.saveData(data);
+          plugin.savedData = data;
+        } catch (error) {
+          console.warn('[knowledge-graph-smoke] UI state save failed:', error?.message || error);
+        }
+      });
+      plugin.settingsSaveQueue = operation;
+      return operation;
+    },
+  };
+}
+
 function createNativeGraphServices(view) {
   const app = view.app, container = view.contentEl, doc = container.ownerDocument, win = doc.defaultView;
   const panel = doc.createElement('section');
   panel.className = 'kg-native-preview'; panel.hidden = true; panel.tabIndex = -1;
-  panel.setAttribute('aria-label', '笔记预览');
+  panel.setAttribute('aria-label', kgT('native.preview.label'));
   const bar = panel.appendChild(doc.createElement('div')); bar.className = 'kg-native-preview-bar';
   const title = bar.appendChild(doc.createElement('span'));
-  const open = bar.appendChild(doc.createElement('button')); open.textContent = '打开笔记';
-  const close = bar.appendChild(doc.createElement('button')); close.textContent = '关闭'; close.setAttribute('aria-label', '关闭预览');
+  const open = bar.appendChild(doc.createElement('button')); open.textContent = kgT('native.preview.open');
+  const close = bar.appendChild(doc.createElement('button')); close.textContent = kgT('native.preview.close'); close.setAttribute('aria-label', kgT('native.preview.closeLabel'));
   const body = panel.appendChild(doc.createElement('div')); body.className = 'kg-native-preview-body markdown-rendered';
   container.appendChild(panel);
   const events = new win.AbortController();
@@ -65,15 +102,15 @@ function createNativeGraphServices(view) {
   }
   async function openNote(target) {
     try {
-      if (!target?.path) throw new Error('这个元素没有对应的笔记');
-      if (!graphPathAllowed(view.plugin, target.path)) throw new Error('这篇笔记不在当前建图范围内');
+      if (!target?.path) throw new Error(kgT('native.error.noNote'));
+      if (!graphPathAllowed(view.plugin, target.path)) throw new Error(kgT('native.error.outOfScope'));
       const file = app.vault.getAbstractFileByPath(target.path);
-      if (!file || file.extension !== 'md') throw new Error('笔记已删除或移动，请等待图谱更新');
+      if (!file || file.extension !== 'md') throw new Error(kgT('native.error.missingNote'));
       let line = 0;
       if (target.kind === 'heading') {
         const current = parseGraphNote({ text: await app.vault.cachedRead(file), id: target.note }, parseYaml);
         const heading = current.headings.find(h => h.id === target.id);
-        if (!heading) throw new Error('标题已变更，请等待图谱更新');
+        if (!heading) throw new Error(kgT('native.error.headingChanged'));
         line = heading.line - 1;
       }
       // Open a separate tab so navigating does not replace the graph itself.
@@ -83,16 +120,16 @@ function createNativeGraphServices(view) {
     } catch (error) { new Notice(error.message); }
   }
   async function render(target, token, cx, cy) {
-    if (!graphPathAllowed(view.plugin, target.path)) throw new Error('这篇笔记不在当前建图范围内');
+    if (!graphPathAllowed(view.plugin, target.path)) throw new Error(kgT('native.error.outOfScope'));
     const file = app.vault.getAbstractFileByPath(target.path);
-    if (!file || file.extension !== 'md') throw new Error('笔记已删除或移动');
+    if (!file || file.extension !== 'md') throw new Error(kgT('native.error.missingNoteShort'));
     const text = await app.vault.cachedRead(file);
     if (disposed || token !== generation) return;
     const parsed = target.kind === 'heading'
       ? parseGraphNote({ text, id: target.note }, parseYaml)
       : splitGraphFrontmatter({ text }, parseYaml);
     const heading = parsed.headings?.find(h => h.id === target.id);
-    if (target.kind === 'heading' && !heading) throw new Error('标题已变更，请等待图谱更新');
+    if (target.kind === 'heading' && !heading) throw new Error(kgT('native.error.headingChanged'));
     const targetLine = target.kind === 'heading' ? Math.max(0, heading.line - parsed.offset - 1) : -1;
     const marker = 'kg-native-target-' + token;
     const configured = Number(view.plugin.pipelineSettings?.config?.preview?.max_note_chars);
@@ -104,7 +141,7 @@ function createNativeGraphServices(view) {
     const content = body.appendChild(doc.createElement('div'));
     await MarkdownRenderer.render(app, markdown, content, target.path, component);
     if (disposed || token !== generation) { content.remove(); return; }
-    if (truncated) { const hint = body.appendChild(doc.createElement('p')); hint.className = 'kg-native-preview-hint'; hint.textContent = '内容较多，预览已截取；打开笔记查看全文。'; }
+    if (truncated) { const hint = body.appendChild(doc.createElement('p')); hint.className = 'kg-native-preview-hint'; hint.textContent = kgT('native.preview.truncated'); }
     const anchor = content.querySelector('#' + marker);
     body.scrollTop = anchor ? Math.max(0, anchor.getBoundingClientRect().top - body.getBoundingClientRect().top + body.scrollTop - 12) : 0;
     place(cx, cy); panel.dataset.ready = 'true';
@@ -116,7 +153,7 @@ function createNativeGraphServices(view) {
     try {
       await render(request.target, request.token, ...request.position);
     } catch (error) {
-      if (request.token === generation && !disposed) { releaseComponent(); body.textContent = '预览失败：' + error.message; }
+      if (request.token === generation && !disposed) { releaseComponent(); body.textContent = kgT('native.preview.failed', { message: error.message }); }
     } finally {
       busy = false; resources.rendering--; request.resolve();
       void drain();
@@ -132,7 +169,7 @@ function createNativeGraphServices(view) {
     }
     hide(); node = target; pinned = !!pin; panel.hidden = false;
     title.textContent = target.path + (target.kind === 'heading' ? ' › ' + target.title : '');
-    body.textContent = '正在读取笔记…'; place(cx, cy);
+    body.textContent = kgT('native.preview.loading'); place(cx, cy);
     pending = new Promise(resolve => {
       queued = { target, token: generation, position: [cx, cy], resolve };
     });
@@ -168,6 +205,7 @@ function createNativeGraphServices(view) {
   listen(win, 'blur', () => { if (!pinned) hide(); });
   return {
     openNote,
+    uiStorage: createNativeUiStorage(view.plugin),
     preview: { show, hide, setOnHide(callback) { onHide = callback; }, state: () => ({ open: !panel.hidden, pinned, note: node?.note || node?.id || null }) },
     diagnostics: () => ({ disposed, ...resources, queued: !!queued, timers: hoverTimer === null ? 0 : 1, listeners, observers: disposed ? 0 : 1 }),
     dispose() { if (disposed) return; disposed = true; hide(); events.abort(); listeners = 0; resize.disconnect(); panel.remove(); onHide = () => {}; },

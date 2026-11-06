@@ -15,8 +15,11 @@ let css = template.match(/<style>([\s\S]*?)<\/style>/)[1]
 css += '\n:host { display:block; width:100%; height:100%; color-scheme:dark; }\n.kg-surface { position:relative; width:100%; height:100%; container-type:size; outline:none; }\n';
 css += read('src/host.css');
 const html = template.match(/<body>([\s\S]*?)<script>/)[1]
-  .replaceAll('__PAGE_TITLE__', '知识图谱').replaceAll('__GENERATED__', '快照冒烟');
-const core = ['src/core/payload.js', 'src/core/layout-edit.js', 'src/core/layout-state.js', 'src/core/renderer.js', 'src/core/graph-core.js'].map(read).join('\n');
+  .replaceAll('__PAGE_TITLE__', 'Knowledge Map').replaceAll('__GENERATED__', '');
+// i18n 引擎与各域字典必须排在所有使用 kgT() 的源码之前；main.js、graph-core.mjs
+// （renderer 用文案）与 browser.mjs（adapters 用文案）三份产物各自含一份。
+const i18n = ['src/i18n.js', 'src/i18n.core.js', 'src/i18n.ui.js', 'src/i18n.hud.js', 'src/i18n.obsidian.js'].map(read).join('\n');
+const core = i18n + '\n' + ['src/core/payload.js', 'src/core/layout-edit.js', 'src/core/layout-state.js', 'src/core/renderer.js', 'src/core/graph-core.js'].map(read).join('\n');
 const pipeline = ['defaults','input','layout','graph','palette','build','encode'].map(name => read('src/pipeline/' + name + '.js')).join('\n');
 const workerSource = pipeline + '\nself.onmessage = event => { try { self.postMessage({payload:buildGraph(event.data)}); } catch(error) { self.postMessage({error:error.message}); } };';
 const adapters = [
@@ -29,7 +32,7 @@ fs.writeFileSync(path.join(output, 'main.js'), bundle);
 fs.writeFileSync(path.join(output, 'graph-core.mjs'), core + '\nexport { GraphCore, decodeGraphPayload, createLayoutEditor, createLayoutModel, createLayoutStore };\n');
 fs.writeFileSync(path.join(output, 'pipeline.mjs'), pipeline + '\nexport { buildGraph, encodeGraphPayload, pipelineConfig, selectGraphFiles, parseGraphNote, packGraphSiblings, kgRound };\n');
 fs.writeFileSync(path.join(output, 'pipeline-worker.js'),workerSource);
-fs.writeFileSync(path.join(output, 'browser.mjs'), "import { GraphCore, createLayoutStore } from './graph-core.mjs';\n" + adapters + '\nexport { mountGraph, createCanvasPlatform };\n');
+fs.writeFileSync(path.join(output, 'browser.mjs'), "import { GraphCore, createLayoutStore } from './graph-core.mjs';\n" + i18n + '\n' + adapters + '\nexport { mountGraph, createCanvasPlatform };\n');
 for (const name of ['manifest.json', 'styles.css']) fs.copyFileSync(path.join(root, name), path.join(output, name));
 const payload = path.join(root, '.local/smoke-payload.json');
 if (fs.existsSync(payload)) fs.copyFileSync(payload, path.join(output, 'smoke-payload.json'));

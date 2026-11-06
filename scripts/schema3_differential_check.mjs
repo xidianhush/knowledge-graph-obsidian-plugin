@@ -100,12 +100,41 @@ function applyState(side, store, record) {
 }
 const clone = value => JSON.parse(JSON.stringify(value));
 function allFinite(nodes) { return nodes.every(n => Number.isFinite(n.x) && Number.isFinite(n.y)); }
+// 布局状态文案由 core 按界面语言生成（Node 默认 en），而 0.0.10 基线固定是中文。
+// 差分只关心"哪一类状态 + 文案里的变量部分"，所以把已知中英文前缀归一成稳定
+// 的 kind，前缀之后的部分（例如写失败时的底层 error.message）原样保留。未知文案
+// 原样带前缀返回，这样新文案仍会被差分检出，而不是被静默放过。
+const LAYOUT_MESSAGE_KINDS = [
+  ['save-failed', ['布局保存失败，已恢复上次保存的位置：', 'Could not save the layout; restored the last saved positions: ']],
+  ['saved-repaired', ['布局已保存；已局部适配结构变化，撤销记录已清空', 'Layout saved; structure changes partly adapted and undo history cleared']],
+  ['invalidated', ['笔记结构已更新；撤销记录已清空', 'Note structure updated; undo history cleared']],
+  ['saved', ['布局已保存', 'Layout saved']],
+  ['graph-changed', ['图谱结构已变化；撤销记录已清空', 'Graph structure changed; undo history cleared']],
+  ['busy-other-view', ['另一视图正在调整或保存布局，请稍后重试', 'Another view is adjusting or saving the layout. Try again in a moment.']],
+  ['busy-saving', ['布局正在保存，请稍后重试', 'The layout is being saved. Try again in a moment.']],
+  ['unsupported', ['布局数据版本不受支持，调整已禁用；原数据保留', 'Layout data version not supported; adjusting is disabled and the original data is preserved']],
+  ['saving', ['正在保存布局…', 'Saving layout…']],
+  ['unchanged', ['布局未改变', 'Layout unchanged']],
+  ['idle', ['拖动后自动保存', 'Auto-saves after dragging']],
+];
+function messageKind(message) {
+  const text = String(message ?? '');
+  for (const [kind, prefixes] of LAYOUT_MESSAGE_KINDS) {
+    for (const prefix of prefixes) {
+      if (text.startsWith(prefix)) return kind + ':' + text.slice(prefix.length);
+    }
+  }
+  return 'unknown:' + text;
+}
+// `messageKey` 是 0.0.14 i18n 新增的语言无关状态标记（0.0.10 没有），比较
+// "i18n 之前的状态字段集合"仍然有效，其它字段的增减照旧会被差分检出。
+const stateTopKeys = state => sortKeys(state).filter(key => key !== 'messageKey');
 function stageOf(store) {
   const state = store.state();
   return {
     revision: state.revision, canUndo: !!state.canUndo, canRedo: !!state.canRedo,
     groups: Object.keys(state.groups ?? {}).length, busy: state.busy, locked: state.locked,
-    message: state.message ?? '', unsupported: !!state.unsupported,
+    message: messageKind(state.message), unsupported: !!state.unsupported,
   };
 }
 function sortKeys(object) { return Object.keys(object ?? {}).sort(); }
@@ -164,14 +193,18 @@ async function sceneColdStart(api) {
   const coldGeometry = geometryOf(fresh.nodes);
 
   // Write failure must reject, keep durable data and release the store.
+  // The token object has to be the *same* one for acquire/command, otherwise the store
+  // rejects with busy-other-view before the writer runs and this scene silently stops
+  // covering the save-failure path (the assertion below keeps that from regressing).
   record.fail = true;
+  const failingOwner = {};
   const failure = {rejected: false, message: null};
   try {
-    assert.equal(store.acquire({}), true, 'store.acquire before failing reset-all');
-    await store.command({}, 'reset-all');
+    assert.equal(store.acquire(failingOwner), true, 'store.acquire before failing reset-all');
+    await store.command(failingOwner, 'reset-all');
   } catch (error) {
     failure.rejected = true;
-    failure.message = String(error?.message ?? error);
+    failure.message = messageKind(String(error?.message ?? error));
   }
   record.fail = false;
   const failedState = store.state();
@@ -180,8 +213,11 @@ async function sceneColdStart(api) {
     state: stageOf(store),
     groupsPreserved: sameJson(failedState.groups, liveState.groups),
     failedWrites: record.failedWrites,
-    messageFlagged: /布局保存失败/.test(failedState.message ?? ''),
+    messageFlagged: messageKind(failedState.message).startsWith('save-failed'),
   };
+  assert.equal(failed.rejected, true, 'S1 write failure must reject');
+  assert.ok(failed.failedWrites >= 1, 'S1 write failure must reach the throwing writer');
+  assert.equal(failed.messageFlagged, true, 'S1 write failure must surface as save-failed');
 
   // Plugin rebuild path.
   const re = await rebuild(api, durable(record, store), S1_FILES);
@@ -276,8 +312,8 @@ async function sceneRename(api) {
       noteSchemaVersion: noteState.schemaVersion,
       folderSchemaVersion: folderState.schemaVersion,
       noteForm: noteRe.form, folderForm: folderRe.form,
-      noteTopKeys: sortKeys(noteState),
-      folderTopKeys: sortKeys(folderState),
+      noteTopKeys: stateTopKeys(noteState),
+      folderTopKeys: stateTopKeys(folderState),
       structureCount: Object.keys(structuresOf(record, store) ?? {}).length,
     },
   };
@@ -512,7 +548,7 @@ async function sceneLegacy(api) {
   const failingSide = prepare(api, LEGACY_FILES);
   const failure = {rejected: false, message: null};
   try { await failing.store.reconcile(failingSide.model); }
-  catch (error) { failure.rejected = true; failure.message = String(error?.message ?? error); }
+  catch (error) { failure.rejected = true; failure.message = messageKind(String(error?.message ?? error)); }
   const failingState = failing.store.state();
   const writeFailure = {
     ...failure,
@@ -520,8 +556,11 @@ async function sceneLegacy(api) {
     schemaVersionStable: failingState.schemaVersion === 1,
     groupsPreserved: sameJson(failingState.groups, schema1.groups),
     busy: failingState.busy, locked: failingState.locked,
-    messageFlagged: /布局保存失败/.test(failingState.message ?? ''),
+    messageFlagged: messageKind(failingState.message).startsWith('save-failed'),
   };
+  assert.equal(writeFailure.rejected, true, 'legacy migration write failure must reject');
+  assert.ok(writeFailure.failedWrites >= 1, 'legacy migration write failure must reach the throwing writer');
+  assert.equal(writeFailure.messageFlagged, true, 'legacy migration write failure must surface as save-failed');
 
   // schema2 (0.0.10) input upgrade through the store
   const flat2 = legacyDrag(frozen010, LEGACY_FILES, 'H1', 13, 7);

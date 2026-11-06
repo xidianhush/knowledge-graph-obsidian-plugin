@@ -27,16 +27,16 @@ async function buildVaultGraph(plugin,win,signal,onProgress){
   if(!config.exclude.includes('Utilities/API Key.md'))config.exclude.push('Utilities/API Key.md');
   const entries=plugin.app.vault.getMarkdownFiles().map(file=>({path:file.path,file}));
   const scan=selectGraphFiles(entries,config), selected=new Map();
-  onProgress('已选中 '+scan.files.length+' 篇笔记，排除 '+scan.stats.excluded+' 篇；正在读取…');
+  onProgress(kgT('core.pipeline.selected', { notes: scan.files.length, excluded: scan.stats.excluded }));
   for(const [index,entry] of scan.files.entries()){
     if(signal.aborted)throw new Error('Graph build cancelled');
     const text=await plugin.app.vault.cachedRead(entry.file);
     if(signal.aborted)throw new Error('Graph build cancelled');
     const frontmatter=splitGraphFrontmatter({text,rel:entry.rel},parseYaml).frontmatter;
     selected.set(entry.rel,{text,frontmatter});
-    if(index%25===0){onProgress('正在读取笔记 '+(index+1)+' / '+scan.files.length);await new Promise(resolve=>win.setTimeout(resolve,0));}
+    if(index%25===0){onProgress(kgT('core.pipeline.reading', { current: index + 1, total: scan.files.length }));await new Promise(resolve=>win.setTimeout(resolve,0));}
   }
-  onProgress('正在计算图谱布局…');
+  onProgress(kgT('core.pipeline.layout'));
   const input={files:entries.map(e=>({path:e.path,...(selected.get(e.path)||{text:''})})),config:{...config,attachments:undefined},annotations:settings.annotations||{},candidates:settings.candidates||{},generated:new Date().toISOString().slice(0,16).replace('T',' ')};
   // Blob worker has no vault/Node access; only explicitly selected note text crosses.
   const payload=await runPipelineWorker(input,win,signal,plugin.pipelineResources);
