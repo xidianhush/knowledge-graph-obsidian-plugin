@@ -7,10 +7,10 @@
 
 先读 [详细交接](docs/HANDOFF_0.0.15_README_RELEASE.md) 与 [README 修改计划原文副本](docs/README_PLAN_0.0.15.md)，再以 TODO.md 顶部为当前执行清单。
 
-- README 已按 **simple and accurate** 精简并获用户认可（DOC-015-A1 已验收）；0.0.15 桌面+iPadOS 本地发布候选准备和技术核验完成。Android 适配下一版，iPhone 未验证。当前步骤见 [发布准备](docs/RELEASE_PREP_0.0.15.md)。
-- iPad 本轮功能体验与 PC-F1/PC-F2 支线已用户验收。当前源码仍在 codex/mobile-support 未提交工作区，HEAD b75aa40；manifest/package 已 0.0.15，versions.json 已新增映射，isDesktopOnly:false；公开发布仍 0.0.14。先保存并检查工作区，不从旧 clone 覆盖。
+- README 已按 **simple and accurate** 精简并获用户认可（DOC-015-A1 已验收）；0.0.15 桌面+iPadOS 已完成 GitHub Release、门户同步与原生客户端安装验证，MOB-A9 已完成。Android 适配下一版，iPhone 未验证。当前步骤见 [发布准备](docs/RELEASE_PREP_0.0.15.md)。
+- iPad 本轮功能体验与 PC-F1/PC-F2 支线已用户验收。发布源码提交 `8b82e4b` 已 push 到 main，tag `0.0.15` 指向该提交；本地仍在 codex/mobile-support。manifest/package/versions 为 0.0.15、isDesktopOnly:false。GitHub Release 已正式发布；门户同步状态见发布记录。
 - 本轮候选 npm test 构建及 11 个合成脚本全过，独立 Windows Obsidian 1.15.0 原生回归 10 项通过、异常/警告 0；三资产/版本/哈希/二次构建核验通过。main.js 416,150 B / SHA-256 8801c3a3e5c2d96fcd6d230e8b703eac8472ac815e677e915c81c23249411391，与用户验收 PC-F2 包相同；本轮没有重跑 iPad 真机。
-- tag／Release／门户由用户届时明确授权；本轮没有 commit/push/发布动作。详细执行顺序、测试范围与安装备份见交接文档。
+- 用户已明确授权并完成源码 commit/push、tag 和 GitHub Release；Actions run `42355198309` 成功，三资产下载哈希及来源 payload 一致，官方三文件独立库安装通过。门户短/长描述已保存，公开 Overview 为新版 README，当前版本 0.0.15、审核 Completed；原生安装器直连安装/启用/空库建图通过。详见 docs/RELEASE_PREP_0.0.15.md；保留未测平台边界。
 - 以下旧交接章节保留追溯。「未开始移动开发」「先重新询问 MOB-P1」「Android 必须先测才能发 0.0.15」不再代表当前任务。
 
 ## 历史交接：0.0.14（2026-11-06）
