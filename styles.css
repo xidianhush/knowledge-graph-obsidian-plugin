@@ -33,3 +33,13 @@
 .kg-settings textarea { width: 260px; min-height: 80px; }
 .kg-settings .kg-settings-message { position: sticky; top: 0; background: var(--background-primary); z-index: 1; padding: 8px 0; }
 .kg-settings-message[data-error="true"] { color: var(--text-error); }
+
+.kg-smoke-content[data-kg-platform] > .kg-native-preview {
+  inset: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  width: auto;
+  max-height: none;
+}
+.kg-smoke-content[data-kg-platform] .kg-native-preview-bar { flex-wrap: wrap; }
+.kg-smoke-content[data-kg-platform] .kg-native-preview-bar > button { min-height: 44px; }
+.kg-smoke-content[data-kg-platform] .kg-native-preview-body { flex: 1; max-height: none; }

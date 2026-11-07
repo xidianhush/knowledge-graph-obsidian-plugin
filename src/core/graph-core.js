@@ -26,6 +26,9 @@ class GraphCore {
     };
     try {
       this.renderer = createCanvasRenderer(this.canvas, this.data, hooks, {
+        touch: this.platform.touch === true,
+        setTimer: (fn, delay) => this.platform.setTimer(fn, delay),
+        clearTimer: id => this.platform.clearTimer(id),
         metrics: () => this.platform.metrics(), now: () => this.platform.now(),
         requestFrame: callback => this.requestFrame(callback),
         listenCanvas: listen('listenCanvas'), listenGlobal: listen('listenGlobal'),

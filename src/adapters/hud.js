@@ -58,6 +58,7 @@ function mountHud(scope, surface, core, services = {}) {
   const canvas = $('cv');
   const tooltip = $('tooltip');
   const toastEl = $('toast');
+  const mobile = !!surface.dataset.kgPlatform;
 
   // ── 状态 ──────────────────────────────────────────────────────────────
   let filterDomain = 'all';
@@ -95,9 +96,9 @@ function mountHud(scope, surface, core, services = {}) {
           try { uiStorage.set(LEGEND_STORAGE_KEY, legacy); } catch (err) { /* 下次再迁移 */ }
         }
       }
-      return value === '1';
+      return value === '1' || (value == null && mobile);
     }
-    return readStored(LEGEND_STORAGE_KEY, '0') === '1';
+    return readStored(LEGEND_STORAGE_KEY, mobile ? '1' : '0') === '1';
   }
 
   function saveLegendCollapsed(collapsed) {
@@ -183,7 +184,8 @@ function mountHud(scope, surface, core, services = {}) {
     // 药丸层已删除 → 文案必须教会用户「Ctrl + 悬停标题圆」，否则功能等于不存在。
     // 提示按「一整句」进字典，不再拼中英碎片；span 是我们自己的可信常量，
     // 文案只是普通文本，仍 escapeHtml 一道，保证以后字典改动也进不了 XSS 通道。
-    const hintKey = lv < MAX_DEPTH ? 'hud.readout.deeperHint' : 'hud.readout.previewHint';
+    const hintKey = mobile ? 'hud.readout.touchPreviewHint'
+      : lv < MAX_DEPTH ? 'hud.readout.deeperHint' : 'hud.readout.previewHint';
     const hint = ' <span style="color:#7e879a">' + escapeHtml(kgT(hintKey)) + '</span>';
     if (text !== lastReadout) {
       lastReadout = text;
@@ -386,6 +388,7 @@ function mountHud(scope, surface, core, services = {}) {
 
     let html = '';
     html += '<h2>' + escapeHtml(d.label) + '</h2>';
+    if (mobile) html += '<button type="button" class="kg-sidebar-close" data-act="close">' + escapeHtml(kgT('hud.action.closeDetails')) + '</button>';
     html += '<div class="path">' + escapeHtml(d.path || id) + '</div>';
     html += '<div class="meta">';
     html += '<span class="chip">' + escapeHtml(kindLabel(kind) || kind) + '</span>';
@@ -423,6 +426,9 @@ function mountHud(scope, surface, core, services = {}) {
     html += '<button data-act="focus">' + escapeHtml(kgT('hud.action.focus')) + '</button>';
     html += '<button data-act="drill">' + escapeHtml(kgT('hud.action.drill')) + '</button>';
     if (isNote || isHeading) html += '<button data-act="obsidian">' + escapeHtml(kgT('hud.action.openObsidian')) + '</button>';
+    if (mobile && (isNote || isHeading) && services.preview?.isEnabled?.()) {
+      html += '<button type="button" data-act="preview">' + escapeHtml(kgT('hud.action.preview')) + '</button>';
+    }
     html += '</div>';
 
     if (isNote && d.excerpt) {
@@ -455,6 +461,8 @@ function mountHud(scope, surface, core, services = {}) {
         if (act === 'focus') R.focusOn(id, 1.0);
         else if (act === 'drill') R.focusOn(id, 1.6, 380);
         else if (act === 'obsidian') openInObsidian(id);
+        else if (act === 'preview') showPreviewFor(d, 0, 0, true);
+        else if (act === 'close') { select(null); surface.focus({ preventScroll: true }); }
       });
     });
     side.querySelectorAll('[data-target]').forEach((li) => {
@@ -620,6 +628,11 @@ function mountHud(scope, surface, core, services = {}) {
       showTooltip(node, sx, sy);
     },
     onSelect: (id) => select(id, false),
+    onTouchPreview: (node, x, y) => {
+      if (!services.preview?.isEnabled?.() || (node.kind !== 'note' && node.kind !== 'heading')) return false;
+      showPreviewFor(node, x, y, true);
+      return true;
+    },
     onCamera: updateHud,
     onFrame: updateStats,
   });
@@ -673,7 +686,7 @@ function mountHud(scope, surface, core, services = {}) {
     R.setEditMode(!R.editMode);$('layout-mode').setAttribute('aria-pressed',String(R.editMode));
     syncLayoutModeLabels();
     editTools.hidden=!R.editMode;
-    if(R.editMode)setLayoutStatusKey('hud.layout.editHint');
+    if (R.editMode) setLayoutStatusKey(mobile ? 'hud.layout.editHint.touch' : 'hud.layout.editHint');
     syncInsets();
     hidePreview();hideTooltip();surface.focus({preventScroll:true});
   });
@@ -691,16 +704,44 @@ function mountHud(scope, surface, core, services = {}) {
   // fit / home 与相机中心；这里把「看得见的那块」告诉它。侧栏开合用 MutationObserver
   // 盯 .open 类，不用在十几个调用点里各插一次 syncInsets。
   const TOP_H = 46, BOTTOM_H = 46;
+  const more = $('kg-more');
+  const moreVisible = () => !!more?.getClientRects().length;
+  const moreOpen = () => more?.getAttribute('aria-expanded') === 'true';
+  function setMoreOpen(open) {
+    if (!more || moreOpen() === open) return;
+    more.setAttribute('aria-expanded', String(open));
+    syncInsets();
+  }
+  if (more) {
+    scope.listen(more, 'click', () => setMoreOpen(!moreOpen()));
+    scope.listen($('kg-actions'), 'click', event => {
+      if (moreVisible() && event.target.closest('button') && !event.target.closest('button').disabled) {
+        setMoreOpen(false);
+        if (!surface.contains(document.activeElement) || document.activeElement?.closest('#kg-actions')) more.focus();
+      }
+    });
+    scope.listen(surface, 'pointerdown', event => {
+      if (moreVisible() && moreOpen() && !event.target.closest('#topbar, #hits')) setMoreOpen(false);
+    });
+    window.addEventListener('resize', () => {
+      if (!moreVisible()) setMoreOpen(false);
+    });
+  }
   function syncInsets() {
     const side = $('sidebar');
     const open = !!(side && side.classList.contains('open'));
-    const right = open ? (side.getBoundingClientRect().width || 0) : 0;
+    const sideRect = open ? side.getBoundingClientRect() : null;
+    const bottomSheet = mobile && open && getComputedStyle(side).getPropertyValue('--kg-sidebar-bottom').trim() === '1';
+    const right = bottomSheet ? 0 : sideRect?.width || 0;
+    const bottom = bottomSheet ? Math.max(BOTTOM_H, sideRect.height) : BOTTOM_H;
     // 布局工具条可见时是顶栏下方的第二条横带：把它的真实高度计入上内边距，
     // 让 fit / home 与相机中心按「真正没被盖住的矩形」算，而不是按 46px 顶栏算。
     const band = editTools && !editTools.hidden ? (editTools.getBoundingClientRect().height || 0) : 0;
     // 图例 / 搜索命中列表按同一条横带的真实高度避让（窄容器里提示文案会换行）。
     surface.style.setProperty('--kg-band-h', band + 'px');
-    R.setInsets({ top: TOP_H + band, bottom: BOTTOM_H, right: right });
+    const top = moreVisible() ? $('topbar').getBoundingClientRect().height : TOP_H;
+    surface.style.setProperty('--kg-top-h', top + 'px');
+    R.setInsets({ top: top + band, bottom, right });
   }
   syncInsets();
   window.addEventListener('resize', syncInsets);
@@ -907,6 +948,16 @@ function mountHud(scope, surface, core, services = {}) {
   }
 
   function dismiss() {
+    if (mobile && services.preview?.state().open) {
+      hidePreview();
+      surface.focus({ preventScroll: true });
+      return;
+    }
+    if (moreVisible() && moreOpen()) {
+      setMoreOpen(false);
+      more.focus();
+      return;
+    }
     if(R.cancelLayout()){hidePreview();hideTooltip();surface.focus({preventScroll:true});return;}
     const target = document.activeElement;
     const tag = (target?.tagName || '').toLowerCase();
@@ -945,7 +996,11 @@ function mountHud(scope, surface, core, services = {}) {
     if (evt.key === ']' || evt.key === '+' || evt.key === '=') stepLevel(1);
     else if (evt.key === '[' || evt.key === '-' || evt.key === '_') stepLevel(-1);
     else if (evt.key === 'l' || evt.key === 'L') toggleLegend();
-    else if (evt.key === '/' ) { evt.preventDefault(); $('search').focus(); }
+    else if (evt.key === '/') {
+      evt.preventDefault();
+      if (moreVisible()) setMoreOpen(true);
+      $('search').focus();
+    }
     else if (evt.key === 'Enter' && $('search').value) runSearch($('search').value);
   });
 

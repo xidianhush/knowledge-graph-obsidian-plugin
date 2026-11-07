@@ -67,6 +67,8 @@ function createNativeUiStorage(plugin) {
 
 function createNativeGraphServices(view) {
   const app = view.app, container = view.contentEl, doc = container.ownerDocument, win = doc.defaultView;
+  const mobile = !!container.dataset.kgPlatform;
+  const previewEnabled = () => view.plugin.pipelineSettings?.config?.preview?.enabled !== false;
   const panel = doc.createElement('section');
   panel.className = 'kg-native-preview'; panel.hidden = true; panel.tabIndex = -1;
   panel.setAttribute('aria-label', kgT('native.preview.label'));
@@ -95,6 +97,7 @@ function createNativeGraphServices(view) {
     panel.hidden = true; delete panel.dataset.ready; body.replaceChildren(); onHide();
   }
   function place(cx, cy) {
+    if (mobile) return;
     const rect = container.getBoundingClientRect(), w = panel.offsetWidth, h = panel.offsetHeight;
     const x = cx - rect.left, y = cy - rect.top;
     panel.style.left = Math.max(8, Math.min(x + 18 + w > rect.width ? x - w - 18 : x + 18, rect.width - w - 8)) + 'px';
@@ -160,7 +163,7 @@ function createNativeGraphServices(view) {
     }
   }
   function show(target, cx, cy, pin) {
-    if (disposed || view.plugin.pipelineSettings?.config?.preview?.enabled === false || !graphPathAllowed(view.plugin, target?.path) || target.kind === 'folder') { hide(); return Promise.resolve(); }
+    if (disposed || !previewEnabled() || !graphPathAllowed(view.plugin, target?.path) || target.kind === 'folder') { hide(); return Promise.resolve(); }
     position = [cx, cy];
     if (node?.id === target.id && !panel.hidden) {
       pinned = !!pin; place(cx, cy);
@@ -181,7 +184,10 @@ function createNativeGraphServices(view) {
     listeners++; el.addEventListener(type, fn, { signal: events.signal, capture });
   };
   listen(panel, 'mousedown', () => { pinned = true; }, true);
-  listen(close, 'click', hide);
+  listen(close, 'click', () => {
+    hide();
+    if (mobile) view.host?.shadowRoot?.querySelector('[data-act="preview"]')?.focus({ preventScroll: true });
+  });
   listen(open, 'click', () => openNote(node));
   listen(panel, 'keydown', event => { if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); hide(); view.host?.shadowRoot?.querySelector('.kg-surface')?.focus(); } });
   listen(panel, 'click', event => {
@@ -206,7 +212,7 @@ function createNativeGraphServices(view) {
   return {
     openNote,
     uiStorage: createNativeUiStorage(view.plugin),
-    preview: { show, hide, setOnHide(callback) { onHide = callback; }, state: () => ({ open: !panel.hidden, pinned, note: node?.note || node?.id || null }) },
+    preview: { show, hide, isEnabled: previewEnabled, setOnHide(callback) { onHide = callback; }, state: () => ({ open: !panel.hidden, pinned, note: node?.note || node?.id || null }) },
     diagnostics: () => ({ disposed, ...resources, queued: !!queued, timers: hoverTimer === null ? 0 : 1, listeners, observers: disposed ? 0 : 1 }),
     dispose() { if (disposed) return; disposed = true; hide(); events.abort(); listeners = 0; resize.disconnect(); panel.remove(); onHide = () => {}; },
   };

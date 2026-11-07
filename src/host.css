@@ -1,7 +1,7 @@
 /* 布局工具条：与顶栏同样左右贴边。编辑时作为顶栏下方的第二条横带（画布 inset
    由 hud 的 syncInsets 让出它的真实高度）；阅读时整条隐藏 —— 可视区始终是完整矩形，
    不再像旧版那样用浮动按钮在右上角挖掉一块画布。 */
-.kg-layout-tools { position:absolute; left:0; right:0; top:46px; z-index:19; display:flex; align-items:center; gap:8px; padding:0 12px; min-height:38px; font-size:12px;
+.kg-layout-tools { position:absolute; left:0; right:0; top:var(--kg-top-h, 46px); z-index:19; display:flex; align-items:center; gap:8px; padding:0 12px; min-height:38px; font-size:12px;
   background:linear-gradient(180deg, rgba(8,18,22,.82), rgba(8,18,22,.5));
   -webkit-backdrop-filter:blur(18px) saturate(125%); backdrop-filter:blur(18px) saturate(125%);
   border-bottom:1px solid rgba(255,255,255,.085); box-shadow:0 1px 24px rgba(0,0,0,.35); }
@@ -16,10 +16,10 @@
 .kg-surface.kg-sidebar-open .kg-layout-tools { right:min(360px, 40cqw); }
 /* 工具条展开时把搜索命中列表压到它下面，避免两条横带重叠。实际高度由 hud 写进
    --kg-band-h（窄容器里提示文案会换行，横带不止 38px，写死会重新叠上）。 */
-#layout-tools:not([hidden]) + #hits { top:calc(46px + var(--kg-band-h, 38px) + 8px); }
+#layout-tools:not([hidden]) + #hits { top:calc(var(--kg-top-h, 46px) + var(--kg-band-h, 38px) + 8px); }
 /* 图例是「bottom:12 起、最多撑到 top:46」的卡片：工具条展开时它的可用高度要再让出
    横带的真实高度，否则卡片头部（图例标题/收起）会被第二条横带盖住。 */
-#layout-tools:not([hidden]) ~ #legend { max-height:calc(100% - 58px - var(--kg-band-h, 38px)); }
+#layout-tools:not([hidden]) ~ #legend { max-height:calc(100% - var(--kg-top-h, 46px) - 12px - var(--kg-band-h, 38px)); }
 #layout-mode[aria-pressed="true"] { background:rgba(230,191,125,.88); border-color:rgba(230,191,125,.88); color:#132435; }
 #layout-mode[aria-pressed="true"]:hover { background:rgba(230,191,125,.96); border-color:rgba(230,191,125,.96); }
 /* 顶栏动作按钮（重新构建 / 调整布局）固定为单字形图标：文字标签在宽窗口里也会被
@@ -41,7 +41,7 @@
   #topbar .brand, #topbar .spacer, #readout { display: none; }
   #levelbar { flex: 0 0 auto; min-width: 0; }
   #pills { flex: 0 1 auto; max-width: 140px; }
-  #topbar > input, #topbar > select, #topbar > button { flex-shrink: 0; }
+  #kg-actions > input, #kg-actions > select, #kg-actions > button { flex-shrink: 0; }
   #legend { max-width: min(280px, calc(100cqw - 24px)); }
 }
 /* 窄容器（主窗口 + 左侧文件列表 ≈ 686px）：收紧间距与搜索框，使顶栏继续是一行
@@ -51,3 +51,59 @@
   #topbar { gap:6px; padding:0 8px; }
   #search { width:110px; }
 }
+
+#kg-more { display: none; }
+#kg-actions { display: contents; }
+
+@container (max-width: 520px) {
+  .kg-surface[data-kg-platform] #topbar {
+    height: auto; min-height: 46px; flex-wrap: wrap; overflow: visible;
+    padding-inline: max(8px, env(safe-area-inset-left)) max(8px, env(safe-area-inset-right));
+  }
+  .kg-surface[data-kg-platform] #levelbar { flex: 1 1 0; min-height: 45px; }
+  .kg-surface[data-kg-platform] #pills { max-width: none; }
+  .kg-surface[data-kg-platform] #levelbar > button { width: 44px; min-height: 44px; }
+  .kg-surface[data-kg-platform] #kg-more { display: block; min-width: 44px; min-height: 44px; font-size: 20px; }
+  .kg-surface[data-kg-platform] #kg-actions { display: none; }
+  .kg-surface[data-kg-platform] #kg-more[aria-expanded="true"] + #kg-actions {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px;
+    flex: 0 0 100%; padding-bottom: 8px;
+  }
+  .kg-surface[data-kg-platform] #kg-actions > * { min-width: 0; min-height: 44px; }
+  .kg-surface[data-kg-platform] #search { grid-column: 1 / -1; width: 100%; font-size: 16px; }
+  .kg-surface[data-kg-platform] #kg-actions button { width: auto; padding-inline: 6px; white-space: normal; }
+  .kg-surface[data-kg-platform] #kg-actions .kg-action-label { display: inline; margin-inline-start: 4px; }
+  .kg-surface[data-kg-platform] #sidebar { top: var(--kg-top-h, 46px); }
+  .kg-surface[data-kg-platform] #hits { top: calc(var(--kg-top-h, 46px) + var(--kg-band-h, 0px) + 8px); }
+  .kg-surface[data-kg-platform] #layout-options { flex-wrap: nowrap; overflow-x: auto; }
+  .kg-surface[data-kg-platform] #layout-status { flex: 0 0 auto; max-width: 160px; }
+  .kg-surface[data-kg-platform] #footer {
+    left: 8px; right: max(8px, env(safe-area-inset-right)); bottom: max(8px, env(safe-area-inset-bottom));
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+}
+
+.kg-surface[data-kg-platform] #sidebar h2 { padding-inline-end: 96px; overflow-wrap: anywhere; }
+.kg-surface[data-kg-platform] #sidebar button { min-height: 44px; }
+.kg-surface[data-kg-platform] #sidebar .kg-sidebar-close { position: absolute; inset-block-start: 8px; inset-inline-end: 8px; }
+.kg-surface[data-kg-platform] #legend { max-height: min(60cqh, calc(100% - var(--kg-top-h, 46px) - var(--kg-band-h, 0px) - 12px)); }
+.kg-surface[data-kg-platform] #hits {
+  max-height: min(300px, calc(100% - var(--kg-top-h, 46px) - var(--kg-band-h, 0px) - 16px));
+}
+.kg-surface[data-kg-platform] #hits .hit { min-height: 44px; display: flex; flex-direction: column; justify-content: center; }
+
+@container (max-width: 520px) {
+  .kg-surface[data-kg-platform] #sidebar {
+    --kg-sidebar-bottom: 1;
+    top: auto; left: 0; width: 100%; max-height: min(55cqh, calc(100% - var(--kg-top-h, 46px) - var(--kg-band-h, 0px)));
+    transform: translateY(100%); border-left: 0; border-top: 1px solid var(--glass-border);
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .kg-surface[data-kg-platform] #sidebar.open { transform: none; }
+  .kg-surface[data-kg-platform].kg-sidebar-open .kg-layout-tools { right: 0; }
+  .kg-surface[data-kg-platform].kg-sidebar-open #legend { visibility: hidden; }
+}
+
+.kg-surface[data-kg-platform] #cv { touch-action: none; -webkit-touch-callout: none; }
+.kg-surface[data-kg-platform] #layout-parent { display: none; }
+.kg-surface[data-kg-platform] #layout-status { white-space: normal; }

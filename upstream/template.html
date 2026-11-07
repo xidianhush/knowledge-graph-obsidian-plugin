@@ -311,6 +311,8 @@
   </div>
   <span id="readout"></span>
   <span class="spacer"></span>
+  <button id="kg-more" type="button" aria-expanded="false" aria-controls="kg-actions" data-i18n-aria-label="ui.moreActions">⋯</button>
+  <div id="kg-actions">
   <input id="search" type="search" placeholder="搜索笔记 / 标题…" data-i18n-placeholder="ui.search.placeholder">
   <select id="domain"><option value="all" data-i18n="ui.domain.all">全部学科</option></select>
   <select id="labels" title="标签的显示策略（自动 = 按屏幕密度竞争）" data-i18n-title="ui.labels.title">
@@ -324,6 +326,7 @@
   <button id="rebuild" title="重新构建当前库的图谱（不用关开视图）" aria-label="重新构建当前库的图谱" data-i18n-title="ui.rebuild.title" data-i18n-aria-label="ui.rebuild.aria" hidden><span class="kg-action-icon" aria-hidden="true">↻</span><span class="kg-action-label" data-i18n="ui.rebuild.label">重新构建</span></button>
   <button id="layout-mode" title="进入/退出布局调整：拖动节点、调整整组" aria-label="调整布局" aria-pressed="false" data-i18n-title="ui.layoutMode.title" data-i18n-aria-label="ui.layoutMode.aria"><span class="kg-action-icon" aria-hidden="true">✥</span><span class="kg-action-label" data-i18n="ui.layoutMode.label">调整布局</span></button>
   <button id="reset" title="回到该层默认视角" data-i18n="ui.reset.label" data-i18n-title="ui.reset.title">重置视角</button>
+  </div>
 </header>
 
 <div id="layout-tools" class="kg-layout-tools" hidden>

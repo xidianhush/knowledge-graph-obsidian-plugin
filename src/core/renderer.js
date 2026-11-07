@@ -328,7 +328,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
     }
     function editHandle() {
       var n = byId.get(selectedId);
-      if (!editMode || !n || (filterSet && !filterSet.has(n.id))) return null;
+      if (runtime.touch || !editMode || !n || (filterSet && !filterSet.has(n.id))) return null;
       var x=w2sx(n.x), y=w2sy(n.y)-n._r*cam.zoom-14;
       var rect=contentRect();
       // For a zoomed-in parent, keep the handle discoverable inside the viewport.
@@ -346,7 +346,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
     var textW = new Map();
     var ctx = canvas.getContext('2d');
 
-    // 内容区（去掉顶栏 / 页脚 / 打开的侧栏）—— 相机居中、fit、屏外判据都以它为准
+    // 内容区用于相机居中、fit 和 HUD 预算；世界图形按整块画布绘制。
     function contentRect() {
       var x0 = 0, y0 = Math.max(0, INSETS.top || 0);
       var x1 = Math.max(x0 + 80, W - Math.max(0, INSETS.right || 0));
@@ -468,9 +468,11 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
     // 父圆在自己下一层成熟时被压暗（「省淡出、市淡入」的交接点也统一到同一个 zoom）。
     // 半径从此只决定「同层里画多大」，不再决定「什么时候出现」。
     function levelFade(depth, z) {
+      // Keep the overview visible below the first layer entry point on every platform.
+      if (depth === 1) return 1;
       var e = ENTER[Math.max(0, depth - 1)];
       if (e == null) return 1;                 // 超出表就不管（理论上不会）
-      return smoothstep(e, e * FADE, z);
+      return smoothstep(e / Math.sqrt(FADE), e * FADE, z);
     }
     // 该层「成熟」的 zoom = 该层全部满不透明的那一档。跳层落点、focusOn、
     // fitPair 都用它 —— 用 _mz 会落到「本层还没开始淡入」的地方。
@@ -693,7 +695,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
         // 即往上滚放大），也可能是放大到极端（连最小的圆都铺满视口 → maxzoom 停画，
         // 要往下滚）。原来只写「向下滚」在缩太远时是反的。
         var cc0 = contentCenter();
-        ctx.fillText(kgT('core.renderer.emptyViewport'),
+        ctx.fillText(kgT(runtime.touch ? 'core.renderer.emptyViewport.touch' : 'core.renderer.emptyViewport'),
                      cc0[0], cc0[1]);
         ctx.textAlign = 'left';
       }
@@ -797,7 +799,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
     //   2) alpha 恒为 1，不乘端点淡入进度、不按条数打折 —— 缩放只改长度，不改浓淡。
     //   3) 线宽恒为 RAW_LW、恒为直线。关联强度由「同一对父圆之间有几条线」表达：真实
     //      端点本来就散在父圆内部的不同位置，一束线天然散开，不需要扇形展开。
-    // 唯一的门是几何的：整条线段的屏幕 bbox 与内容视口不相交才不画。两端都在屏外但
+    // 唯一的门是几何的：整条线段的屏幕 bbox 与画布不相交才不画。两端都在屏外但
     // 横跨视口的长边照样画 —— 线穿过屏幕就该看得见。
     // 焦点/悬停的压暗（FOCUS_DIM / HOVER_DIM）保留，理由见文件头注释。
     function drawEdges() {
@@ -810,10 +812,10 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       beginEdges();
       var selN = byId.get(selectedId), hovN = byId.get(hoverId);
       var droppedFocus = [];
-      var Hc = contentHeight();
+      var Hc = H;
       var drawn = 0;
       ctx.lineCap = 'round';
-      // 第一趟：几何筛（bbox 与内容区是否相交）+ 焦点记账（被筛掉的焦点边仍要计数）；
+      // 第一趟：几何筛（bbox 与画布是否相交）+ 焦点记账（被筛掉的焦点边仍要计数）；
       // 同时算出这一帧要不要抽稀。第二趟才真正落笔。
       var visible = [];
       for (var i = 0; i < SEM.length; i++) {
@@ -986,12 +988,15 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       return clamp(Math.floor(area / 1200), 200, 3000);
     }
 
-    // 线段裁到内容区（外扩 CULL_MARGIN）。深缩放时端点的**屏幕坐标**能到几万像素
+    // 线段裁到画布（外扩 CULL_MARGIN）。深缩放时端点的**屏幕坐标**能到几万像素
     // （世界坐标差 × zoom），直接塞进 canvas 路径会让光栅化在视口外反复裁剪 ——
     // 实测 edge-storm 在 z≈4 时 2700 条这样的长线就是每帧几百 ms。裁完两端都落在
     // 视口附近，光栅化只在可见的那一段上做。返回 null 表示整段在视口外。
+    // World geometry shares the nodes' full canvas, including behind HUD overlays.
+    // contentHeight() is a size, not an absolute bottom coordinate; using it here
+    // cuts links/markers off early by the toolbar and footer insets.
     function clipToScreen(x1, y1, x2, y2) {
-      var Hc = contentHeight();
+      var Hc = H;
       var xmin = -CULL_MARGIN, xmax = W + CULL_MARGIN;
       var ymin = -CULL_MARGIN, ymax = Hc + CULL_MARGIN;
       var t0 = 0, t1 = 1;
@@ -1011,7 +1016,7 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
     }
 
     function inScreen(x, y, margin) {
-      var Hc = contentHeight();
+      var Hc = H;
       var m = margin == null ? CULL_MARGIN : margin;
       return x >= -m && x <= W + m && y >= -m && y <= Hc + m;
     }
@@ -1138,27 +1143,27 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       ctx.globalAlpha = 1;
     }
 
-    // 端点锚点：永远是节点自己，不沿 parent 链上移。on 只表示「这个点还在内容视口内
+    // 端点锚点：永远是节点自己，不沿 parent 链上移。on 只表示「这个点还在画布视口内
     // （外扩 CULL_MARGIN）」，供 drawEdges 主循环决定「屏外的那一端」挂不挂 chip 用
     // （一端屏外命名那一端，两端都屏外命名非焦点端）；它**不**决定线画不画（那由线段
     // bbox 判定）。sr 用节点自己的世界半径 × zoom，粗尺度下可能亚像素，于是线端落在
     // 父圆内部 —— 正是「这里面还有更深知识点」的暗示。
     function rawAnchor(n) {
       var sx = w2sx(n.x), sy = w2sy(n.y);
-      var Hc = contentHeight();
+      var Hc = H;
       var on = !(sx < -CULL_MARGIN || sx > W + CULL_MARGIN ||
                  sy < -CULL_MARGIN || sy > Hc + CULL_MARGIN);
       return { on: on, node: n, sx: sx, sy: sy, sr: n._r * cam.zoom };
     }
 
-    // 两端都在屏外时，求线段 N→O **进入**内容视口的那一点，以及指向 N 的朝外单位向量
+    // 两端都在屏外时，求线段 N→O **进入**画布视口的那一点，以及指向 N 的朝外单位向量
     // （drawChips 靠 dx/dy 把 chip 沿反方向内移进屏，所以这里必须给 -u）。
     // 不能复用单端那套 tBest=min(正 t)：那个式子假定起点在矩形内、算出来的是**出口**；
     // 起点在屏外时它会返回远侧交点，把名字牌钉到线离开视口的那一头去。所以这里用 slab
-    // 裁剪（Liang–Barsky）求真正的入口。视口取内容区 [0,W]×[0,Hc]、不外扩 CULL_MARGIN，
+    // 裁剪（Liang–Barsky）求真正的入口。视口取整块画布 [0,W]×[0,H]、不外扩 CULL_MARGIN，
     // 与单端分支同一口径。返回 null = 这条线段根本没穿过视口。
     function entryToward(N, O) {
-      var Hc = contentHeight();
+      var Hc = H;
       var vx = O.sx - N.sx, vy = O.sy - N.sy;
       var vl = Math.sqrt(vx * vx + vy * vy);
       if (vl <= 1e-6) return null;
@@ -1724,14 +1729,14 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       if (hooks.onCamera) hooks.onCamera();
     }, { passive: false });
 
-    runtime.listenCanvas('mousedown', function (e) {
-      if (e.button !== 0) return;
+    function beginDrag(e, touch) {
       if (nodeDrag) cancelLayout();
       if (editMode) {
-        var p=pos(e), h=editHandle(), hit=h && Math.hypot(p[0]-h.x,p[1]-h.y)<=13 ? byId.get(h.id) : hitTest(p[0],p[1]);
+        var p=pos(e), h=touch ? null : editHandle();
+        var hit=h && Math.hypot(p[0]-h.x,p[1]-h.y)<=13 ? byId.get(h.id) : hitTest(p[0],p[1]);
         // An explicitly selected container owns a drag inside its subtree.
         // A click still uses the ordinary innermost hit below, so children remain selectable.
-        if(hit && selectedId && kids.has(selectedId)) {
+        if(!touch && hit && selectedId && kids.has(selectedId)) {
           var ancestor=hit;
           while(ancestor){if(ancestor.id===selectedId){hit=ancestor;break;}ancestor=byId.get(ancestor.parent);}
         }
@@ -1748,19 +1753,20 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       lastX = e.clientX; lastY = e.clientY;
       tween = null;
       canvas.style.cursor = 'grabbing';
-    });
+    }
 
-    runtime.listenGlobal('mousemove', function (e) {
+    function moveDrag(e, touch) {
       var p = pos(e);
-      lastMouse = (p[0] < 0 || p[1] < 0 || p[0] > W || p[1] > H) ? null : p;
+      if (!touch) lastMouse = (p[0] < 0 || p[1] < 0 || p[0] > W || p[1] > H) ? null : p;
       if(nodeDrag) {
-        if(Math.hypot(e.clientX-nodeDrag.startX,e.clientY-nodeDrag.startY)<5 && !nodeDrag.started)return;
+        if(Math.hypot(e.clientX-nodeDrag.startX,e.clientY-nodeDrag.startY)<(touch ? TOUCH_SLOP : 5) && !nodeDrag.started)return;
         dragMoved=6;
         if(nodeDrag.error)return;
         if(!nodeDrag.started){nodeDrag.started=true;selectedId=nodeDrag.id;layoutNotice(kgT('core.renderer.adjustingStart'));}
         var blocked=layout.move((p[0]-cam.panX)/cam.zoom-nodeDrag.offsetX,(p[1]-cam.panY)/cam.zoom-nodeDrag.offsetY);
         canvas.style.cursor='grabbing';invalidate();
-        layoutNotice(kgT(blocked?'core.renderer.adjustBlocked':'core.renderer.adjustingHint'));return;
+        const hint = runtime.touch ? 'core.renderer.adjustingHint.touch' : 'core.renderer.adjustingHint';
+        layoutNotice(kgT(blocked ? 'core.renderer.adjustBlocked' : hint)); return;
       }
       if (dragging) {
         var dx = e.clientX - lastX, dy = e.clientY - lastY;
@@ -1771,8 +1777,13 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
         if (hooks.onCamera) hooks.onCamera();
         return;
       }
-      if (lastMouse) evalHover(p[0], p[1]);
+      if (!touch && lastMouse) evalHover(p[0], p[1]);
+    }
+
+    runtime.listenCanvas('mousedown', function (e) {
+      if (e.button === 0) beginDrag(e, false);
     });
+    runtime.listenGlobal('mousemove', function (e) { moveDrag(e, false); });
 
     runtime.listenCanvas('mouseleave', function () { lastMouse = null; });
     runtime.listenGlobal('pointercancel', function(){cancelLayout();});
@@ -1780,26 +1791,169 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       if(nodeDrag && !e.relatedTarget && e.view && (e.clientX<=0||e.clientY<=0||e.clientX>=e.view.innerWidth||e.clientY>=e.view.innerHeight))cancelLayout();
     });
 
-    runtime.listenGlobal('mouseup', function () {
+    function finishDrag() {
       if(nodeDrag){var moved=nodeDrag.started, key=layoutModel.groupKey(nodeDrag.id);layout.commit();nodeDrag=null;
         if(moved && hooks.onLayoutCommit)hooks.onLayoutCommit(key,layoutModel.capture(key));
         else if(hooks.onLayoutEnd)hooks.onLayoutEnd();
         invalidate();}
       dragging = false;
       canvas.style.cursor = hoverId ? 'pointer' : 'grab';
-    });
+    }
+    runtime.listenGlobal('mouseup', finishDrag);
 
-    runtime.listenCanvas('click', function (e) {
-      if (dragMoved > 5) return;                // 是拖拽，不是点击
-      var p = pos(e);
-      var hit = hitTest(p[0], p[1]);
+    function selectHit(hit) {
       selectedId = hit ? hit.id : null;
       invalidate();
       if (hooks.onSelect) hooks.onSelect(selectedId, hit);
+    }
+
+    const touches = runtime.touch ? new Map() : null;
+    let multiTouch = false;
+    let touchClickPending = false;
+    let held = false;
+    let holdTimer = null;
+    let pendingTap = null;
+    const DOUBLE_TAP_MS = 400;
+    const TOUCH_SLOP = 8;
+    let touchDownAt = 0;
+    const LONG_PRESS_MS = 500;
+
+    function clearHold() {
+      if (holdTimer === null) return;
+      runtime.clearTimer(holdTimer);
+      holdTimer = null;
+    }
+
+    function clearTap() {
+      if (!pendingTap) return;
+      runtime.clearTimer(pendingTap.timer);
+      pendingTap = null;
+    }
+
+    function clearTouches() {
+      touches?.clear();
+      multiTouch = false;
+      held = false;
+      clearHold();
+      clearTap();
+    }
+
+    function finishTap(e) {
+      const point = pos(e);
+      const hit = hitTest(point[0], point[1]);
+      const previous = pendingTap;
+      clearTap();
+      if (editMode) { selectHit(hit); return; }
+      if (previous && previous.hit?.id === hit?.id && touchDownAt - previous.time <= DOUBLE_TAP_MS &&
+          Math.hypot(previous.point[0] - point[0], previous.point[1] - point[1]) <= 24) {
+        selectHit(hit);
+        if (hit) focusOn(hit.id, 1.6, TRANSITION * 1.4);
+        else resetView();
+        return;
+      }
+      // Let the second tap land before opening details, which can reposition the canvas.
+      pendingTap = { hit, point, time: runtime.now(), timer: runtime.setTimer(() => {
+        pendingTap = null;
+        selectHit(hit);
+      }, DOUBLE_TAP_MS) };
+    }
+
+    function pinchGeometry() {
+      const [a, b] = touches.values();
+      return {
+        x: (a[0] + b[0]) / 2,
+        y: (a[1] + b[1]) / 2,
+        distance: Math.hypot(a[0] - b[0], a[1] - b[1]),
+      };
+    }
+
+    if (touches) {
+      runtime.listenCanvas('pointerdown', function (e) {
+        if (e.pointerType !== 'touch') { touchClickPending = false; return; }
+        e.preventDefault();
+        touchClickPending = true;
+        touches.set(e.pointerId, pos(e));
+        lastMouse = null;
+        hoverId = null;
+        if (touches.size === 1) {
+          held = false;
+          touchDownAt = runtime.now();
+          if (pendingTap) runtime.clearTimer(pendingTap.timer);
+          beginDrag(e, true);
+          if (!editMode && hooks.onTouchPreview) {
+            const point = touches.get(e.pointerId);
+            const hit = hitTest(point[0], point[1]);
+            if (hit) holdTimer = runtime.setTimer(() => {
+              holdTimer = null;
+              if (!hooks.onTouchPreview(hit, e.clientX, e.clientY)) return;
+              held = true;
+              dragging = false;
+              clearTap();
+            }, LONG_PRESS_MS);
+          }
+          return;
+        }
+        clearHold();
+        clearTap();
+        multiTouch = true;
+        cancelLayout();
+        dragging = false;
+      }, { passive: false });
+
+      runtime.listenGlobal('pointermove', function (e) {
+        if (!touches.has(e.pointerId) || held) return;
+        const moved = Math.hypot(e.clientX - lastX, e.clientY - lastY) > TOUCH_SLOP;
+        if (moved) { clearHold(); clearTap(); }
+        const previous = touches.size === 2 ? pinchGeometry() : null;
+        touches.set(e.pointerId, pos(e));
+        if (previous && previous.distance > 0) {
+          const current = pinchGeometry();
+          if (current.distance <= 0) return;
+          tween = null;
+          zoomAt(previous.x, previous.y, cam.zoom * Math.pow(current.distance / previous.distance, 0.75));
+          cam.panX += current.x - previous.x;
+          cam.panY += current.y - previous.y;
+          invalidate();
+          if (hooks.onCamera) hooks.onCamera();
+        } else if (!multiTouch && (nodeDrag || dragMoved > 0 || moved)) {
+          moveDrag(e, true);
+        }
+      });
+
+      runtime.listenGlobal('pointerup', function (e) {
+        if (!touches.delete(e.pointerId)) return;
+        clearHold();
+        if (!multiTouch && !held) {
+          finishDrag();
+          if (dragMoved <= 5) finishTap(e);
+        }
+        if (!touches.size) { multiTouch = false; held = false; }
+      });
+
+      const cancelTouch = e => {
+        if (!touches.has(e.pointerId)) return;
+        clearTouches();
+        cancelLayout();
+        dragging = false;
+      };
+      runtime.listenGlobal('pointercancel', cancelTouch);
+      runtime.listenCanvas('lostpointercapture', cancelTouch);
+      runtime.listenCanvas('contextmenu', e => { if (touches.size) e.preventDefault(); });
+    }
+
+    function touchGeneratedClick(e) {
+      return !!touches && (e.pointerType === 'touch' || e.sourceCapabilities?.firesTouchEvents ||
+        (touchClickPending && e.detail > 0));
+    }
+
+    runtime.listenCanvas('click', function (e) {
+      if (touchGeneratedClick(e) || dragMoved > 5) return;
+      const p = pos(e);
+      selectHit(hitTest(p[0], p[1]));
     });
 
     runtime.listenCanvas('dblclick', function (e) {
-      if(editMode && dragMoved>5)return;
+      if(touchGeneratedClick(e) || (editMode && dragMoved>5))return;
       var p = pos(e);
       var hit = hitTest(p[0], p[1]);
       // 双击空白 = 回到默认视角，顺手清掉选中 —— 否则焦点过滤还挂着，用户会以为
@@ -1831,8 +1985,8 @@ var ctrlMode = false;   // Ctrl 按住时给标题圆画虚线圈（可预览提
       chipJobs: chipJobs,
       NODES: NODES, byId: byId, SEM: SEM,
       resize: resize,
-      cancelInteraction: function () { cancelLayout(); dragging = false; lastMouse = null; tween = null; canvas.style.cursor = 'grab'; },
-      setEditMode: function(v){cancelLayout();editMode=!!v;invalidate();},
+      cancelInteraction: function () { clearTouches(); cancelLayout(); dragging = false; lastMouse = null; tween = null; canvas.style.cursor = 'grab'; },
+      setEditMode: function(v){clearHold();clearTap();cancelLayout();editMode=!!v;invalidate();},
       get editMode(){return editMode;},
       get layoutDragging(){return !!nodeDrag;},
       get suppressClick(){return dragMoved>5;},

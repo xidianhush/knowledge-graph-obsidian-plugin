@@ -1,4 +1,4 @@
-# 安装、升级、卸载与已知限制（0.0.14）
+# 安装、升级、卸载与已知限制（0.0.15）
 
 本文面向**使用者**，说明如何把插件装进一个 Obsidian 库、升级、回退与卸载，以及当前版本的已知限制。开发与回归说明见 [DEVELOPMENT.md](../DEVELOPMENT.md)，当前进度与验收记录见 [TODO.md](../TODO.md)。
 
@@ -6,11 +6,11 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 插件版本 | 0.0.14（`manifest.json`；GitHub Release 0.0.14 已于 2026-11-06 发布） |
+| 插件版本 | 0.0.15 |
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
-| 实际验证环境 | 0.0.13 界面在 Obsidian 1.15.0（合成库 vault-012 与「日常库副本」vault-013）验证；0.0.14 的原生验证环境与结果以 [TODO.md](../TODO.md) 的 UI-A6/A8/A10/A11/A13 行为准；0.0.12 及更早在 1.6.7 与 1.14.5 / Electron 30.1.2 / Windows，深色与浅色主题 |
-| 平台声明 | `isDesktopOnly: true`，仅支持桌面版 Obsidian；移动端未验证、不在支持范围 |
-| 发布状态 | **0.0.14 是当前正式发布版本**（2026-11-06 发布）：tag `0.0.14` + GitHub Release <https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.14>，由 GitHub Actions `Release` 工作流（run 42164446268）在 runner 上构建并发布，资产**恰三项**：`main.js` 396,234 B sha256 `b022a4d8…`、`manifest.json` 308 B `aa3cc460…`、`styles.css` 2,400 B `c14381d9…`；`SHA256SUMS` 与发布说明在 Release 正文中，三资产带 GitHub Actions 构建来源证明（见 [RELEASE_CI.md](RELEASE_CI.md)）。上一版 0.0.13 的 Release 仍保留（五资产，含 `SHA256SUMS`/`RELEASE_NOTES.md`）。社区目录条目：<https://community.obsidian.md/plugins/knowledge-graph-smoke>；门户条目图标与 Overview 已于 2026-11-06 由维护者在门户后台更新（门户图标由图标名 + 背景色组合，不支持上传仓库内 PNG/SVG）。 |
+| 实际验证环境 | 本版已有 Windows Obsidian 1.15.0 技术证据；iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0 (396) 由用户手动验收。历史桌面 1.6.7 / 1.14.5 结果不能当成本轮复测。最终候选技术核验见 [发布准备](RELEASE_PREP_0.0.15.md) |
+| 平台声明 | `isDesktopOnly: false`；本版范围为桌面 + iPadOS。该布尔值也允许其他移动端安装，不代表 Android/iPhone 已适配或验证。Android 适配下一版；iPhone 未验证；最低 iPadOS 与客观移动帧率/内存界限未确立 |
+| 发布方式 | tag `0.0.15` 由 GitHub Actions Release 工作流构建并发布，[Release 页面](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.15)；资产仅 `main.js`、`manifest.json`、`styles.css`，校验值在 Release 正文，三资产附构建来源证明。最终线上核对见 [发布记录](RELEASE_PREP_0.0.15.md)。社区目录沿用现有条目与图标。 |
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 
@@ -43,6 +43,7 @@
 8. 0.0.13 候选期间修复了「删除标题后整篇笔记标题重排」与布局编辑提示文案；重新安装只需再次替换 `main.js`/`manifest.json`/`styles.css` 三文件，`data.json` 保留，无需迁移。
 9. 0.0.13 → 0.0.14 只改界面与发布方式：界面中英双语、布局工具条不再依赖 CSS `:has()`、图例收起状态改存 `data.json` 的 `ui` 字段（首次加载会把旧 `localStorage` 值迁移过去）。布局数据仍为 schema3，`data.json` 直接沿用，无需迁移。
 10. **语言设置**：0.0.14 新增「设置 → 第三方插件 → Knowledge Map → 语言」，可选「跟随应用 / 中文 / English」。默认跟随 Obsidian 语言，非中文环境显示英文。切换后已打开的图谱与设置页立即刷新；命令面板、ribbon 悬停提示与标签页标题在重载插件后更新（保存时会提示）。
+11. **0.0.14 → 0.0.15**：新增 iPad 触屏导航、预览、单元素布局调整及 Worker 失败分块降级，修复桌面/iPad 缩放可见性和底部连线裁剪。ID 与 schema3 保持；升级仅替换三运行文件，保留本库 `data.json`，不要用其他设备或测试包的配置覆盖它。首次尝试建议使用独立测试库。iPad 手动安装可通过文件 App 或已配置的 Obsidian Sync 传入三运行文件，完成后重启 Obsidian 并启用插件。
 
 ### 回退
 
@@ -66,7 +67,7 @@ Obsidian 卸载插件时会连同插件目录删除 `data.json`，**已保存的
 - 笔记节点在悬停/预览时会显示正文摘要（最多 220 字符），这是既有交互的一部分；该摘要只在内存渲染，不写入 `data.json`、不写入日志或状态消息。
 - 插件不发送网络请求、不上传笔记内容、不采集遥测。
 
-## 6. 已知限制（0.0.14）
+## 6. 已知限制（0.0.15）
 
 - 单组同级节点超过 128 个，或受影响节点超过修复预算（5000）时，该组回退为自动布局，不能手动调整。
 - 图谱画布固定深色，不跟随 Obsidian 浅色主题；宿主界面变浅时画布仍为深色（DEC-001，已决定维持）。
@@ -74,7 +75,8 @@ Obsidian 卸载插件时会连同插件目录删除 `data.json`，**已保存的
 - 卸载插件会删除布局数据（见第 4 节）。
 - 部分第三方插件弹窗（例如文件改名后的“更新链接”确认、Excalidraw 首次欢迎页）会暂时盖住图谱并拦截鼠标输入，处理完弹窗即可恢复。
 - 稳定性调查 FB-006 已定因：早期原生自动化对 Obsidian 渲染页执行整页 reload 会触发宿主层告警（插件被禁用时同样出现），属测试驱动产物，不是插件缺陷；正常使用不会触发。详见 [DESKTOP_STABILITY_RESULT.md](../DESKTOP_STABILITY_RESULT.md)。
-- 仅支持桌面版 Obsidian（`isDesktopOnly: true`）；移动端未验证、不在支持范围。
+- 0.0.15 加入 iPadOS；旧版 0.0.14 仅桌面。iPhone 未验证，Android 适配下一版。iPad 取消构建、强制 Worker 失败、5000 节点冷启动、128 兄弟保存延迟及客观帧率/内存峰值尚无完整真机证据；桌面模拟与 Node 故障测试不能替代这些结果。
+- 触屏：单指平移、双指捏合、双击聚焦/双击空白重置；长按笔记或标题，或选中后点「预览」。点 ✥「调整布局」后可拖动单个元素、松手保存，再点 ✥ 结束；支持撤销/重做，触屏整组拖动与选父级后置。
 - 开发用的快照冒烟命令依赖本地 `smoke-payload.json`；正式交付包只含三个运行文件，不含该快照。
 - 兼容性矩阵覆盖 Obsidian 1.14.5 桌面版、单显示器、核心插件与 6 个常见社区插件（Dataview、Templater、Obsidian Git、Style Settings、Omnisearch、Excalidraw），未做 WCAG/无障碍测量；详见 [COMPAT_MATRIX_RESULT.md](../COMPAT_MATRIX_RESULT.md)。
 
@@ -90,7 +92,7 @@ node scripts/package.mjs   # 白名单三文件 + SHA256SUMS -> .local/release/<
 ## 8. 反馈模板
 
 ```
-版本：0.0.14 / Obsidian 1.6.7 或 1.15.0 / 操作系统
+版本：插件版本 / Obsidian 版本 / 操作系统与设备型号
 场景：
 操作步骤：
 实际表现：

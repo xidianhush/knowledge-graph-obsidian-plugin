@@ -1,5 +1,5 @@
 // Browser primitives are selected from the canvas's owner window (including popouts).
-function createCanvasPlatform(canvas) {
+function createCanvasPlatform(canvas, mobile = false) {
   const win = canvas.ownerDocument.defaultView;
   let dragging = false;
   const listen = (target, type, callback, options) => {
@@ -7,8 +7,11 @@ function createCanvasPlatform(canvas) {
     return () => target.removeEventListener(type, callback, options);
   };
   return {
+    touch: mobile && typeof win.PointerEvent === 'function',
     metrics: () => ({ dpr: win.devicePixelRatio || 1, width: canvas.clientWidth, height: canvas.clientHeight }),
     now: () => win.performance.now(),
+    setTimer: (fn, delay) => win.setTimeout(fn, delay),
+    clearTimer: id => win.clearTimeout(id),
     requestFrame: fn => win.requestAnimationFrame(fn),
     cancelFrame: id => win.cancelAnimationFrame(id),
     listenCanvas(type, callback, options) {

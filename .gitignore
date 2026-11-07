@@ -23,3 +23,5 @@ data.json
 # 产品端验收截图：含真实库笔记标题，仅本地保存，不进公开交付
 product-site-img-evidence/
 product-site-acceptance/product-site-img-evidence/
+# 0.0.15 用户设备验收原报告包含真实笔记名；公开结论见 TODO/MOBILE_PLAN
+product-site-acceptance/product-site-acceptance-report/v0.0.15_PRODUCT_SITE_ACCEPTANCE_REPORT.md

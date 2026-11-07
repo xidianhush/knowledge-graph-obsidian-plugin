@@ -4,9 +4,11 @@ kgI18nRegister('en', {
   'core.renderer.cancelled': 'Layout change cancelled',
   'core.renderer.moveGroup': 'Move group',
   'core.renderer.emptyViewport': 'Nothing here · scroll back a little, or press Home / double-click empty space to reset the view',
+  'core.renderer.emptyViewport.touch': 'Pinch to find the map, or double-tap empty space / tap Reset view',
   'core.renderer.adjustingStart': 'Adjusting',
   'core.renderer.adjustBlocked': "Doesn't fit here; kept the last valid position",
   'core.renderer.adjustingHint': 'Adjusting · Esc to cancel',
+  'core.renderer.adjustingHint.touch': 'Release to save',
   // layout-state：布局库状态文案。state() 里的 message 每次读取时按当前语言生成。
   'core.layout.busyOtherView': 'Another view is adjusting or saving the layout. Try again in a moment.',
   'core.layout.message.idle': 'Auto-saves after dragging',
@@ -30,6 +32,8 @@ kgI18nRegister('en', {
   'core.browser.snapshotToast': 'Snapshot mode: opening notes is available in the full adapter',
   'core.pipeline.selected': vars => `Selected ${vars.notes} ${vars.notes === 1 ? 'note' : 'notes'}, ${vars.excluded} excluded; reading…`,
   'core.pipeline.reading': vars => `Reading note ${vars.current} / ${vars.total}`,
+  'core.pipeline.parsing': vars => 'Preparing note ' + vars.current + ' / ' + vars.total,
+  'core.pipeline.connections': 'Building connections…',
   'core.pipeline.layout': 'Computing graph layout…',
 });
 
@@ -37,9 +41,11 @@ kgI18nRegister('zh', {
   'core.renderer.cancelled': '已取消本次调整',
   'core.renderer.moveGroup': '移动整组',
   'core.renderer.emptyViewport': '此处没有内容 · 往回滚一点，或按 Home / 双击空白回到默认视角',
+  'core.renderer.emptyViewport.touch': '捏合找回图谱，或双击空白 / 点重置视角',
   'core.renderer.adjustingStart': '开始调整',
   'core.renderer.adjustBlocked': '这里放不下，已保留有效位置',
   'core.renderer.adjustingHint': '调整中 · Esc 取消',
+  'core.renderer.adjustingHint.touch': '松手保存',
   'core.layout.busyOtherView': '另一视图正在调整或保存布局，请稍后重试',
   'core.layout.message.idle': '拖动后自动保存',
   'core.layout.message.unsupported': '布局数据版本不受支持，调整已禁用；原数据保留',
@@ -60,5 +66,7 @@ kgI18nRegister('zh', {
   'core.browser.snapshotToast': '当前为快照冒烟，原笔记跳转将在正式适配层接入',
   'core.pipeline.selected': '已选中 {notes} 篇笔记，排除 {excluded} 篇；正在读取…',
   'core.pipeline.reading': '正在读取笔记 {current} / {total}',
+  'core.pipeline.parsing': '正在处理笔记 {current} / {total}',
+  'core.pipeline.connections': '正在整理关联…',
   'core.pipeline.layout': '正在计算图谱布局…',
 });

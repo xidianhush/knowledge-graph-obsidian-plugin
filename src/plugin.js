@@ -1,4 +1,4 @@
-const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope, addIcon, moment } = require('obsidian');
+const { Plugin, ItemView, Notice, parseYaml, MarkdownRenderer, Component, Scope, Platform, addIcon, moment } = require('obsidian');
 const KNOWLEDGE_MAP_ICON_ID = 'knowledge-map';
 // Hub with three satellites: two links pass through the outer ring to the inner node,
 // the third stops at the ring. Single-color path so Obsidian can recolor it.
@@ -42,6 +42,12 @@ class KnowledgeGraphView extends ItemView {
   async onOpen() {
     this.closed = false;
     this.contentEl.classList.add('kg-smoke-content');
+    if (Platform?.isMobileApp) {
+      let platform = 'mobile';
+      if (Platform.isAndroidApp) platform = 'android';
+      if (Platform.isIosApp) platform = 'ios';
+      this.contentEl.dataset.kgPlatform = platform;
+    }
     if (this.source === 'vault' && !this.watchEvents.length) this.watchVault();
     await this.rebuild();
   }

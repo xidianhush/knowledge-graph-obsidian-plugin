@@ -23,7 +23,7 @@ if (manifest.version !== pkg.version) {
   throw new Error(`version mismatch: manifest ${manifest.version} vs package.json ${pkg.version}`);
 }
 if (manifest.isDesktopOnly !== true) {
-  console.warn('warning: manifest.isDesktopOnly is not true; mobile is not validated.');
+  console.warn('Mobile installation is enabled; consult the release notes for validated devices and platform limits. isDesktopOnly does not certify every mobile platform.');
 }
 
 const out = path.resolve(root, arg('--out') || path.join('.local', 'release', manifest.version));

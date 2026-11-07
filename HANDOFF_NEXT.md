@@ -1,9 +1,19 @@
 # 下一位 Coding Agent 交接入口
 
-交接日期：2026-11-01（Asia/Shanghai），最后更新 **2026-11-06**（0.0.14 交接）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
+交接日期：2026-11-01（Asia/Shanghai），最后更新 **2026-11-07**（README 精简与 0.0.15 iPadOS 发布交接）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
 
 
-## 本版交接：0.0.14（2026-11-06，最新，先读这一节）
+## 最新交接：README 精简 → 0.0.15 桌面 + iPadOS 发布（2026-11-07）
+
+先读 [详细交接](docs/HANDOFF_0.0.15_README_RELEASE.md) 与 [README 修改计划原文副本](docs/README_PLAN_0.0.15.md)，再以 TODO.md 顶部为当前执行清单。
+
+- README 已按 **simple and accurate** 精简并获用户认可（DOC-015-A1 已验收）；0.0.15 桌面+iPadOS 本地发布候选准备和技术核验完成。Android 适配下一版，iPhone 未验证。当前步骤见 [发布准备](docs/RELEASE_PREP_0.0.15.md)。
+- iPad 本轮功能体验与 PC-F1/PC-F2 支线已用户验收。当前源码仍在 codex/mobile-support 未提交工作区，HEAD b75aa40；manifest/package 已 0.0.15，versions.json 已新增映射，isDesktopOnly:false；公开发布仍 0.0.14。先保存并检查工作区，不从旧 clone 覆盖。
+- 本轮候选 npm test 构建及 11 个合成脚本全过，独立 Windows Obsidian 1.15.0 原生回归 10 项通过、异常/警告 0；三资产/版本/哈希/二次构建核验通过。main.js 416,150 B / SHA-256 8801c3a3e5c2d96fcd6d230e8b703eac8472ac815e677e915c81c23249411391，与用户验收 PC-F2 包相同；本轮没有重跑 iPad 真机。
+- tag／Release／门户由用户届时明确授权；本轮没有 commit/push/发布动作。详细执行顺序、测试范围与安装备份见交接文档。
+- 以下旧交接章节保留追溯。「未开始移动开发」「先重新询问 MOB-P1」「Android 必须先测才能发 0.0.15」不再代表当前任务。
+
+## 历史交接：0.0.14（2026-11-06）
 
 ### 本轮交付结果（2026-11-06，0.0.14 已 tag 并发布）
 
@@ -257,6 +267,6 @@
 - 不把 `.local`、vault/profile、data.json、截图或私有快照加入 Git。原始证据不可跨机器获得时，如实保留摘要与未复跑状态。
 - 网络中断后先读 TODO 和 git status，续接未完工作，不从历史交接重做已验收功能。
 
-## 可直接交给下一位的开场语（2026-11-06，0.0.15 移动端交接）
+## 历史开场语（2026-11-06；已由顶部 2026-11-07 交接取代）
 
 请先读 `AGENTS.md`、`HANDOFF_NEXT.md`「下一阶段交接：移动端支持」、`docs/MOBILE_PLAN.md`、`TODO.md`（`MOB-*`）和 `DEVELOPMENT.md`，然后运行 `npm test` 核对基线（**11** 个合成脚本应全过）并用 `git log --oneline -5` 确认 HEAD。背景：0.0.14 已 tag 并发布（Release 三资产 + attestations，门户图标/Overview 已由用户手动更新），桌面端暂无未完成项；用户要求下一阶段把插件升级为**移动端可用**并交给你做。当前只做了规划：`manifest.json` 仍 `isDesktopOnly: true`，源码未改，`TODO.md` 新增 `MOB-P1` 与 `MOB-A1…A10`。**第一件事不是写代码，而是先问用户 MOB-P1**：Android 优先还是必须覆盖 iOS、最低系统版本、是否接受功能降级（如移动端只读/单元素拖动）、性能目标机型。拿到答复后按 `docs/MOBILE_PLAN.md` §11 的顺序做：MOB-A1 平台检测与 `isDesktopOnly`（先在本地验证，不急着发布）→ A2 响应式布局 → A5 浮层 → A3 触摸 → A4 文案与快捷键等价 → A6/A7 性能与 worker 降级 → A8 矩阵 → A9 发布门禁（tag/Release/门户仍需用户明确授权）。未做真机测试不得写“已验证”，iOS 结果必须如实标注来源；不 force push、不自动升级日常库、不代替用户确认体验验收；每轮按任务 ID 更新 TODO 并写证据路径。

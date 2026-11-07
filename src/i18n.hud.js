@@ -32,6 +32,7 @@ kgI18nRegister('en', {
   'hud.levelCounts': 'folders {folders} · notes {notes} · headings {headings}',
   'hud.readout.deeperHint': '— keep scrolling up to go deeper · Ctrl + hover a heading circle to preview its text',
   'hud.readout.previewHint': '— Ctrl + hover a heading circle to preview its text',
+  'hud.readout.touchPreviewHint': '— pinch to zoom · hold a note or heading to preview',
 
   // ── 页脚（第二行是 ui.footer，模板流负责）─────────────────────────────
   'hud.stats': 'nodes {nodes} · links {edges} · labels {labels}',
@@ -59,6 +60,8 @@ kgI18nRegister('en', {
   'hud.action.focus': 'Center',
   'hud.action.drill': 'Drill in',
   'hud.action.openObsidian': 'Open in Obsidian',
+  'hud.action.preview': 'Preview',
+  'hud.action.closeDetails': 'Close details',
   'hud.more.items': '…{count} more',
   'hud.more.topics': '…{count} more, scroll up to see',
 
@@ -83,6 +86,7 @@ kgI18nRegister('en', {
   'hud.layout.skipped': (vars) => vars.count + (Number(vars.count) === 1 ? ' group' : ' groups') + ' changed structure or geometry; automatic layout used',
   'hud.layout.selectFirst': 'Select an element of the group to restore first',
   'hud.layout.editHint': 'Drag a circle or heading to reposition it; changes save automatically — click ✥ in the top bar again to exit',
+  'hud.layout.editHint.touch': 'Drag one node and release to save',
   'hud.layout.moveHandleHint': 'Drag the handle labelled "move group"',
   'hud.layout.topLevel': 'Already at the top level — drag the circle or the move handle directly',
   'hud.layout.selectElement': 'Select a folder, note or topic first',
@@ -121,6 +125,7 @@ kgI18nRegister('zh', {
   'hud.levelCounts': '文件夹 {folders} · 笔记 {notes} · 标题 {headings}',
   'hud.readout.deeperHint': '— 继续向上滚可深入 · Ctrl + 悬停标题圆可预览正文',
   'hud.readout.previewHint': '— Ctrl + 悬停标题圆可预览正文',
+  'hud.readout.touchPreviewHint': '— 双指捏合缩放 · 长按笔记或标题预览',
 
   // ── 页脚（第二行是 ui.footer，模板流负责）─────────────────────────────
   'hud.stats': '节点 {nodes} · 关系 {edges} · 标签 {labels}',
@@ -148,6 +153,8 @@ kgI18nRegister('zh', {
   'hud.action.focus': '居中',
   'hud.action.drill': '深入下一层',
   'hud.action.openObsidian': '在 Obsidian 打开',
+  'hud.action.preview': '预览',
+  'hud.action.closeDetails': '关闭详情',
   'hud.more.items': '…另有 {count} 条',
   'hud.more.topics': '…另有 {count} 个，向上滚可见',
 
@@ -172,6 +179,7 @@ kgI18nRegister('zh', {
   'hud.layout.skipped': '{count} 组结构或几何已变化，使用自动布局',
   'hud.layout.selectFirst': '先选择要恢复的组内元素',
   'hud.layout.editHint': '拖动圆或标题调整位置；改动自动保存，再次点击顶栏 ✥ 退出',
+  'hud.layout.editHint.touch': '拖动单个节点，松手即保存',
   'hud.layout.moveHandleHint': '拖动标记为“移动整组”的手柄',
   'hud.layout.topLevel': '已是顶层，可直接拖圆或拖移动手柄',
   'hud.layout.selectElement': '先选择一个文件夹、笔记或知识点',

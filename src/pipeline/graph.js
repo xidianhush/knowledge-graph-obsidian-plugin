@@ -32,23 +32,24 @@ class PipelineGraphBuilder {
     return same[0]||hits[0];
   }
   addNode(id,fields){if(this.nodes.has(id))return this.nodes.get(id);const node={id,label:id.split('/').at(-1),...fields};this.nodes.set(id,node);return node;}
-  buildNodes(annotations){
+  *buildNodes(annotations){
     const annNotes=annotations.notes||{};
-    for(const folder of this.folders){const parts=folder.split('/');this.addNode(folder,{kind:'folder',depth:parts.length,parent:parts.slice(0,-1).join('/')||null,domain:parts[0],note_count:0,heading_count:0});}
-    for(const note of this.notes){const f=note.file,ann=kgAnnotation(annNotes,f.stem,f.id)||{},fm=note.frontmatter;
+    for(const folder of this.folders){yield;const parts=folder.split('/');this.addNode(folder,{kind:'folder',depth:parts.length,parent:parts.slice(0,-1).join('/')||null,domain:parts[0],note_count:0,heading_count:0});}
+    for(const note of this.notes){yield;const f=note.file,ann=kgAnnotation(annNotes,f.stem,f.id)||{},fm=note.frontmatter;
       const node=this.addNode(f.id,{kind:'note',depth:f.depth,parent:f.parts.join('/')||null,domain:f.parts[0]||f.id,heading_count:note.headings.length,excerpt:note.excerpt,path:f.rel,aliases:ann.aliases||[],subject:fm.subject||(f.parts.length>1?f.parts[1]:f.parts[0]||''),parent_course:fm.parent||f.parts.at(-1)||''});
       for(const alias of node.aliases)if(typeof alias==='string'&&alias){const key=alias.trim().toLowerCase();if(!this.byStem.has(key))this.byStem.set(key,[]);this.byStem.get(key).push(f.id);}
     }
-    for(const note of this.notes){const override=(kgAnnotation(annNotes,note.file.stem,note.file.id)||{}).domain;if(override)this.nodes.get(note.file.id).domain=override;}
+    for(const note of this.notes){yield;const override=(kgAnnotation(annNotes,note.file.stem,note.file.id)||{}).domain;if(override)this.nodes.get(note.file.id).domain=override;}
     for(const node of [...this.nodes.values()].sort((a,b)=>b.depth-a.depth)){
+      yield;
       if(node.kind!=='note')continue;let parent=node.parent;
       while(parent){const p=this.nodes.get(parent);if(!p)break;p.note_count++;p.heading_count+=node.heading_count;parent=p.parent;}
     }
   }
-  buildHeadings(){
+  *buildHeadings(){
     let count=0;
     for(const note of this.notes){const n=this.nodes.get(note.file.id);if(!n)continue;const levels=[...new Set(note.headings.map(h=>h.level))].sort((a,b)=>a-b);
-      for(const h of note.headings){const rank=levels.indexOf(h.level)+1;
+      for(const h of note.headings){yield;const rank=levels.indexOf(h.level)+1;
         if(this.nodes.has(h.id))throw new Error('Heading id collides with an existing node: '+h.id);
         this.addNode(h.id,{kind:'heading',label:h.title,depth:n.depth+rank,parent:h.parent||note.file.id,domain:n.domain,level:h.level,rank,title:h.title,line:h.line,layoutEvidence:h.layoutEvidence,note:note.file.id,path:n.path||''});count++;
       }
@@ -63,7 +64,7 @@ class PipelineGraphBuilder {
       if(evidence&&kgLength(edge.evidence)<120){const extra='; '+evidence;if(!edge.evidence.includes(extra))edge.evidence+=extra;}return;}
     const edge={id:'e'+(this.edges.length+1),s:source,t:target,type,weight:kgRound(weight,3),origin,evidence,hits:1};this.edges.push(edge);this.edgeKeys.set(key,edge);
   }
-  buildContains(){for(const[id,n]of this.nodes)if(n.parent)this.addEdge(n.parent,id,'contains',1,'hierarchy');}
+  *buildContains(){for(const[id,n]of this.nodes){yield;if(n.parent)this.addEdge(n.parent,id,'contains',1,'hierarchy');}}
   headingAtLine(id,line){const note=this.byId.get(id);if(!note||!line)return null;let found=null;for(const h of note.headings){if(h.line<=line)found=h.id;else break;}return found;}
   recordHeadingLink(source,target,link){
     const note=this.byId.get(target);if(!note||!link.anchor)return;
@@ -74,9 +75,10 @@ class PipelineGraphBuilder {
     }
     kgInc(this.stats,'heading_anchor_miss');
   }
-  buildWiki(){
+  *buildWiki(){
     const w=this.cfg.weight;
     for(const note of this.notes)for(const link of note.links){
+      yield;
       const ext=link.target.split('/').at(-1).match(/\.[^.]*$/)?.[0].toLowerCase();
       if(ext&&this.cfg.attachments.has(ext)){kgInc(this.stats,'attachment_links');continue;}
       const target=this.resolve(link.target);
@@ -86,13 +88,14 @@ class PipelineGraphBuilder {
       this.addEdge(note.file.id,target,'derives',weight,'wiki',link.raw);kgInc(this.stats,'wiki_edges_raw');
     }
   }
-  buildFrontmatter(){
+  *buildFrontmatter(){
     for(const note of this.notes)for(const[key,type,reverse]of [['prerequisites','prerequisite',true],['derives','derives',false],['contrasts','contrast',false]]){
-      for(const name of kgList(note.frontmatter[key])){const target=this.resolve(name);if(target)this.addEdge(reverse?target:note.file.id,reverse?note.file.id:target,type,this.cfg.weight.annotation_default,'frontmatter',key+': '+name);else this.unresolvedLink(name);}
+      for(const name of kgList(note.frontmatter[key])){yield;const target=this.resolve(name);if(target)this.addEdge(reverse?target:note.file.id,reverse?note.file.id:target,type,this.cfg.weight.annotation_default,'frontmatter',key+': '+name);else this.unresolvedLink(name);}
     }
   }
-  buildAnnotations(annotations,candidates){
+  *buildAnnotations(annotations,candidates){
     for(const[items,origin]of [[annotations.edges||[],'annotation'],[candidates.candidates||[],'candidate']])for(const item of items){
+      yield;
       if(!kgDict(item))continue;const status=String(item.status??(origin==='annotation'?'accepted':'pending')).toLowerCase();
       if(origin==='annotation'&&['rejected','pending','no','off'].includes(status)){kgInc(this.stats,'annotation_skipped');continue;}
       if(origin==='candidate'&&!['accepted','yes','on'].includes(status))continue;
@@ -102,7 +105,7 @@ class PipelineGraphBuilder {
       this.addEdge(source,target,type,Number(item.weight??this.cfg.weight.annotation_default),origin,String(item.reason??(origin==='annotation'?'annotations.yaml':'candidates.yaml')));
     }
   }
-  levels(maxDepth){const semantic=this.edges.filter(e=>e.type!=='contains'),table={};
-    for(let depth=1;depth<=maxDepth;depth++){const visible=[...this.nodes.values()].filter(n=>n.depth<=depth);table[depth]={nodes:visible.length,notes:visible.filter(n=>n.kind==='note').length,folders:visible.filter(n=>n.kind==='folder').length,headings:visible.filter(n=>n.kind==='heading').length,edges:semantic.filter(e=>this.nodes.get(e.s).depth<=depth&&this.nodes.get(e.t).depth<=depth).length};}return table;
+  *levels(maxDepth){const semantic=this.edges.filter(e=>e.type!=='contains'),table={};
+    for(let depth=1;depth<=maxDepth;depth++){yield;const visible=[...this.nodes.values()].filter(n=>n.depth<=depth);table[depth]={nodes:visible.length,notes:visible.filter(n=>n.kind==='note').length,folders:visible.filter(n=>n.kind==='folder').length,headings:visible.filter(n=>n.kind==='heading').length,edges:semantic.filter(e=>this.nodes.get(e.s).depth<=depth&&this.nodes.get(e.t).depth<=depth).length};}return table;
   }
 }

@@ -29,13 +29,33 @@ function mountGraph(container, payload, services = {}) {
     const style = doc.createElement('style'); style.textContent = GRAPH_CSS; shadow.appendChild(style);
     const surface = doc.createElement('div');
     surface.className = 'kg-surface'; surface.tabIndex = 0;
+    if (container.dataset.kgPlatform) surface.dataset.kgPlatform = container.dataset.kgPlatform;
     surface.setAttribute('aria-label', kgT('core.canvas.ariaLabel'));
     surface.innerHTML = GRAPH_HTML; shadow.appendChild(surface);
+    if (surface.dataset.kgPlatform) {
+      for (const [attribute, key] of [
+        ['title', 'ui.zoomOut'], ['title', 'ui.zoomIn'], ['title', 'ui.layoutMode.title'],
+        ['title', 'ui.legend.toggleTitle'], ['html', 'ui.legend.contains'], ['html', 'ui.legend.hint'],
+      ]) {
+        const binding = 'data-i18n-' + attribute;
+        surface.querySelector(`[${binding}="${key}"]`)?.setAttribute(binding, key + '.touch');
+      }
+    }
     // 首次翻译模板里的 data-i18n*，并登记为语言切换时自动重刷的根。
     detachI18n = kgI18nAttach(surface);
     const canvas = shadow.getElementById('cv');
-    core = new GraphCore({ canvas, payload, platform: createCanvasPlatform(canvas) });
+    core = new GraphCore({ canvas, payload, platform: createCanvasPlatform(canvas, !!surface.dataset.kgPlatform) });
     hud = createHudScope(host, shadow, surface);
+    if (surface.dataset.kgPlatform) {
+      // Obsidian's drawers consume Touch Events as well as Pointer Events.
+      // Only contain gestures originating on the graph canvas.
+      for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
+        hud.listen(canvas, type, event => {
+          if (event.cancelable) event.preventDefault();
+          event.stopPropagation();
+        }, { passive: false });
+      }
+    }
     const graph = mountHud(hud, surface, core, services);
     hud.finishSetup();
     // 语言切换：重刷模板文案（attach 已自动做一次，这里兜住 root 自身的 aria-label），

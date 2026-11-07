@@ -3,6 +3,7 @@ function runPipelineWorker(input, win, signal, resources) {
   return new Promise((resolve,reject)=>{
     if(signal.aborted){reject(new Error('Graph build cancelled'));return;}
     let worker,url,settled=false;
+    const unavailable=error=>{error.workerUnavailable=true;return error;};
     const finish=(error,result)=>{
       if(settled)return;settled=true;signal.removeEventListener('abort',abort);
       if(worker){worker.terminate();resources.active--;resources.stopped++;}
@@ -14,10 +15,10 @@ function runPipelineWorker(input, win, signal, resources) {
       url=win.URL.createObjectURL(new win.Blob([PIPELINE_WORKER_SOURCE],{type:'text/javascript'}));
       worker=new win.Worker(url);resources.active++;resources.started++;
       worker.onmessage=event=>event.data.error?finish(new Error(event.data.error)):finish(null,event.data.payload);
-      worker.onerror=event=>finish(new Error(event.message||'Graph worker failed'));
-      worker.onmessageerror=()=>finish(new Error('Graph worker returned an unreadable payload'));
+      worker.onerror=event=>{event.preventDefault?.();finish(unavailable(new Error(event.message||'Graph worker failed')));};
+      worker.onmessageerror=()=>finish(unavailable(new Error('Graph worker returned an unreadable payload')));
       signal.addEventListener('abort',abort,{once:true});worker.postMessage(input);
-    }catch(error){finish(error);}
+    }catch(error){finish(unavailable(error));}
   });
 }
 async function buildVaultGraph(plugin,win,signal,onProgress){
@@ -39,7 +40,16 @@ async function buildVaultGraph(plugin,win,signal,onProgress){
   onProgress(kgT('core.pipeline.layout'));
   const input={files:entries.map(e=>({path:e.path,...(selected.get(e.path)||{text:''})})),config:{...config,attachments:undefined},annotations:settings.annotations||{},candidates:settings.candidates||{},generated:new Date().toISOString().slice(0,16).replace('T',' ')};
   // Blob worker has no vault/Node access; only explicitly selected note text crosses.
-  const payload=await runPipelineWorker(input,win,signal,plugin.pipelineResources);
+  let payload;
+  try { payload=await runPipelineWorker(input,win,signal,plugin.pipelineResources); }
+  catch(error){
+    if(signal.aborted || !error.workerUnavailable)throw error;
+    payload=await buildGraphAsync(input,{
+      signal,now:()=>win.performance.now(),
+      yieldTask:()=>new Promise(resolve=>win.setTimeout(resolve,0)),
+      onProgress:progress=>onProgress(kgT('core.pipeline.'+progress.stage,progress)),
+    });
+  }
   if(signal.aborted)throw new Error('Graph build cancelled');
   return payload;
 }

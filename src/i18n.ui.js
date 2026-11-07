@@ -12,6 +12,9 @@ kgI18nRegister('en', {
   // ── 顶栏 ──────────────────────────────────────────────────────────────
   'ui.zoomOut': 'Zoom out one level ([)',
   'ui.zoomIn': 'Zoom in one level (])',
+  'ui.zoomOut.touch': 'Go up one level',
+  'ui.zoomIn.touch': 'Go deeper one level',
+  'ui.moreActions': 'More graph controls',
   'ui.search.placeholder': 'Search notes / headings…',
   'ui.domain.all': 'All subjects',
   'ui.labels.title': 'Label display strategy (Auto = compete by on-screen density)',
@@ -22,6 +25,7 @@ kgI18nRegister('en', {
   'ui.rebuild.aria': "Rebuild this vault's graph",
   'ui.rebuild.label': 'Rebuild',
   'ui.layoutMode.title': 'Enter/exit layout editing: drag nodes, adjust whole groups',
+  'ui.layoutMode.title.touch': 'Enter or exit layout editing to move a node',
   'ui.layoutMode.aria': 'Adjust layout',
   'ui.layoutMode.label': 'Adjust layout',
   'ui.reset.title': "Return to this level's default view",
@@ -39,6 +43,11 @@ kgI18nRegister('en', {
   // ── 图例（静态说明，hud 只重建「学科」列表与折叠状态）──────────────────
   'ui.legend.title': 'Legend',
   'ui.legend.toggleTitle': 'Collapse / expand legend (L)',
+  'ui.legend.toggleTitle.touch': 'Collapse or expand legend',
+  'ui.legend.contains.touch': 'Select an element to see its ancestors along a grey <b>dotted line</b>. Solid lines show links.',
+  'ui.legend.hint.touch': '<b>Drag with one finger</b> to pan. <b>Pinch with two fingers</b> to zoom, or tap − / + to change levels. ' +
+    '<b>Tap</b> for details, <b>double-tap</b> to focus, or <b>hold</b> a note or heading to preview it. ' +
+    'Use <b>Reset view</b> to return to the default view. Look in ⋯ for search and layout tools in narrow panes.',
   'ui.legend.domainsHeading': 'Subjects (top-level folders)',
   'ui.legend.relationsHeading': 'Relations (one thin line per [[link]], at any scale)',
   'ui.legend.linkColor':
@@ -71,6 +80,9 @@ kgI18nRegister('zh', {
   // ── 顶栏 ──────────────────────────────────────────────────────────────
   'ui.zoomOut': '缩小一层（[）',
   'ui.zoomIn': '放大一层（]）',
+  'ui.zoomOut.touch': '返回上一层',
+  'ui.zoomIn.touch': '深入下一层',
+  'ui.moreActions': '更多图谱操作',
   'ui.search.placeholder': '搜索笔记 / 标题…',
   'ui.domain.all': '全部学科',
   'ui.labels.title': '标签的显示策略（自动 = 按屏幕密度竞争）',
@@ -81,6 +93,7 @@ kgI18nRegister('zh', {
   'ui.rebuild.aria': '重新构建当前库的图谱',
   'ui.rebuild.label': '重新构建',
   'ui.layoutMode.title': '进入/退出布局调整：拖动节点、调整整组',
+  'ui.layoutMode.title.touch': '进入或退出布局调整，可拖动单个节点',
   'ui.layoutMode.aria': '调整布局',
   'ui.layoutMode.label': '调整布局',
   'ui.reset.title': '回到该层默认视角',
@@ -98,6 +111,11 @@ kgI18nRegister('zh', {
   // ── 图例（静态说明，hud 只重建「学科」列表与折叠状态）──────────────────
   'ui.legend.title': '图例',
   'ui.legend.toggleTitle': '收起 / 展开图例（快捷键 L）',
+  'ui.legend.toggleTitle.touch': '收起或展开图例',
+  'ui.legend.contains.touch': '选中元素时，灰色<b>点线</b>标出它的祖先链。实线表示链接。',
+  'ui.legend.hint.touch': '<b>单指拖动</b>平移，<b>双指捏合</b>缩放，也可点 − / + 切换层级。' +
+    '<b>轻点</b>查看详情，<b>双击</b>聚焦，<b>长按</b>笔记或标题预览。' +
+    '点<b>重置视角</b>回到默认视图。窗口较窄时，可在 ⋯ 中找到搜索与布局工具。',
   'ui.legend.domainsHeading': '学科（顶层目录）',
   'ui.legend.relationsHeading': '关系（每处 [[链接]] 各画一条细线，任何尺度都在）',
   'ui.legend.linkColor':

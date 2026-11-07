@@ -3,6 +3,8 @@
 Status: introduced for **0.0.14** (UI-A7). Workflow: [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 Applies to this repository only: `xidianhush/knowledge-graph-obsidian-plugin`.
 
+Current local candidate: **0.0.15**, not yet published. Version-specific checks, hashes, portal copy and remaining authorized actions are tracked in [RELEASE_PREP_0.0.15.md](RELEASE_PREP_0.0.15.md). The 0.0.14 examples below document the established workflow; use `0.0.15` for the next authorized release. Portal icons use a name and background colour; repository PNG/SVG uploads are not supported, and the existing icon is unchanged for 0.0.15.
+
 This document is English-first; a short Chinese summary is at the end.
 
 ## 1. What the workflow does
@@ -100,9 +102,10 @@ outside it breaks the provenance guarantee.
    - Release <https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.14>
    - exactly three assets: `main.js`, `manifest.json`, `styles.css`
    - body: release notes + `## SHA-256 checksums` code block + notes/run links
-6. After the Release exists, do the portal step (user action): upload the 512 px
-   icon in <https://community.obsidian.md> → *Edit listing → Choose icon*, and
-   confirm the listing shows 0.0.14.
+6. After the Release exists, confirm the portal listing shows the new version
+   and the approved Overview/platform description. The 0.0.14 icon update was
+   completed by the user using the portal's icon name and background colour;
+   the portal cannot upload a repository PNG/SVG. Keep that icon for 0.0.15.
 
 Failure handling:
 

@@ -30,7 +30,7 @@ const adapters = [
 const bundle = '// Shared graph pipeline and GraphCore; host APIs stay in adapters.\n' + pipeline + '\n' + core + '\n' + adapters + '\nconst PIPELINE_WORKER_SOURCE = ' + JSON.stringify(workerSource) + ';\n' + read('src/adapters/vault-pipeline.js') + '\n' + read('src/adapters/obsidian-native.js') + '\n' + read('src/settings.js') + '\n' + read('src/plugin.js');
 fs.writeFileSync(path.join(output, 'main.js'), bundle);
 fs.writeFileSync(path.join(output, 'graph-core.mjs'), core + '\nexport { GraphCore, decodeGraphPayload, createLayoutEditor, createLayoutModel, createLayoutStore };\n');
-fs.writeFileSync(path.join(output, 'pipeline.mjs'), pipeline + '\nexport { buildGraph, encodeGraphPayload, pipelineConfig, selectGraphFiles, parseGraphNote, packGraphSiblings, kgRound };\n');
+fs.writeFileSync(path.join(output, 'pipeline.mjs'), pipeline + '\nexport { buildGraph, buildGraphAsync, encodeGraphPayload, pipelineConfig, selectGraphFiles, parseGraphNote, packGraphSiblings, kgRound };\n');
 fs.writeFileSync(path.join(output, 'pipeline-worker.js'),workerSource);
 fs.writeFileSync(path.join(output, 'browser.mjs'), "import { GraphCore, createLayoutStore } from './graph-core.mjs';\n" + i18n + '\n' + adapters + '\nexport { mountGraph, createCanvasPlatform };\n');
 for (const name of ['manifest.json', 'styles.css']) fs.copyFileSync(path.join(root, name), path.join(output, name));
