@@ -3,7 +3,7 @@
 Status: introduced for **0.0.14** (UI-A7). Workflow: [`.github/workflows/release.yml`](../.github/workflows/release.yml).
 Applies to this repository only: `xidianhush/knowledge-graph-obsidian-plugin`.
 
-Current GitHub release: **0.0.16**, published from tag `0.0.16` / source `da0a59f` by successful Actions run `44864419889`. Download hashes and a fresh Windows native-install path were verified; authenticated portal refresh/review remains pending due browser-tool failures. See [0.0.16 release record](RELEASE_PREP_0.0.16.md). The [0.0.15 record](RELEASE_PREP_0.0.15.md) and examples below are historical and do not establish current portal state.
+Current GitHub release: **0.0.16**, published from tag `0.0.16` / source `da0a59f` by successful Actions run `44864419889`. Download hashes, a fresh Windows direct-native installation, the user-supplied Completed portal review and the live public 0.0.16 version/README/descriptions were verified. Official mobile-client distribution and agent cryptographic attestation verification remain unverified. See [0.0.16 release record](RELEASE_PREP_0.0.16.md). The [0.0.15 record](RELEASE_PREP_0.0.15.md) and examples below are historical and do not establish current portal state.
 
 This document is English-first; a short Chinese summary is at the end.
 
