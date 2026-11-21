@@ -2,7 +2,7 @@
 
 **Explore the hierarchy and connections in your Obsidian knowledge as a map you can arrange.** Folders, notes and headings form nested circles; wiki-links connect them.
 
-![Folders, notes and headings in one nested map](docs/assets/knowledge-map-overview.png)
+![Folders, notes and headings in one nested map](docs/assets/knowledge-map-overview.png?v=20261121)
 
 ## Explore the hierarchy
 
@@ -10,21 +10,21 @@ See where knowledge belongs, from a subject down to a heading. Colour follows th
 
 **Pan** — drag the canvas to explore another region; on iPad, use one finger.
 
-![Dragging the canvas to pan](docs/assets/knowledge-map-pan.gif)
+![Dragging the canvas to pan](docs/assets/knowledge-map-pan.gif?v=20261121)
 
 **Zoom** — on desktop, scroll over a circle to explore deeper levels or come back out. On iPad, pinch to zoom or tap − / + to change levels. Use **Reset view** to return to the current level's default view.
 
-![Zooming through the hierarchy on desktop](docs/assets/knowledge-map-zoom.gif)
+![Zooming through the hierarchy on desktop](docs/assets/knowledge-map-zoom.gif?v=20261121)
 
 **Preview** — on desktop, hold Ctrl and hover over a note or heading; click the circle to pin its preview. On iPad, hold a note or heading, or select it and tap **Preview**. Close the preview with its close button (or Esc on desktop).
 
-![Previewing and pinning a note on desktop](docs/assets/knowledge-map-preview.gif)
+![Previewing and pinning a note on desktop](docs/assets/knowledge-map-preview.gif?v=20261121)
 
 ## Follow the connections
 
 See the chain between related ideas and follow it when investigating a question or tracing a problem.
 
-![Links between notes and headings](docs/assets/knowledge-map-links.png)
+![Links between notes and headings](docs/assets/knowledge-map-links.png?v=20261121)
 
 A dot marks a link's source and an arrow its target. Dashed lines mark parallel / contrast relations. Select a circle to highlight its links and connected elements; a grey dotted line traces its ancestors. Visible links depend on zoom, filters and drawing limits.
 
@@ -34,7 +34,7 @@ Put core ideas in the centre and supporting details around them.
 
 Press ✥ **Adjust layout**, drag a circle, then press ✥ again to finish. The layout toolbar provides undo, redo and reset controls. Desktop also supports group dragging; touch layout editing moves one element at a time.
 
-![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif)
+![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif?v=20261121)
 
 Layouts are saved separately from your notes and reused after edits where they can be reconciled. Incompatible groups fall back to automatic layout.
 
