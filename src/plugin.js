@@ -53,8 +53,9 @@ class KnowledgeGraphView extends ItemView {
   }
   watchVault() {
     const vault = this.app.vault;
-    const changed = (file, oldPath) => {
+    const changed = (file, oldPath, event) => {
       if (this.closed || this.plugin.graphSettings.autoUpdate === false) return;
+      if (this.plugin.vaultLayoutDriver?.isTransportEvent?.(file.path, oldPath, event, Array.isArray(file?.children))) return;
       // Folder renames/deletes can move many notes without per-note rename events.
       const paths = [file.path, oldPath].filter(Boolean);
       const folder = Array.isArray(file.children);
@@ -71,7 +72,7 @@ class KnowledgeGraphView extends ItemView {
       this.progress(kgT('plugin.build.waiting'), 'waiting');
       this.updateTimer = win.setTimeout(() => { this.updateTimer = null; void this.rebuild(); }, this.plugin.graphSettings.debounceMs ?? 350);
     };
-    for (const name of ['create', 'modify', 'delete', 'rename']) this.watchEvents.push(vault.on(name, changed));
+    for (const name of ['create', 'modify', 'delete', 'rename']) this.watchEvents.push(vault.on(name, (file,oldPath)=>changed(file,oldPath,name)));
   }
   rebuildButton() { return this.host?.shadowRoot?.getElementById('rebuild') || null; }
   syncRebuildButton(phase) {
@@ -133,6 +134,8 @@ class KnowledgeGraphView extends ItemView {
   }
   async rebuild() {
     if (this.closed) return;
+    const layoutDriver = this.source === 'vault' ? this.plugin.vaultLayoutDriver : null;
+    layoutDriver?.graphLoading(this);
     this.graph?.renderer.cancelInteraction();
     const win = this.contentEl.ownerDocument.defaultView;
     win.clearTimeout(this.updateTimer); this.updateTimer = null;
@@ -166,7 +169,7 @@ class KnowledgeGraphView extends ItemView {
         nextServices.layoutStore = this.plugin.layoutStore;
         nextServices.onRebuild = () => { if (!this.closed) void this.rebuild(); };
         const decoded=decodeGraphPayload(payload);
-        await this.plugin.layoutStore.reconcile(createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius),
+        if (!layoutDriver) await this.plugin.layoutStore.reconcile(createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius),
           ()=>generation===this.generation && !this.closed && !controller.signal.aborted && layoutEpoch===this.plugin.layoutEpoch);
         if(generation!==this.generation || this.closed || controller.signal.aborted || layoutEpoch!==this.plugin.layoutEpoch){nextServices?.dispose?.();return;}
         const shape=JSON.stringify(decoded.nodes.map(n=>[n.id,n.parent,n.r,n.kind,n.title]));
@@ -188,6 +191,7 @@ class KnowledgeGraphView extends ItemView {
       delete this.contentEl.dataset.pipelineEmpty;
       this.contentEl.dataset.smokeReady = 'true';
       this.contentEl.dataset.graphRevision = String(generation);
+      layoutDriver?.graphReady(this, payload, layoutEpoch);
       if (this.source === 'vault') {
         const summary = {
           notes: payload.meta.note_count,
@@ -225,7 +229,11 @@ class KnowledgeGraphView extends ItemView {
     this.releaseSession(); this.statusEl = null;
     delete this.contentEl.dataset.pipelineEmpty; delete this.contentEl.dataset.pipelineUpdating; delete this.contentEl.dataset.buildPhase;
   }
-  async onClose() { this.closed = true; ++this.generation; this.release(); this.contentEl.replaceChildren(); }
+  async onClose() {
+    this.closed = true; ++this.generation;
+    if (this.source === 'vault') this.plugin.vaultLayoutDriver?.graphClosed(this);
+    this.release(); this.contentEl.replaceChildren();
+  }
 }
 
 module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
@@ -240,8 +248,11 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
     this.graphSettings = this.savedData.settings;
     this.settingsSaveQueue = Promise.resolve();
     this.layoutEpoch=0;
-    for(const event of ['modify','create','delete','rename'])this.registerEvent(this.app.vault.on(event,()=>{this.layoutEpoch++;}));
-    this.layoutStore = createLayoutStore(this.savedData.layoutOverrides, layout => {
+    for(const event of ['modify','create','delete','rename'])this.registerEvent(this.app.vault.on(event,(file,oldPath)=>{
+      if(this.vaultLayoutDriver?.isTransportEvent?.(file?.path,oldPath,event,Array.isArray(file?.children)))return;
+      if(!this.vaultLayoutDriver||Array.isArray(file?.children)||[file?.path,oldPath].some(path=>/\.md$/i.test(path||'')))this.layoutEpoch++;
+    }));
+    this.layoutStore = this.vaultLayoutDriver?.store ?? createLayoutStore(this.savedData.layoutOverrides, layout => {
       const operation=this.settingsSaveQueue.catch(()=>{}).then(async()=>{
         const data={...this.savedData,layoutOverrides:layout};
         try { await this.saveData(data); } catch(error) { new Notice(kgT('plugin.layout.saveFailed', { message: error.message })); throw error; }
@@ -253,6 +264,7 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
       const folder=Array.isArray(file.children);
       if(!folder && !/\.md$/i.test(file.path) && !/\.md$/i.test(oldPath||''))return;
       for(const leaf of this.app.workspace.getLeavesOfType(VAULT_VIEW_TYPE))leaf.view.graph?.renderer.cancelInteraction();
+      if(this.vaultLayoutDriver)return;
       void this.layoutStore.changePath(oldPath||file.path,event==='rename'?file.path:null,folder,
         !(this.pipelineSettings.config.remap||[]).length).catch(error=>new Notice(layoutFailureText(error)));
     }));

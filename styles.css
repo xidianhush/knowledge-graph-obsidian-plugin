@@ -32,6 +32,8 @@
 .kg-build-status > button { pointer-events: auto; flex-shrink: 0; }
 .kg-settings textarea { width: 260px; min-height: 80px; }
 .kg-settings .kg-settings-message { position: sticky; top: 0; background: var(--background-primary); z-index: 1; padding: 8px 0; }
+/* Keep the live region mounted, without an empty sticky strip over controls. */
+.kg-settings .kg-settings-message:empty { padding: 0; }
 .kg-settings-message[data-error="true"] { color: var(--text-error); }
 
 .kg-smoke-content[data-kg-platform] > .kg-native-preview {

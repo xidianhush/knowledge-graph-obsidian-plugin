@@ -49,7 +49,7 @@ For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a
 ## Platforms and limits
 
 - **Desktop:** Obsidian 1.6.7+.
-- **iPadOS (0.0.15):** user testing covered iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0. The demos show desktop controls. iPhone is unverified; Android adaptation is planned for the next version. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
+- **iPadOS (0.0.15):** user testing covered iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0. The demos show desktop controls. iPhone is unverified; Android adaptation is planned for 0.0.17. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
 - Layout editing supports up to **128 siblings per group** and **5000 affected nodes**. Undo keeps **50 steps** within the session and clears on structural changes or plugin reload.
 - The map canvas stays dark, including with a light Obsidian theme.
 
@@ -57,10 +57,16 @@ For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a
 
 **Knowledge Map（知识地图）** 用嵌套圆展示知识的包含层级，用连线展示知识之间的联系。拖动画布探索，缩放查看层级，预览笔记内容；点 ✥「调整布局」，把核心知识放在中间、细节放在周围，再点一次结束。
 
-桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，Android 适配留到下一版。
+桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；Android 适配留到0.0.17。
+
+## Sync layouts across Windows and iPad
+
+**0.0.16** adds reviewed layout sync using ordinary vault files transferred by your own sync service. Windows ↔ iPadOS with Nutstore is the tested transport scope. Select the same shared layout on each device, then explicitly review the first join. Compatible saved edits are queued automatically while sync is enabled; conflicts and drafts saved while sync was off require review. Turning sync off keeps local work.
+
+Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_GUIDE.md) before joining, backing up or rolling back. Large histories can take longer to replay; transport rate limits and the disclosed original iPad anomaly remain unresolved. Android adaptation is planned for 0.0.17; iPhone remains unverified.
 
 ## Data and development
 
-Map building happens locally within your configured scope. The plugin does not modify or upload your notes; settings and layouts are stored in the plugin's own `data.json`. Back up that file before upgrading or uninstalling.
+Map building happens locally within your configured scope. The plugin does not modify your notes or make network uploads. Before sync is joined, local settings and layouts use the plugin's `data.json`; sync additionally keeps device-local identity and a private journal, and writes layout records to `Knowledge Map Sync`. Your external sync tool transfers shared files, which include relative paths, heading structure and coordinates. Keep full recovery backups and copy them outside the vault; `data.json` alone is not a complete sync backup.
 
-[Data, upgrades and limits](docs/INSTALL.md) · [Build and test](DEVELOPMENT.md) · [Current tasks](TODO.md) · [0.0.15 release notes](docs/RELEASE_NOTES_0.0.15.md) · [MIT license](LICENSE)
+[Data, upgrades and limits](docs/INSTALL.md) · [Build and test](DEVELOPMENT.md) · [Current tasks](TODO.md) · [0.0.16 release notes](docs/RELEASE_NOTES_0.0.16.md) · [MIT license](LICENSE)

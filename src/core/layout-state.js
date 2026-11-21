@@ -266,7 +266,22 @@ function createLayoutModel(nodes, rootRadius) {
         a.x -= dx / d * over * aw; a.y -= dy / d * over * aw; b.x += dx / d * over * bw; b.y += dy / d * over * bw;
       }
     }
-    if (!validDisks(disks, tolerance)) return null;
+    if (!validDisks(disks, tolerance)) {
+      // Weighted projection can stall at the boundary after an insertion.
+      // The current packing is a bounded fallback; rotate it to minimize the
+      // squared displacement of surviving centers, then validate it normally.
+      const packed = g.nodes.map(n => ({ id: keys.get(n.id), x: (n.x - p.x) / p.r,
+        y: (n.y - p.y) / p.r, r: n.r / p.r }));
+      let dot = 0, cross = 0;
+      for (const n of packed) { const oldPoint = points.get(n.id); if (oldPoint) {
+        dot += n.x * oldPoint.x + n.y * oldPoint.y;
+        cross += n.x * oldPoint.y - n.y * oldPoint.x;
+      } }
+      const angle = Math.atan2(cross, dot), c = Math.cos(angle), s = Math.sin(angle);
+      const aligned = packed.map(n => ({ ...n, x: n.x * c - n.y * s, y: n.x * s + n.y * c }));
+      if (!validDisks(aligned, tolerance)) return null;
+      disks.splice(0, disks.length, ...aligned);
+    }
     const moved = disks.filter(n => points.has(n.id) && Math.hypot(n.x - points.get(n.id).x, n.y - points.get(n.id).y) > 1e-8).length;
     const repaired = {
       shape: structuredClone(g.shape),
@@ -449,10 +464,10 @@ function createLayoutStore(initial, write) {
     typeof initial.groups === 'object' && !Array.isArray(initial.groups);
   let data = usable ? structuredClone(initial) : { schemaVersion: 3, revision: 0, groups: {}, structures: {} };
   if (!Object.hasOwn(data, 'groups')) data.groups = {};
-  let owner = null, busy = 0, tail = Promise.resolve();
+  let owner = null, external = null, busy = 0, tail = Promise.resolve();
   let messageKey = 'layout.idle', messageVars = null;
   const setMessage = (key, vars = null) => { messageKey = key; messageVars = vars; };
-  const undo = [], redo = [], listeners = new Set();
+  const undo = [], redo = [], listeners = new Set(), idleListeners = new Set();
   const unsupported = initial != null && !usable;
   if (unsupported) messageKey = 'layout.unsupported';
   const revision = value => Number.isSafeInteger(value) ? value : 0;
@@ -466,9 +481,36 @@ function createLayoutStore(initial, write) {
     if (unsupported || busy || (owner !== null && owner !== token)) return false;
     owner = token; return true;
   }
-  function release(token) { if (owner === token) owner = null; }
+  function release(token) {
+    if (owner === token) owner = null;
+    if (owner === null && !busy) for (const fn of idleListeners) fn();
+  }
+  // A receiver reserves the store only for the durable commit and view update.
+  // The caller supplies exact graph validation and retains its own durable receipt.
+  function reserveExternal(validate) {
+    const token = {};
+    if (typeof validate !== 'function' || !acquire(token)) return null;
+    external = token;
+    return {
+      apply(snapshot) {
+        if (external !== token || owner !== token || busy) throw layoutError('layout.busySaving');
+        const checked = validate(snapshot);
+        if (data.schemaVersion === 3 && JSON.stringify(layoutCanonical(data)) === JSON.stringify(layoutCanonical(checked))) return false;
+        data = structuredClone(checked);
+        undo.length = 0; redo.length = 0; setMessage('layout.idle');
+        emit();
+        return true;
+      },
+      release() {
+        if (external !== token) return;
+        external = null;
+        release(token);
+      },
+    };
+  }
   function run(token, transform, mode = 'edit') {
     if (unsupported) return Promise.reject(layoutError('layout.unsupported'));
+    if (external) return Promise.reject(layoutError('layout.busySaving'));
     busy++; setMessage('layout.saving'); emit();
     const operation = tail.catch(() => {}).then(async () => {
       const current = layoutCanonical(data);
@@ -557,10 +599,11 @@ function createLayoutStore(initial, write) {
     }, 'invalidate');
   }
   return {
-    state, acquire, release, command, changePath,
+    state, acquire, release, command, changePath, reserveExternal,
     reconcile(model, valid = () => true) { return unsupported ? Promise.resolve() : run(null, layout => valid() ? model.reconcile(layout) : null, 'migrate'); },
     settled: () => tail.catch(() => {}),
     subscribe(fn) { listeners.add(fn); fn(state()); return () => listeners.delete(fn); },
+    onIdle(fn) { idleListeners.add(fn); return () => idleListeners.delete(fn); },
     clearHistory() { undo.length = 0; redo.length = 0; setMessage('layout.graphChanged'); emit(); },
   };
 }

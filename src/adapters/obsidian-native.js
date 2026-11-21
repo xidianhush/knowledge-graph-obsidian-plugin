@@ -47,6 +47,7 @@ function createNativeUiStorage(plugin) {
     },
     set(key, value) {
       if (!plugin || !key || value === undefined || typeof plugin.saveData !== 'function') return Promise.resolve();
+      if(typeof plugin.syncSaveUi==='function')return plugin.syncSaveUi(key,value);
       const text = String(value);
       // Update memory first: the UI must agree with the user's action even if the write fails.
       plugin.savedData = { ...(plugin.savedData || {}), ui: { ...currentUi(), [key]: text } };

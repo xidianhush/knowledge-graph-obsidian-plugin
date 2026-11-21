@@ -26,7 +26,7 @@ const HERE_ROOT = fileURLToPath(new URL('../', import.meta.url));
 // 仅用于本脚本自身的坏样本自测（node scripts/i18n_check.mjs 时不会设置）。
 const ROOT = process.env.I18N_CHECK_ROOT ? path.resolve(process.env.I18N_CHECK_ROOT) : HERE_ROOT;
 const ENGINE_FILE = 'src/i18n.js';
-const DOMAIN_FILES = ['src/i18n.core.js', 'src/i18n.ui.js', 'src/i18n.hud.js', 'src/i18n.obsidian.js'];
+const DOMAIN_FILES = ['src/i18n.core.js', 'src/i18n.ui.js', 'src/i18n.hud.js', 'src/i18n.obsidian.js', 'src/i18n.recovery.js', 'src/i18n.receive.js', 'src/i18n.sync.js'];
 const TEMPLATE_FILE = 'upstream/template.html';
 const LOCALES = ['en', 'zh'];
 const SRC_ROOT = 'src';
