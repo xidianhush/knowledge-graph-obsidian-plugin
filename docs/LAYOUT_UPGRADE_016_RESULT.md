@@ -66,7 +66,7 @@
 - 最终构建（与提交 blob 一致的规范 LF 源码）：`dist/main.js` **806991 字节**，SHA256 `62c6aed7012b277c64fbf713ab8dadcaf9c2af863f0db610d3a4645b7910fe87`；`styles.css` 3055 字节 `29429890…`；`manifest.json` 309 字节 `18d11571…`（整合时为 0.0.16；版本决定见下节）。仓库 `.gitattributes` 规定 `eol=lf`：复制源工作字节后的首次构建为 807855 / `127f446b…`（混合行尾），把工作树规范化为提交 LF blob 后重建得到上述规范字节；CI 从提交源码将复现 `62c6aed7…`。
 - 与已验收候选 2 字节（807891 / `2248816d…`）的关系：唯一差异是 4 个模块的本地工作副本为 CRLF 行尾——`src/sync/recovery-export.mjs`（36 个 `\r`）、`src/i18n.sync.js`（164）、`src/sync/obsidian-sync-settings.mjs`（166）、`src/sync/obsidian-unified-host.mjs`（534），共 900 个 CR 字节——及其在构建溯源清单中的 4 处摘要。去除 CR 并替换该 4 处摘要后，两份 main.js 逐字节相等——**功能恒等已证明，不宣称字节相同**。
 - 对最终规范字节重跑验证（本整合轮新通过）：`npm test` 构建 + **43 脚本**（含 18 项升级/恢复场景，日志 `.local/integration-final-lf-test.log`）；磁盘真实退出/冷开 **3 项**（`disk/run-Y5XDqV`）；Chrome 桌面/窄屏 **6 项**（`browser-_eaa0qfq`）；原生 Windows Obsidian 真实 0.0.15 拖动→正式 0.0.16 对照→修复候选 **4 项**（`native-gcy26xov`，`runtimeSha256` 即 `62c6aed7…`）。此前 `run-aDJJ01`/`browser-bb2kudbe`/`native-tar7z8k4` 为对中间混合行尾构建 `127f446b…` 的重验。磁盘/浏览器/原生检查因沙箱命名管道限制需实际权限运行，与历史记录同类边界。
-- 公开文档已脱敏：新增内容不含共享布局 ID、备份 ID、绝对用户路径或日常库名；私有证据仍只在 `.local/`。本地 commit 于整合分支完成；**未 push/tag/Release**。iPad 本机历史恢复入口仍未真机验收。
+- 公开文档已脱敏：新增内容不含共享布局 ID、备份 ID、绝对用户路径或日常库名；私有证据仍只在 `.local/`。本地 commit 于整合分支完成；**未 push/tag/Release**。iPad 本机历史恢复入口的真机短验结论见下文专节（同日由用户验收通过）。
 
 ## 版本决定与 iPad 短验准备（2026-11-22）
 
@@ -74,12 +74,18 @@
 - 版本升级已本地完成：`manifest.json`/`package.json`/`versions.json` → 0.0.17（minAppVersion 仍 1.6.7）。重建确认 `main.js` 字节不变（806991 / `62c6aed7…`，版本号不进入 bundle）；新 `manifest.json` 309 字节，SHA256 `6ded0d9d7cd88de9cc94f68b133cd3435a0a40818c7220ba33fc2f284a684eee`。`npm test` 构建 + 43 脚本（18 项升级/恢复场景）复验通过（`.local/integration-017-test.log`）。
 - iPad 短验包（本地证据，不随公开仓库分发）：`.local/layout-upgrade/ipad-short-verify-017/KM-iPad-Restore-Short-Verify-0.0.17-20261122.zip`，241348 字节，SHA256 `4a11861290e42d56f81e83ecadab4996c227b9c146a614a4765980f43069c4b8`，解压读回逐文件摘要一致（回执 `delivery.json`；START-HERE 已补首开信任提示/受限模式说明）。内容：即将发布的三运行文件（正式名称与 0.0.17 版本）、START-HERE.md、SHA256.json、合成笔记 Synthetic/A、B、C 与合成历史来源 historical-source.json（取自 `native-gcy26xov` 已验证归档，经契约校验）；全部合成数据，不含私有笔记/配置/身份/日志。
 - 同日应用户要求另备开箱即用测试库包：`.local/layout-upgrade/ipad-short-verify-017/KM-iPad-Restore-Vault-0.0.17-20261122.zip`，242186 字节，SHA256 `ee93ab9e35d88282ee96b421085e738d2f9fcb70c420465613977c04e218d5c3`，12 文件，解压读回逐文件摘要一致（回执 `delivery-vault.json`）。顶层文件夹 `KM Restore Check` 即完整独立测试库：插件三运行文件已装入 `.obsidian/plugins/knowledge-graph-smoke/` 并经 `community-plugins.json` 预启用、`app.json` safeMode:false（沿用 `native-gcy26xov` 已验证配置）、Synthetic 三笔记与 historical-source.json 就位、库内 START-HERE.md 说明；不含 data.json/workspace.json（保持全新未加入状态）。用户在文件 App 解压后以 Obsidian“打开文件夹作为仓库”即可直接测试；原分步安装包仍有效。
-- 该库包已对最终交付字节通过桌面首用冒烟（2026-11-22，隔离 profile 的真实 Windows Obsidian，5 项）：解压即开、插件预启用 0.0.17、首开“信任仓库作者并启用插件”提示出现（START-HERE 已覆盖该提示与受限模式两种情况）、构图 Synthetic 单分组圆（库根说明笔记为分组外单独笔记）、设置恢复入口/选择 JSON/审阅预览 adjusted·移动 3·最大位移父半径 8.172%（与 PC 合成库实测一致，默认不勾选、确认禁用）、取消零写入。证据：`.local/layout-upgrade/ipad-short-verify-017/vault-smoke-n9856zja/verification.json`。范围=桌面冒烟；iPad 真机短验仍待用户执行，通过前维持“iPad 本机恢复入口未真机验收”。
-- 短验由用户在 iPad 真机执行：全新独立测试库→安装→构图→选择历史 JSON→逐组预览（预期 Synthetic 单组“调整”/移动 3/最大位移父半径 8.172%）→备份并恢复→冷开保持；仅覆盖未加入状态入口，已加入状态的 iPad 本机恢复不在本次范围。通过前维持“iPad 本机历史恢复入口未真机验收”。
+- 该库包已对最终交付字节通过桌面首用冒烟（2026-11-22，隔离 profile 的真实 Windows Obsidian，5 项）：解压即开、插件预启用 0.0.17、首开“信任仓库作者并启用插件”提示出现（START-HERE 已覆盖该提示与受限模式两种情况）、构图 Synthetic 单分组圆（库根说明笔记为分组外单独笔记）、设置恢复入口/选择 JSON/审阅预览 adjusted·移动 3·最大位移父半径 8.172%（与 PC 合成库实测一致，默认不勾选、确认禁用）、取消零写入。证据：`.local/layout-upgrade/ipad-short-verify-017/vault-smoke-n9856zja/verification.json`。范围=桌面冒烟；iPad 真机短验已于同日由用户执行并通过，见下节。
+- 短验由用户在 iPad 真机执行：全新独立测试库→安装→构图→选择历史 JSON→逐组预览（预期 Synthetic 单组“调整”/移动 3/最大位移父半径 8.172%）→备份并恢复→冷开保持；仅覆盖未加入状态入口，已加入状态的 iPad 本机恢复不在本次范围。短验已于 2026-11-22 由用户在 iPad 真机执行并通过，结论与证据见下节。
+
+## iPad 本机恢复入口真机短验通过（2026-11-22，用户验收）
+
+- 用户在 iPad 真机用开箱即用测试库包（`ee93ab9e…`）完成短验并明确回报通过：①任意拖动大/小圆到新位置，结束拖动自动保存，完全退出重开后当前布局保持；②设置→Knowledge Map→恢复历史布局，文件选择器选库根 `historical-source.json`，点“审阅历史布局”弹出预览，仅一个可恢复分组 Synthetic，三列对照（历史/当前/恢复候选），提示“安全放置需要调整”、移动 3 个中心、最大位移父半径 8.172%，默认不勾选、确认禁用；③点取消，图谱与设置无任何变化；④再次审阅→勾选 Synthetic→“备份并恢复选中分组”，图谱变为恢复候选排列（A 上偏左、B 左下、C 右且圆较大）；⑤完全退出重开测试库，仍为恢复后排列，用户人工确认保持。用户回交三张截图（预览/恢复后/重开保持）。
+- 用户另回传测试完成后的完整库包 `KM Restore Check Acceptance.zip`（257580 字节，SHA256 `fc81b41b8ad1d30ab8a98be6c7a75d47715ba718a29b35074157f777b4edc93f`，本地证据 `.local/layout-upgrade/ipad-short-verify-017/acceptance-vault/`，不随公开仓库分发）。只读核验与用户回报一致：插件三运行文件即最终发布字节（`main.js` 806991 / `62c6aed7…`、`manifest.json` 309 / `6ded0d9d…` 0.0.17、`styles.css` 3055 / `29429890…`）；`data.json` 仅 `layoutOverrides`+`layoutUpgradeOriginal`（无 sync/session，确为未加入状态），Synthetic 分组恢复中心 A(-0.143227,-0.364455)/B(-0.307859,0.525357)/C(0.478423,0.210699) 与 PC 合成库协调结果几何一致（iPad 独立重算的浮点尾差约 1e-7），`layoutUpgradeOriginal` version 1 归档存在；`Knowledge Map Backups/` 下两份 `unjoined-config-recovery` 备份各含 `initial-config.json`+`manifest.json`，manifest 哈希与字节逐一匹配（恢复前先验证备份）；Synthetic 三笔记字节未变（仅布局恢复，不改笔记）；`.obsidian/workspace-mobile.json` 存在，确为 iPadOS 移动端。
+- 结论：**iPad 本机历史恢复入口（未加入状态）已在独立合成测试库经用户真机短验确认可用**，覆盖预览/取消零写入/验证备份/恢复/冷开保持。此为用户真机回报+回传库只读核验，不是代理直接观察真机。范围边界：已加入状态的 iPad 本机恢复（草稿+另行发布）、全部历史组、并发冲突与反向编辑仍未据此覆盖；不宣称 iPad 已安装日常库候选或全部旧组可恢复。正式发布仍单独待用户明确授权。
 
 ## 验收与交付边界
 
-用户旧截图和备份只用作私有证据，没有加入公开夹具或候选。只读管线重建的可恢复性统计是参考，不能替代真实宿主预览和用户判断。本次四目标PC恢复、发布后的iPad接收及重开已获用户明确验收；iPad本机历史恢复入口、全部历史组及并发冲突仍未覆盖，此前普通双向移动的结论不扩展为本轮新反向编辑测试。
+用户旧截图和备份只用作私有证据，没有加入公开夹具或候选。只读管线重建的可恢复性统计是参考，不能替代真实宿主预览和用户判断。本次四目标PC恢复、发布后的iPad接收及重开已获用户明确验收；iPad本机历史恢复入口（未加入状态）已于2026-11-22经用户真机短验覆盖（见上节）；已加入状态的iPad本机恢复、全部历史组及并发冲突仍未覆盖，此前普通双向移动的结论不扩展为本轮新反向编辑测试。
 
 日常库仅在用户明确授权并退出后安装上述三运行文件；数据文件保持不变，未操作共享连接，无 commit/push/tag/Release 操作。独立 worktree 保留现有候选基础及本轮增量，原源码工作区现场不变。交付步骤见 [验收指南](LAYOUT_UPGRADE_016_GUIDE.md)。
 
