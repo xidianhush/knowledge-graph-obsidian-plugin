@@ -1,6 +1,6 @@
 # Layout sync and recovery — 0.0.16
 
-Windows ↔ iPadOS with Nutstore is the validated transport scope. Android is planned for 0.0.17; iPhone is unverified. The plugin writes ordinary vault files; your external sync tool transfers them. Configure the same note scope on both devices and let notes arrive before applying layouts.
+Windows ↔ iPadOS with Nutstore is the validated transport scope. Android is planned for 0.0.18; iPhone is unverified. The plugin writes ordinary vault files; your external sync tool transfers them. Configure the same note scope on both devices and let notes arrive before applying layouts.
 
 ## First join and local work
 

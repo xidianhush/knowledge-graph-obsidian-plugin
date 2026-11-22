@@ -9,12 +9,12 @@
 | 插件版本 | 0.0.16 |
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 0.0.15历史验证环境 | 本版已有 Windows Obsidian 1.15.0 技术证据；iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0 (396) 由用户手动验收。历史桌面 1.6.7 / 1.14.5 结果不能当成本轮复测。最终候选技术核验见 [发布准备](RELEASE_PREP_0.0.15.md) |
-| 平台声明 | `isDesktopOnly: false`；本版范围为桌面 + iPadOS。该布尔值也允许其他移动端安装，不代表 Android/iPhone 已适配或验证。Android 适配0.0.17；iPhone 未验证；最低 iPadOS 与客观移动帧率/内存界限未确立 |
+| 平台声明 | `isDesktopOnly: false`；本版范围为桌面 + iPadOS。该布尔值也允许其他移动端安装，不代表 Android/iPhone 已适配或验证。Android 适配0.0.18；iPhone 未验证；最低 iPadOS 与客观移动帧率/内存界限未确立 |
 | 发布方式 | tag `0.0.16` 由 GitHub Actions Release 工作流构建并发布，[Release 页面](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.16)；资产仅 `main.js`、`manifest.json`、`styles.css`，校验值在 Release 正文，三资产附构建来源证明。最终线上核对见 [发布记录](RELEASE_PREP_0.0.16.md)。社区目录沿用现有条目与图标。 |
 
 ## 0.0.16 同步与恢复
 
-0.0.16加入Windows ↔ iPadOS布局同步，已验证传输为坚果云。同步加入、私有身份/日志、完整备份与旧版兼容导出见[同步指南](SYNC_GUIDE.md)。下方历史迁移说明保留；同步状态不能只备份data.json。Android排期0.0.17，iPhone未验证。
+0.0.16加入Windows ↔ iPadOS布局同步，已验证传输为坚果云。同步加入、私有身份/日志、完整备份与旧版兼容导出见[同步指南](SYNC_GUIDE.md)。下方历史迁移说明保留；同步状态不能只备份data.json。Android排期0.0.18，iPhone未验证。
 
 ## 2. 手动安装（新建独立库推荐先这样试）
 
@@ -82,7 +82,7 @@
 - 卸载插件会删除布局数据（见第 4 节）。
 - 部分第三方插件弹窗（例如文件改名后的“更新链接”确认、Excalidraw 首次欢迎页）会暂时盖住图谱并拦截鼠标输入，处理完弹窗即可恢复。
 - 稳定性调查 FB-006 已定因：早期原生自动化对 Obsidian 渲染页执行整页 reload 会触发宿主层告警（插件被禁用时同样出现），属测试驱动产物，不是插件缺陷；正常使用不会触发。详见 [DESKTOP_STABILITY_RESULT.md](../DESKTOP_STABILITY_RESULT.md)。
-- 0.0.15 加入 iPadOS；旧版 0.0.14 仅桌面。iPhone 未验证，Android 适配0.0.17。iPad 取消构建、强制 Worker 失败、5000 节点冷启动、128 兄弟保存延迟及客观帧率/内存峰值尚无完整真机证据；桌面模拟与 Node 故障测试不能替代这些结果。
+- 0.0.15 加入 iPadOS；旧版 0.0.14 仅桌面。iPhone 未验证，Android 适配0.0.18。iPad 取消构建、强制 Worker 失败、5000 节点冷启动、128 兄弟保存延迟及客观帧率/内存峰值尚无完整真机证据；桌面模拟与 Node 故障测试不能替代这些结果。
 - 触屏：单指平移、双指捏合、双击聚焦/双击空白重置；长按笔记或标题，或选中后点「预览」。点 ✥「调整布局」后可拖动单个元素、松手保存，再点 ✥ 结束；支持撤销/重做，触屏整组拖动与选父级后置。
 - 开发用的快照冒烟命令依赖本地 `smoke-payload.json`；正式交付包只含三个运行文件，不含该快照。
 - 兼容性矩阵覆盖 Obsidian 1.14.5 桌面版、单显示器、核心插件与 6 个常见社区插件（Dataview、Templater、Obsidian Git、Style Settings、Omnisearch、Excalidraw），未做 WCAG/无障碍测量；详见 [COMPAT_MATRIX_RESULT.md](../COMPAT_MATRIX_RESULT.md)。
