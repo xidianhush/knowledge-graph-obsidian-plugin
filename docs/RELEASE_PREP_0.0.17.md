@@ -21,6 +21,7 @@
 - `npm test`: build + 43 synthetic check scripts, 18 upgrade/restore scenarios (`.local/integration-017-test.log`; earlier LF-byte run `.local/integration-final-lf-test.log`).
 - Disk abrupt-exit/cold-reopen 3/3 (`disk/run-Y5XDqV`); Chrome desktop/narrow 6/6 (`browser-_eaa0qfq`); native Windows 0.0.15 → 0.0.16 → fix 4/4 (`native-gcy26xov`, runtimeSha256 = `62c6aed7…`). Evidence under `.local/layout-upgrade/` (private, never distributed).
 - Formal packager dry run: `node scripts/package.mjs` produced `.local/release/0.0.17/` with exactly `main.js`, `manifest.json`, `styles.css` plus `SHA256SUMS`; version-consistency and forbidden-payload guards passed.
+- Release workflow re-checked against `.github/workflows/release.yml`: tag `0.0.17` matches the `0.0.*` trigger and the version guards; CI builds from the tagged commit, uses `docs/RELEASE_NOTES_0.0.17.md` as the release body, enforces exactly three assets and cross-checks SHA-256; `workflow_dispatch` is dry-run only.
 - iPad short-verify package prepared and readback-verified (`.local/layout-upgrade/ipad-short-verify-017/`); awaiting the user's device execution and report. The iPad native restore entry remains **not device-verified** until that report passes.
 
 ## Publication gates (none executed)
@@ -29,7 +30,7 @@
 2. Explicit user authorization for push / tag / Release / portal.
 3. Final doc-accuracy pass before pushing: README 0.0.17 feature sentence and release-notes footer link; INSTALL title/version table/publication row; SYNC_GUIDE historical-restore entry mention and title. These publication-state edits are deliberately deferred to this gate so no document asserts an unpublished release. Then commit; push main fast-forward and annotated tag `0.0.17` atomically, no force; old tags untouched.
 4. Watch the tag-triggered Actions run; independently download the three assets and compare SHA-256 with the expected values above. Never replace CI assets with local builds.
-5. Portal: the user checks for new releases and confirms the scan/listing; prepare version-appropriate short/long description copy for the existing listing edit (observed limits 200/1000 characters). Listing identity, icon, categories and price remain unchanged.
+5. Portal: the user checks for new releases and confirms the scan/listing; prepare version-appropriate short/long description copy for the existing listing edit (observed limits 200/1000 characters). Listing identity, icon, categories and price remain unchanged. Copy already drafted locally at `.local/release-017/portal-copy-0.0.17.md`: short 117/200 (unchanged from 0.0.16), long base 935/1000, and a long variant 998/1000 whose iPad-restore swap sentence may be used **only after** the user's short-verification report passes.
 
 ## Accepted limits carried forward
 
