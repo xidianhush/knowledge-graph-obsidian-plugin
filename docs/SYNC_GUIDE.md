@@ -1,4 +1,4 @@
-# Layout sync and recovery — 0.0.16
+# Layout sync and recovery — 0.0.17
 
 Windows ↔ iPadOS with Nutstore is the validated transport scope. Android is planned for 0.0.18; iPhone is unverified. The plugin writes ordinary vault files; your external sync tool transfers them. Configure the same note scope on both devices and let notes arrive before applying layouts.
 
@@ -17,6 +17,10 @@ While enabled, a compatible ordinary layout save is kept locally and queued for 
 - Shared files under `Knowledge Map Sync` include note-relative paths, title structure and coordinates. Settings, views and UI remain local. Recovery/compatibility packages can contain configuration and unknown fields; keep them private. Hashes check integrity, not encryption or authenticity.
 - Your external tool determines which folders it transfers. Including large recovery backups can add substantial file traffic. Keep backup folders separate from shared operation directories. The plugin does not manage third-party network queues or rate limits.
 
+## Historical layout restore (0.0.17)
+
+In plugin settings, **Restore historical layouts** previews selected title groups from the one-time upgrade archive (`layoutUpgradeOriginal`) or from an optional complete-backup JSON you choose. Each group is labelled unchanged / adjusted / unavailable with a three-column preview (historical / current / proposed); unavailable groups cannot be selected. Nothing is selected by default and cancel writes nothing. Confirming first writes and verifies a complete recovery backup under `Knowledge Map Backups`, then applies only the selected groups: unjoined vaults restore locally, joined sessions stage a local draft that still requires separate review and publication. Joined sessions are never re-imported and no new connection is created. Old layouts lost to deletion, rename or structural change are not promised unchanged; trust the per-group preview. The unjoined iPad native restore entry was device-verified in an independent synthetic test vault (2026-11-22); joined-state iPad restore was not separately device-tested.
+
 ## Compatibility export and rollback
 
 Turn layout sync off and export a complete recovery backup on the same settings page. Under **Layout to export for 0.0.15**, choose the accepted layout or the saved unpublished draft, then review. The preview identifies the source, geometry and full output path. Cancel does not request export; confirm writes a separate compatibility `data.json` with a completion manifest, never overwriting the working plugin data.
@@ -33,4 +37,4 @@ Keep originals and backups when capacity or integrity checks pause an operation.
 
 The user accepted these release boundaries: large synthetic histories have slow replay (about 29–44 seconds for a 409-operation Node host sample; not an iPad benchmark); general Nutstore rate limiting remains unresolved; an original iPad trial anomaly remains unassigned despite a later controlled successful rollback/return trial; extremely long messages may cover undo controls at narrow widths. Objective iPad capacity timing, OS free disk and mobile memory ceilings remain unmeasured. A small iPad test backup felt under a second with no stall, which is subjective and does not establish large-history performance.
 
-中文：先构图，再明确选择共享布局和审阅加入。关闭同步保留本机草稿，重新启用后另行审阅。完整备份请原位保留并另复制到库外；退出重进设置需重新导出以取得本页凭据。兼容来源在“导出给0.0.15的布局”下选择草稿或已接受布局，预览后可取消。回退/回升前完整外备，核对实际安装；旧版新工作不会自动合入同步历史。较大历史回放、第三方限流和已披露未归因异常仍有边界。
+中文：先构图，再明确选择共享布局和审阅加入。关闭同步保留本机草稿，重新启用后另行审阅。完整备份请原位保留并另复制到库外；退出重进设置需重新导出以取得本页凭据。0.0.17的"恢复历史布局"从一次性升级归档或可选完整备份JSON逐组预览（原样/调整/无法恢复），默认不选、取消零写入，确认先写并验证完整备份再应用选中组；未加入本机恢复、已加入生成本机草稿需另行发布，已加入不重新导入。兼容来源在“导出给0.0.15的布局”下选择草稿或已接受布局，预览后可取消。回退/回升前完整外备，核对实际安装；旧版新工作不会自动合入同步历史。较大历史回放、第三方限流和已披露未归因异常仍有边界。

@@ -1,6 +1,6 @@
 # 0.0.17 release preparation record
 
-2026-11-22 (Asia/Shanghai). **Status: prepared locally; NOT published.** The independent iPad test-vault short verification of the native historical-restore entry (unjoined state) passed by user report on 2026-11-22. Publication (push to main, annotated tag, CI Release, portal refresh) still requires the user's explicit authorization. Android adaptation is deferred to 0.0.18 by user decision. No daily-vault operation and no old-tag rewrite are authorized or performed.
+2026-11-22 (Asia/Shanghai). **Status: publication authorized by the user (2026-11-22); publishing in progress.** The independent iPad test-vault short verification of the native historical-restore entry (unjoined state) passed by user report on 2026-11-22. Android adaptation is deferred to 0.0.18 by user decision. No daily-vault operation and no old-tag rewrite are authorized or performed.
 
 ## Source and version
 
@@ -27,8 +27,8 @@
 ## Publication gates (none executed)
 
 1. ~~User completes the independent iPad test-vault short verification and reports results.~~ **Done 2026-11-22 (pass).** The iPad sentence in [RELEASE_NOTES_0.0.17.md](RELEASE_NOTES_0.0.17.md) and the guide/result/TODO conclusions have been updated to record the unjoined-entry device verification and its scope. On any later failure: stop and investigate; no release.
-2. Explicit user authorization for push / tag / Release / portal.
-3. Final doc-accuracy pass before pushing: README 0.0.17 feature sentence and release-notes footer link; INSTALL title/version table/publication row; SYNC_GUIDE historical-restore entry mention and title. These publication-state edits are deliberately deferred to this gate so no document asserts an unpublished release. Then commit; push main fast-forward and annotated tag `0.0.17` atomically, no force; old tags untouched.
+2. ~~Explicit user authorization for push / tag / Release / portal.~~ **Granted 2026-11-22** (user selected "授权发布 0.0.17").
+3. Final doc-accuracy pass before pushing: README 0.0.17 feature sentence and release-notes footer link; INSTALL title/version table/publication row; SYNC_GUIDE historical-restore entry mention and title. **Done in the publication commit.** Then commit; push main fast-forward and annotated tag `0.0.17` atomically, no force; old tags untouched.
 4. Watch the tag-triggered Actions run; independently download the three assets and compare SHA-256 with the expected values above. Never replace CI assets with local builds.
 5. Portal: the user checks for new releases and confirms the scan/listing; prepare version-appropriate short/long description copy for the existing listing edit (observed limits 200/1000 characters). Listing identity, icon, categories and price remain unchanged. Copy already drafted locally at `.local/release-017/portal-copy-0.0.17.md`: short 117/200 (unchanged from 0.0.16), long base 935/1000, and a long variant 998/1000 with the iPad-restore swap sentence. The short-verification report passed on 2026-11-22, so the 998/1000 variant is the version to use at publication.
 

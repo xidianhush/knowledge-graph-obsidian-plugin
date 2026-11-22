@@ -57,11 +57,13 @@ For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a
 
 **Knowledge Map（知识地图）** 用嵌套圆展示知识的包含层级，用连线展示知识之间的联系。拖动画布探索，缩放查看层级，预览笔记内容；点 ✥「调整布局」，把核心知识放在中间、细节放在周围，再点一次结束。
 
-桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；Android 适配留到0.0.18。
+桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；0.0.17修复升级后布局回落并加入审阅式历史恢复；Android 适配留到0.0.18。
 
 ## Sync layouts across Windows and iPad
 
 **0.0.16** adds reviewed layout sync using ordinary vault files transferred by your own sync service. Windows ↔ iPadOS with Nutstore is the tested transport scope. Select the same shared layout on each device, then explicitly review the first join. Compatible saved edits are queued automatically while sync is enabled; conflicts and drafts saved while sync was off require review. Turning sync off keeps local work.
+
+**0.0.17** fixes upgrade continuity: compatible saved layouts survive an upgrade and the original layout is archived once. A reviewed historical restore previews each title group (unchanged / adjusted / unavailable), verifies a complete backup before applying, restores locally when unjoined, and stages a local draft for separate publication when joined. Joined sessions are never re-imported. The iPad native restore entry (unjoined) was device-verified in an independent synthetic test vault.
 
 Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_GUIDE.md) before joining, backing up or rolling back. Large histories can take longer to replay; transport rate limits and the disclosed original iPad anomaly remain unresolved. Android adaptation is planned for 0.0.18; iPhone remains unverified.
 
@@ -69,4 +71,4 @@ Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_G
 
 Map building happens locally within your configured scope. The plugin does not modify your notes or make network uploads. Before sync is joined, local settings and layouts use the plugin's `data.json`; sync additionally keeps device-local identity and a private journal, and writes layout records to `Knowledge Map Sync`. Your external sync tool transfers shared files, which include relative paths, heading structure and coordinates. Keep full recovery backups and copy them outside the vault; `data.json` alone is not a complete sync backup.
 
-[Data, upgrades and limits](docs/INSTALL.md) · [Build and test](DEVELOPMENT.md) · [Current tasks](TODO.md) · [0.0.16 release notes](docs/RELEASE_NOTES_0.0.16.md) · [MIT license](LICENSE)
+[Data, upgrades and limits](docs/INSTALL.md) · [Build and test](DEVELOPMENT.md) · [Current tasks](TODO.md) · [0.0.17 release notes](docs/RELEASE_NOTES_0.0.17.md) · [MIT license](LICENSE)
