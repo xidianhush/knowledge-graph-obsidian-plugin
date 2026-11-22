@@ -178,7 +178,7 @@ function createLayoutModel(nodes, rootRadius) {
     }
   }
   function groupKey(id) { const n = byId.get(id); return n ? (keys.get(n.parent) || 'root') : null; }
-  function capture(key) {
+  function capture(key, includeAutomatic = false) {
     const g = groups.get(key); if (!g) return null;
     const p = g.parent || root, bp = g.parent ? baseline.get(p.id) : root;
     const points = g.nodes.map(n => ({ id: keys.get(n.id), x: (n.x - p.x) / p.r, y: (n.y - p.y) / p.r }));
@@ -186,7 +186,7 @@ function createLayoutModel(nodes, rootRadius) {
       const b = baseline.get(g.nodes[i].id);
       return Math.hypot(point.x - (b.x - bp.x) / p.r, point.y - (b.y - bp.y) / p.r) > 1e-9;
     });
-    if (!changed) return null;
+    if (!changed && !includeAutomatic) return null;
     const record = { shape: structuredClone(g.shape), points };
     if (g.note) {
       record.note = g.note; record.structure = g.structureId;
@@ -600,6 +600,8 @@ function createLayoutStore(initial, write) {
   }
   return {
     state, acquire, release, command, changePath, reserveExternal,
+    // Persistence/recovery needs the per-note identity tables omitted by HUD state.
+    snapshot: () => structuredClone(data),
     reconcile(model, valid = () => true) { return unsupported ? Promise.resolve() : run(null, layout => valid() ? model.reconcile(layout) : null, 'migrate'); },
     settled: () => tail.catch(() => {}),
     subscribe(fn) { listeners.add(fn); fn(state()); return () => listeners.delete(fn); },

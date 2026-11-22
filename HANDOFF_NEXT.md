@@ -1,9 +1,83 @@
 # 下一位 Coding Agent 交接入口
 
-交接日期：2026-11-01（Asia/Shanghai），最后更新 **2026-11-07**（README 精简与 0.0.15 iPadOS 发布交接）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
+2026-11-22 最新交接（同日整合后更新）：用户明确将下一部分交给下一位coding agent。**Science and Tech四目标的PC原库恢复、共享发布至iPad及双端重开已用户验收通过，停止重复验收。** 修复源码已按27文件白名单整合到分支 `layout-recovery-integration`（基线HEAD `1c25526`，含正式0.0.16全部源码及此前已验收join修正），最终构建字节已通过npm/磁盘/浏览器/原生重验，见[恢复结果](docs/LAYOUT_UPGRADE_016_RESULT.md)「源码整合与最终字节验证」及TODO的LAYOUT-UPGRADE-016-INTEGRATION条目。本地commit已完成，**尚未push/正式发布**；新版本号和发布范围待用户决定，不改旧0.0.16 tag或资产。原已验收实现位于Codex管理的detached worktree（本地路径见私有接手上下文），保留大量历史未提交/未跟踪内容，不能只开正式分支就当作已取得本轮实现，也不能直接全目录提交；整合分支现为交付规范源码。PC已按授权安装恢复候选2，原共享连接保持；日常库进一步操作不从交接任务推定授权。本轮专用交接与开场指令（docs/HANDOFF_LAYOUT_RECOVERY_20261122.md）、私有接手上下文、源码清单/检查点（`.local/layout-upgrade/handoff-20261122/`）均保留本地，不得直接公开上传。下述G8/旧阶段条目保留历史，当前进度以TODO为准。
 
+2026-11-21最新委托：用户将最后必要修正/独立测试、统一候选交付/总体验收和最终发布交给下一位coding agent。本轮已准备[专用交接与起始指令](docs/HANDOFF_SYNC_G8_RELEASE_20261121.md)，从该文件和TODO的SYNC-G8-HANDOFF接手，再用[10项清单](docs/SYNC_G8_REMAINING_ISSUES.md)推进。沿用当前未提交工作区及私有证据，常规修正/测试无需再问是否启动；统一候选交用户总体验收后接续发布与分发核验，最终版本/范围及适用授权仍需对齐，不立即推标签。G7 PC/iPad R2已闭环功能不重做，原iPad首轮异常和限流P1边界保留。本轮仅交接，无源码/产品测试/版本/用户库/发布动作。
 
-## 最新交接：README 精简 → 0.0.15 桌面 + iPadOS 发布（2026-11-07）
+2026-11-21当前：G7 PC及iPad R2已完成新状态、明确草稿导出、实际正式版编辑/完整退出重开、旧版工作原文件保全与返回候选；R2最终1报告/4图8组核验通过，原身份/连接/接受/草稿保持、同步关闭、未自动发布。见[结果](docs/SYNC_G7_RESULT.md)、[R2回执](docs/SYNC_G7_IPAD_R2_ACCEPTANCE.md)，证据.local/sync-016/g7/ipad-r2-return-20261121-H6w2Cq/verification.json。勿重复已完成流程；保持原iPad首轮异常/全部备份现场，首轮具体原因及Taio缺陷未独立定论，P2/实际耗时资源/总体体验/P3/G8/发布授权门禁仍在，无产品改版或提交发布。
+
+交接日期：2026-11-01（Asia/Shanghai），最后更新 **2026-11-22**（历史布局恢复双端验收完成，源码整合/修复版交接已准备）。仓库：https://github.com/xidianhush/knowledge-graph-obsidian-plugin （2026-11-01 由拼写错误的 `knoeledg-graph-obsidian-plugin` 更名，旧链接由 GitHub 重定向）。本文是接手摘要，**TODO.md 是唯一当前执行清单**。原 2026-10-27 交接文档已归档至 `docs/history/HANDOFF_2026-10-27.md`，不能照其旧步骤重新开发。
+
+2026-11-20续验：PC已完成新状态、明确草稿导出、实际正式0.0.15编辑完整重开和返回候选；最终10组只读核验及1报告/2图证明原身份/连接/接受/草稿保持、关闭同步、旧版工作独立保全且未发布。详见[PC回执](docs/SYNC_G7_PC_SETUP_ACCEPTANCE.md)，证据.local/sync-016/g7/pc-return-20261120-K8r3Vn/verification.json。下一步iPad新合成库独立同流程，耗时/资源及G7整体待验；勿重复PC已完成流程。
+
+## 历史交付导航（2026-11-19，G7交付时待用户验收，最新状态见顶部）
+
+先读AGENTS.md、TODO.md、README.md、[G7结果](docs/SYNC_G7_RESULT.md)和[新库指南](docs/SYNC_G7_GUIDE.md)。用户已授权开始G7；disabled-only完整备份后明确已接受/草稿兼容导出已实现，取消/过期/部分失败保护保留。实际正式0.0.15三资产校验匹配，独立Windows Obsidian1.15.1同一插件ID回退/旧版编辑完整重开/返回候选两种来源完整7组通过；原身份/接受/草稿保持，旧版编辑不自动发布。默认构建+38脚本（G7 17组）、真实浏览器25组、相关磁盘18次退出、实际旧版VM7组、旧G5日志拒绝3组及交付字节回放4组通过，最终独立审阅无剩余Critical/Important。
+
+新白名单包`.local/sync-016/g7/delivery-_0df3f_u`：PC/iPad各10项和库外版本切换包7项。main2df6b4d0…，当前源码/29模块/原生/ZIP一致；本轮新库使用`knowledge-graph-smoke`以测试原位回退，仍0.0.15候选，不能安装到日常库。PC/iPad分别本地验，无需坚果云或相同逻辑ID；先PC，再iPad，回交回升报告及旧版编辑重开/回升截图。G6原验收现场及冻结436fb462…保持，全部未提交/未跟踪和失败材料保留。G6资源/耗时、一般限流体验/P2/P3/G8/发布门禁不一并结项，未提交推送/升版/发布。
+
+## 已完成验收导航（2026-11-19，G6功能流程）
+
+先读AGENTS.md、TODO.md、README.md及 [G6最终回执](docs/SYNC_G6_FINAL_ACCEPTANCE.md)。用户已完成本轮新PC/iPad+坚果云四组功能流程：基线、触顶草稿/完整导出、PC取消/确认轮换及重开、旧离线端返回隔离、iPad明确采用新ID共享布局及双端最终重开。最终2报告/3图20组只读核验通过，共享单根正文、groups/structures/view一致，PC旧1024原件完整保留。iPad目录未到达障碍已解除，具体传输延迟原因未确定。资源/耗时及一般限流体验、P2/P3/G7/G8/发布门禁仍保留；不重复已闭环功能步骤，不把本轮范围外项目一并结项。现有全部未提交/未跟踪内容和用户验收现场继续保留，未升版本或提交发布。
+
+## 历史交付导航（2026-11-17，G6技术交付）
+
+先读AGENTS.md、TODO.md、README.md及 [G6结果](docs/SYNC_G6_RESULT.md)。用户已明确采用完整导出+受控轮换路线；本轮正常UI、稳定ID恢复、旧端隔离及容量门禁已实现，默认37脚本/G6 25组、浏览器22组、磁盘36次退出、Windows1.15.1最终1024不同操作/两组包原生7组通过。**G6待用户新PC/iPad+坚果云及产品体验验收**，不得把技术结果标作用户验收。
+
+最新白名单包 `.local/sync-016/g6/delivery-kukgu9sx`，main436fb462…，库外指南已填新远端/ID，并明确正常容量hold可能只有草稿、pending=null，无须寻找放弃按钮。原G4/G5/FB2/日常库、未提交/未跟踪内容及所有失败材料保持；测试全套在当前源码白名单副本执行。G7需另验新publication-abandoned日志的旧候选回退，P3/G8/发布门禁仍保留。下方“尚未实施G6”为接手前历史，不覆盖TODO当前状态。
+
+## 历史交接导航（2026-11-17，G6接手前）
+
+先读AGENTS.md、TODO.md、README.md与 [G6交接文件](docs/HANDOFF_SYNC_G6_20261117.md)。G4/FB2/FB5/UI1/UI2及G5本轮验收已收尾；G5用户12报告/4图、36组只读核验通过，恢复前重开仍隔离、取消保持、确认及最终重开正常均明确确认。下一阶段为G6有限容量可恢复，**尚未实施**。本轮只整理交接，不新增实现/设备测试；不需要重做已闭环的首次加入、Fifth、锁及G5三组故障。
+
+继续同一本地工作区：当前codex/mobile-support、HEAD239ddf4，大量同步源码/文档未提交/未跟踪，.local证据被忽略。不能仅clone或从旧HEAD新建worktree替代当前实现。原G4/G5/FB2验收库及日常库不动，后续故障注入新合成库；候选仍0.0.15，无本轮0.0.16发布授权。详细阅读顺序、代码/证据入口、容量事实与未定方案、接手提示词见专用交接。下方导航均为历史。
+
+## 历史交接导航（2026-11-14）
+
+先读 AGENTS.md、TODO.md、README.md 与 [首次启用/已有布局导入交接](docs/HANDOFF_SYNC_A5_ONBOARDING_20261114.md)。PC/iPad 分别主动解决同组冲突、对端接收及双端重开已有两轮真机核验与对应审阅体验验收；不用重做。下一项建议为复用 A3 join 核心的独立首次启用/旧布局导入候选，当前仅准备交接，未实施。详细源码、证据、验收条件和起始指令见专用文件；正式 v2 门禁关闭。
+
+当前大量同步源码/文档尚未提交，`.local` 真机证据被忽略。建议继续同一本地工作区，不清理、不 reset；只 clone 远端不能取得现状。下方 2026-11-08 及更早部分保留为历史，不以其中“未实施同步”等表述覆盖当前 TODO，也不把历史测试数字当成本轮新结果。
+
+## 历史交接：0.0.16 PC ↔ iOS/iPadOS 图谱布局同步（2026-11-08）
+
+以下为当时的任务摘要；先按上方最新导航及 TODO 接手。旧版移动端起步、README 重写、0.0.15 发布步骤均为历史，不要重复执行。
+
+2026-11-08 实施进度补充：SYNC-A3 进行中：[禁用后本地工作/兼容恢复草稿第八阶段原型通过](docs/SYNC_A3_LOCAL_WORK.md)，禁用时同库本地设置/UI/布局可保存重开，共享 I/O 被拒绝；再启用保留草稿/outbox，不自动发布。兼容包完整校验，明确恢复只生成带原文备份的草稿。新 21 项 + 磁盘 16 项/14 次退出、默认构建 + **21 脚本**及原五套磁盘通过，共 **474 项同步细项/96 次退出**。新入口尚未接正式 UI 或原生/iPad；接着做近限额清点/重开性能及独立原生候选验证，旧 schema1/2 恢复交互/存储丢失处理待补。外部 data.json 自动回写与 iPad copy P1 发布门禁保留。默认构建 + 21 脚本与六套磁盘通过，证据见 `.local/sync-016/a3/local-work/`。正式包 0.0.15 不变；A3 未完成，旧交接/规划不替代 TODO 当前状态。
+
+### 用户最新决定
+
+- README 六件新版演示素材和中英 20 秒宣传视频 v3 已获用户明确验收：“就这样，awesome”。PROMO-A3/A4 已验收；保留现有文字、风格与节奏。不要将此次验收扩展成公开上传授权。
+- **0.0.16：已支持的 PC 与 iOS/iPadOS，一端修改图谱布局、多端同步。Android 改为 0.0.17。** 当前 Apple 真机证据是 iPad，iPhone 尚未验证，不据命名扩大平台声明。
+- 用户本人使用 Nutstore Sync；提到其他人用“Remotly Sync”与官方 Obsidian Sync，不清楚是否同步 `.obsidian`。具体工具版本、其他用户准确插件 ID、过滤与 JSON 传输能力待 SYNC-A1 实测，不要求用户现在知道这些技术细节。
+- 本轮用户要求的是方案和交接，**未实施同步功能、未升版本、未重新跑 npm/真机测试**。
+
+### 建议实现路径
+
+复用既有同步工具传输 vault 内专用普通目录中的布局记录，插件处理外端更新、合并和冲突，不自建服务器或读取云端凭据。不要只复制完整 data.json：当前启动时加载一次、没有外部变更回调，多设备内存副本可能把远端布局覆盖回去。
+
+完整设计与替代方案的取舍见同步方案：不可变唯一文件记录、因果前驱、整组/事务合并、同组并发保留两版、重置 tombstone、schema3 导入、编辑中延后应用及笔记晚到重试。它是技术建议，不是已经验证的最终协议；先做 Nutstore 双向哨兵和纯核心原型，再冻结格式与预算。同步范围扩大到设置、冲突选择和首次导入体验见 SYNC-P2，不冒称用户已逐项确认。
+
+### 接手时的仓库事实
+
+- 当前检出分支 `codex/mobile-support`，HEAD `239ddf4`；正式 0.0.15 tag 指向 `8b82e4b`。接手时重新用 git 核实，不把文档快照当作实时状态。
+- 根 manifest/package/versions 仍 0.0.15，布局 schema3；正式 main.js SHA-256 `8801c3a3e5c2d96fcd6d230e8b703eac8472ac815e677e915c81c23249411391`。本轮没有修改产品源码/运行资产或 LICENSE。
+- 工作区已有未提交的 TODO、六件 README 素材、宣传计划及本轮交接文档；不要 reset/clean 或用旧提交覆盖。**本轮文档尚未 commit/push**，远端 clone 不会自动带上这些增量。应在同一工作区接手，或先取得这些公开文档/素材的交付；`.local` 不是必要的源码依赖。
+- README.md 本轮完全保留，SHA-256 `089b0db4c455c9c8d16d890513ad9e6d0b776757f8454c743a7cd103272070cc`。其中 Android“下一版”为 0.0.15 文案；当前排期以本节/清单为准，0.0.16 发布前只更新必要版本事实，避免重做已验收文案。
+- 宣传视频本地 `.local/promo-refresh-20261108/knowledge-map-20s-{zh,en}-v3.mp4`，版权行 `© 2026 hushpro · Code: MIT License`；验收与技术证据摘要见 docs/PROMOTION_PLAN.md。这些本地视频和录制脚本不在远端，不是同步开发的前置条件。
+
+### 第一轮接手顺序
+
+1. 核对 git 状态，保留现有改动；阅读现行文件。重新跑 `npm test` 记录基线，现有入口为构建 + 11 个合成脚本；失败如实修复/报告，不照抄旧通过记录。
+2. 从 `SYNC-A1` 开始：在独立合成库核对 Nutstore Sync 双向传普通 JSON，先准备可审阅哨兵与步骤，再由用户/可用设备完成 PC↔iPad 真链路。模拟文件复制只算模拟，不算服务/设备验收。
+3. 可独立推进 `SYNC-A2` 纯协议合成测试。按 `A2 → A3/A4 → A5 → A6 → A7 → P3 → A8` 逐项实施；SYNC-P2 产品细节与实际工具能力未确定时，避免先绑定隐藏目录、时间戳覆盖或自动丢弃冲突。
+4. 重点入口：`src/plugin.js` 的 onload/saveGraphSettings/布局写队列；`src/core/layout-state.js` 的 createLayoutStore、command/changePath/reconcile；`src/adapters/obsidian-native.js` 的 createNativeUiStorage；`src/settings.js`；`scripts/test.mjs`。新增共享协议模块与文件适配层，不改现有拖动/渲染算法来掩盖同步问题。
+5. 每轮更新 TODO 对应 ID、测试来源与证据；产品验收由用户。不得读取 `Utilities/API Key.md`、修改日常笔记或扩大私有副本；候选安装、0.0.16 commit/push/tag/Release/门户按最新明确授权执行，0.0.15 的已完成授权不自动用于 0.0.16 发布。不 force push。
+
+### 历史开场语（2026-11-08，当前接手请用顶部新交接文件）
+
+> 请接手本项目 0.0.16 的 PC ↔ iOS/iPadOS 图谱布局同步。先读 AGENTS.md、TODO.md、README.md、HANDOFF_NEXT.md 顶部和 docs/SYNC_PLAN_0.0.16.md，再核对 git 状态、运行 npm test 记录真实基线。0.0.15 已发布；README 与中英宣传片 v3 已验收，不重做。0.0.16 专注同步，Android 0.0.17，iPhone 未验证。用户本人用 Nutstore Sync，其他用户的 Remotly Sync 准确 ID 与各端过滤尚待核实。从 SYNC-A1 的独立合成库双向 JSON 哨兵开始，同时可做 A2 协议测试；推荐复用现有文件同步、专用普通目录、整组冲突保留，勿只覆盖 data.json。工作区有未提交的已验收素材和交接增量，请保留。未做真链路/设备测试不要写已验证；日常库、私有数据与发布授权遵守 AGENTS 和最新用户指示。
+
+## 历史交接：README 精简 → 0.0.15 桌面 + iPadOS 发布（2026-11-07）
 
 先读 [详细交接](docs/HANDOFF_0.0.15_README_RELEASE.md) 与 [README 修改计划原文副本](docs/README_PLAN_0.0.15.md)，再以 TODO.md 顶部为当前执行清单。
 

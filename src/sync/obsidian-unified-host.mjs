@@ -16,14 +16,15 @@ import {createSettingsCoordinator} from './settings-coordinator-prototype.mjs';
 import {createAutoPublishQueue,createLayoutDraftPublisher} from './auto-publish-queue.mjs';
 import {createLayoutActionAuthor} from './author-prototype.mjs';
 import {cloneBoundedSyncJson} from './causal-prototype.mjs';
-import {normalizeRestoreLayout,validateSchema3Snapshot,probeSchema3Snapshot,planSchema3Transactions,inspectSchema3History} from './layout-prototype.mjs';
+import {normalizeRestoreLayout,normalizeJoinLayout,projectCurrentJoinLayout,validateSchema3Snapshot,probeSchema3Snapshot,planSchema3Transactions,inspectSchema3History} from './layout-prototype.mjs';
+import {readHistoricalLayout,reconcileLocalLayout,planHistoricalLayout,mergeHistoricalGroups,localLayoutChanged,validateUnjoinedLayoutEdit} from './historical-layout.mjs';
 const copy=v=>cloneBoundedSyncJson(v),equal=(a,b)=>JSON.stringify(copy(a))===JSON.stringify(copy(b));
 const layoutOf=v=>v.layoutOverrides??null,held=reason=>({kind:'held',reason});
 function unwrap(r){return r?.kind==='completed'?unwrap(r.value):r;}
 export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalThis.navigator?.locks,readSource,saveUnjoined,createStore,validateSettings,openBackend,getGraph,getEpoch,onData=()=>{},budgetLimits,checkpoint=async()=>{}}={}){
  if([readSource,saveUnjoined,createStore,validateSettings,openBackend,getGraph,getEpoch,onData].some(fn=>typeof fn!=='function'))throw Error('unified-options');
  let registry=null,lifecycle=null,bundle=null,publisherQueue=null,rotation=null,rotationData=null,closed=false,freezing=false,error=null,externalEpoch=0,tail=Promise.resolve();
- const joinTokens=new WeakMap(),reviews=new WeakMap(),listeners=new Set(),exportTasks=new Map();let saveError=null,outcome=null,pathBasis=null,pathOverflow=false,structureWaiting=false,privateBudget=null;const pathChanges=[];
+ const joinTokens=new WeakMap(),reviews=new WeakMap(),historicalReviews=new WeakMap(),listeners=new Set(),exportTasks=new Map();let saveError=null,outcome=null,pathBasis=null,pathOverflow=false,structureWaiting=false,privateBudget=null;const pathChanges=[];
  let exportFolders=null;
  async function withExportFolders(destination,id,fn){
   if(typeof destination.location!=='string')return fn();
@@ -65,7 +66,7 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
   const privateStore=createDeviceBoundPrivateStore({store:quota.store,device,vault,access});
   const attempts=writable()?createAttemptHistory(adapter,vault):null;
   const session=createDurableSyncSession({privateStore,...(attempts?{attemptHistory:attempts}:{sharedStore:createReadOnlyLayoutHistory(adapter,vault)}),vault,installation:device.state().installation,access,
-   createModel:model,getEpoch:epoch,readLocalData:async()=>rotationData??source(),nextId:()=>rotation?.state()?.target===vault?rotation.state().rootId:randomSyncOperationId(),normalizeLocalLayout:raw=>normalizeRestoreLayout(raw,model),enableConflictResolution:!!attempts,checkpoint});
+   createModel:model,getEpoch:epoch,readLocalData:async()=>rotationData??source(),nextId:()=>rotation?.state()?.target===vault?rotation.state().rootId:randomSyncOperationId(),normalizeLocalLayout:raw=>normalizeJoinLayout(raw,model),projectLocalLayout:raw=>projectCurrentJoinLayout(raw,model),enableConflictResolution:!!attempts,checkpoint});
   const projection=createPrivateConfigProjection({session,validateSettings,getExternalEpoch:()=>externalEpoch});
   const coordinator=createSettingsCoordinator({session,documentStore:projection.documentStore,validateSettings,createModel:model,getGraphEpoch:epoch});
   const b={session,projection,coordinator,backend,quota,attempts,ready:false,async open(){await quota.recover(async()=>{await session.open();if(session.state().initialized&&rotation?.state()?.target!==vault)await setupProjection(b);});await inspectBudget();}};
@@ -129,6 +130,23 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  }
  function reserveReview(joinRecovery=false){const captured=epoch(),guard=store.reserveExternal(value=>{if(!probeSchema3Snapshot(value,model).ok)throw Error('unified-graph-incompatible');return validateSchema3Snapshot(value);});return guard&&{guard,current:()=>(joinRecovery?recoveryGate():gate())===true&&epoch()===captured};}
  const hashValue=v=>syncContentHash(JSON.stringify(copy(v)));
+ async function historicalBasis(){
+  const scan=bundle?.attempts?await bundle.attempts.scan():null;
+  if(scan&&(scan.issue||scan.blockers.length||scan.quarantined.length))throw Error('shared-input-blocked');
+  return hashValue({source:await source(),view:store.snapshot(),epoch:epoch(),selected:registry?.state().selected??null,status:lifecycle?.state().status??'unselected',session:bundle?.session.state()??null,inventory:scan?.inventory??null});
+ }
+ function historicalGate(){
+  assertSave();if(registry?.state().pending||rotation?.state())return false;
+  const g=getGraph(),s=bundle?.session.state();
+  return !!g?.isCurrent()&&!g.hidden&&(!s?.initialized||bundle.ready&&!s.pending&&!s.faulted&&!s.attemptConflict&&!s.localState?.layoutDraft&&!s.localState?.pendingSave&&!s.localState?.settingsDraft&&!externalPending());
+ }
+ async function writeLocalRecovery(destination,id,data){
+  if(!/^[a-f0-9]{32}$/.test(id)||typeof destination?.create!=='function'||typeof destination?.read!=='function')throw Error('historical-backup-options');
+  const body=JSON.stringify(copy(data)),hash=await syncContentHash(body),bytes=new TextEncoder().encode(body).length;
+  await destination.create(id+'/initial-config.json',body);if(await destination.read(id+'/initial-config.json',bytes)!==body)throw Error('historical-backup-content');
+  const manifest=JSON.stringify({version:1,id,scope:'unjoined-config-recovery',bytes,hash});await destination.create(id+'/manifest.json',manifest);
+  if(await destination.read(id+'/manifest.json',262144)!==manifest||await syncContentHash(await destination.read(id+'/initial-config.json',bytes))!==hash)throw Error('historical-backup-content');
+ }
  async function rotationBasis(){const s=bundle?.session.state();return hashValue({sequence:s?.sequence,accepted:s?.accepted?.fingerprint,local:s?.localState,pending:s?.pending,configuration:bundle?.session.getLocalDocument(),source:await source()});}
  async function rotationInput({destination,id,choice},intent=null){
   if(!getGraph()?.isCurrent()||getGraph().hidden||saveError)throw Error('rotation-graph-or-unsaved');
@@ -305,7 +323,7 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
    if(!getGraph()?.isCurrent())return held('graph-unavailable');
    if(!bundle||bundle.ready)return held('join-not-required');const data=await source(),before=epoch();const result=unwrap(await lifecycle.join(b=>b.session.previewJoin({localData:data})));
    if(result.kind!=='join-preview')return result;
-   const token=Object.freeze({});joinTokens.set(token,{data,epoch:before,fingerprint:result.fingerprint,bundle});return {...result,token,canImport:result.canImport&&writable()};
+   const token=Object.freeze({});joinTokens.set(token,{data,epoch:before,fingerprint:result.fingerprint,currentFingerprint:result.currentFingerprint,canImport:result.canImport,canCurrent:result.canCurrent,bundle});return {...result,token,canImport:result.canImport&&writable(),canCurrent:result.canCurrent&&writable()};
   }),
   discardJoin:token=>joinTokens.delete(token),
   discardReview(token){const r=reviews.get(token);if(r?.sessionToken){if(r.kind==='shared-recovery')r.bundle.session.discardSharedRecovery(r.sessionToken);else r.bundle.session.discardConflictReview(r.sessionToken);}reviews.delete(token);},
@@ -372,12 +390,12 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
   joinEvidence:()=>enqueue(async()=>bundle?{backup:bundle.session.getJoinBackup(),proof:bundle.session.getJoinProof()}:null),
   confirmJoin:(token,choice)=>enqueue(async()=>{
    if(!getGraph()?.isCurrent())return held('graph-unavailable');
-   const review=joinTokens.get(token);joinTokens.delete(token);if(!review||review.bundle!==bundle||review.epoch!==epoch()||!['import','shared'].includes(choice))return held('join-review-changed');
-   const current=await source();if(!equal(layoutOf(current),layoutOf(review.data))||choice==='import'&&!writable())return held('join-source-changed');
+   const review=joinTokens.get(token);joinTokens.delete(token);if(!review||review.bundle!==bundle||review.epoch!==epoch()||!['import','shared','current'].includes(choice)||choice==='current'&&!review.canCurrent)return held('join-review-changed');
+   const current=await source();if(!equal(layoutOf(current),layoutOf(review.data))||choice!=='shared'&&!writable())return held('join-source-changed');
    const guard=store.reserveExternal(value=>{if(!probeSchema3Snapshot(value,model).ok)throw Error('unified-graph-incompatible');return validateSchema3Snapshot(value);});if(!guard)return held('layout-busy');
    try{
     const result=unwrap(await lifecycle.join(async b=>{
-     const joined=await b.session.join({localData:current,choice,expectedSharedFingerprint:review.fingerprint});
+     const joined=await b.session.join({localData:current,choice,expectedSharedFingerprint:review.fingerprint,...(choice!=='import'&&review.currentFingerprint?{expectedCurrentFingerprint:review.currentFingerprint}:{})});
      if(b.session.state().initialized)await setupProjection(b);return joined;
     }));
     if(!bundle.ready)return result;
@@ -386,10 +404,56 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
     guard.apply(bundle.session.state().accepted.snapshot);await deliver();return {kind:'joined',result};
    }finally{guard.release();}
   }),
+  prepareLocalGraph:({createModel,isCurrent,epoch:expected}={})=>enqueue(async()=>{
+   if(bundle?.session.state().initialized)return held('already-joined');assertSave();
+   if(typeof createModel!=='function'||typeof isCurrent!=='function'||expected!==getEpoch()||!isCurrent())return held('graph-changed');
+   const current=await source(),raw=current.layoutOverrides;if(raw==null)return {kind:'unchanged'};
+   const next=reconcileLocalLayout(raw,createModel);if(!localLayoutChanged(raw,next))return {kind:'unchanged'};
+   const guard=store.reserveExternal(x=>x);if(!guard)return held('layout-busy');
+   try{
+    if(expected!==getEpoch()||!isCurrent())return held('graph-changed');
+    next.revision=raw.revision+1;
+    const data={...current,layoutOverrides:next,layoutUpgradeOriginal:current.layoutUpgradeOriginal??{version:1,layoutOverrides:copy(raw)}};
+    await saveUnjoined(data,{expected:current});guard.apply(next);
+    return {kind:'local-reconciled',deferred:expected!==getEpoch()||!isCurrent()};
+   }finally{guard.release();}
+  }),
+  previewHistoricalRestore:({readBackup=async()=>await bundle?.session.getJoinBackup()??await source()}={})=>enqueue(async()=>{
+   if(typeof readBackup!=='function')throw Error('historical-backup-options');
+   await publisherQueue?.settled();if(!historicalGate())return held('historical-restore-unavailable');
+   const before=await historicalBasis(),data=copy(await readBackup()),sourceLayout=readHistoricalLayout(data),currentLayout=store.snapshot();
+   const plan=planHistoricalLayout({sourceLayout,currentLayout,createModel:model});
+   if(before!==await historicalBasis())return held('historical-restore-changed');
+   const token=Object.freeze({});historicalReviews.set(token,{readBackup,hash:await hashValue(data),basis:before,plan,sourceLayout});
+   return {kind:'historical-restore-review',token,...copy(plan)};
+  }),
+  discardHistoricalRestore:token=>historicalReviews.delete(token),
+  confirmHistoricalRestore:(token,{groups,destination,backupId}={})=>enqueue(async()=>{
+   const r=historicalReviews.get(token);historicalReviews.delete(token);
+   if(!r||!groups?.length)return held('historical-restore-selection');
+   if(!historicalGate()||r.basis!==await historicalBasis()||r.hash!==await hashValue(await r.readBackup()))return held('historical-restore-changed');
+   const fresh=planHistoricalLayout({sourceLayout:r.sourceLayout,currentLayout:store.snapshot(),createModel:model});
+   if(!equal(fresh,r.plan))return held('historical-restore-changed');
+   const next=mergeHistoricalGroups(store.snapshot(),fresh.rows,groups),joined=!!bundle?.session.state().initialized;
+   if(joined){validateSchema3Snapshot(next);if(!probeSchema3Snapshot(next,model).ok)return held('graph-incompatible');}
+   const guard=store.reserveExternal(x=>x);if(!guard)return held('layout-busy');
+   freezing=true;await stopQueue();
+   try{
+    const before=await source();
+    if(joined){
+     const data=await lifecycle.exportRecovery({capture:value=>value});
+     await withExportFolders(destination,backupId,()=>exportRecoveryParts({destination,id:backupId,...data}));await verifyRecoveryExport({source:destination,id:backupId});
+    }else await withExportFolders(destination,backupId,()=>writeLocalRecovery(destination,backupId,before));
+    await checkpoint('historical:after-backup');
+    if(r.basis!==await historicalBasis()||r.hash!==await hashValue(await r.readBackup())||!getGraph()?.isCurrent())return held('historical-restore-changed');
+    if(joined){const draft=await run(b=>b.coordinator.stageLayoutDraft(next));await checkpoint('historical:after-draft');guard.apply(next);return {kind:'restore-staged',id:draft.id,backup:destination.location+'/'+backupId};}
+    await saveUnjoined({...before,layoutOverrides:next,layoutUpgradeOriginal:before.layoutUpgradeOriginal??{version:1,layoutOverrides:copy(before.layoutOverrides??{schemaVersion:3,revision:0,groups:{},structures:{}})}},{expected:before});guard.apply(next);return {kind:'restored-local',backup:destination.location+'/'+backupId};
+   }finally{freezing=false;guard.release();startQueue();}
+  }),
   saveLayout:value=>enqueue(async()=>{
-   const layout=validateSchema3Snapshot(value),before=epoch();if(!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-incompatible');
-   assertSave();
-   if(!bundle?.ready){const data=await source();if(before!==epoch())throw Error('unified-graph-changed');await saveUnjoined({...data,layoutOverrides:layout},{expected:data});return {kind:'saved-local'};}
+   const before=epoch();assertSave();
+   if(!bundle?.ready){if(bundle?.session.state().initialized)throw Error('reopen-required');const data=await source(),layout=validateUnjoinedLayoutEdit(data.layoutOverrides,copy(value),model);if(before!==epoch())throw Error('unified-graph-changed');await saveUnjoined({...data,layoutOverrides:layout},{expected:data});return {kind:'saved-local'};}
+   const layout=validateSchema3Snapshot(value);if(!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-incompatible');
    const draft=await run(b=>{if(before!==epoch()||!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-changed');return b.coordinator.stageLayoutDraft(layout);});publisherQueue?.notifySaved(draft.id);return {kind:'saved-draft',id:draft.id};
   }),
   saveSettings:value=>enqueue(async()=>{

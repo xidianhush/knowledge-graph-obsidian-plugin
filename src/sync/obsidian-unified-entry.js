@@ -43,6 +43,7 @@ module.exports=class KnowledgeMapUnifiedCandidate extends BasePlugin{
   this.syncHost=host;
   if(this.app.workspace?.on)this.registerEvent(this.app.workspace.on('active-leaf-change',wake));
   this.vaultLayoutDriver={store:host.store,
+   prepareGraph:({payload,epoch,isCurrent})=>host.prepareLocalGraph({epoch,isCurrent,createModel:()=>{const decoded=decodeGraphPayload(payload);return createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius);}}),
    graphLoading:view=>views.set(view,null),
    graphReady:(view,payload,expected)=>{
     const doc=view.contentEl.ownerDocument;

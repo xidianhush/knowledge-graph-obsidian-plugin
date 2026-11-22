@@ -7,7 +7,7 @@ import {buildGraph} from '/dist/pipeline.mjs';
 import {createLayoutModel,createLayoutEditor,createLayoutStore} from '/dist/graph-core.mjs';
 import {cloneBoundedSyncJson} from '/src/sync/causal-prototype.mjs';
 const graph=buildGraph({files:[{path:'Synthetic/A.md',text:'# First\nBody\n# Second\nBody'}],config:{include:['Synthetic/**']}});
-const model=()=>createLayoutModel(graph.nodes,graph.meta.layout_root_radius);
+const model=()=>{const current=structuredClone(graph);return createLayoutModel(current.nodes,current.meta.layout_root_radius);};
 async function layout(dx){const g=buildGraph({files:[{path:'Synthetic/A.md',text:'# First\nBody\n# Second\nBody'}],config:{include:['Synthetic/**']}}),m=createLayoutModel(g.nodes,g.meta.layout_root_radius),editor=createLayoutEditor(g.nodes,g.meta.layout_root_radius),node=g.nodes.find(n=>n.title==='Second');editor.begin(node.id);editor.move(node.x+dx,node.y+5);editor.commit();let result;const key=m.groupKey(node.id);await createLayoutStore(null,async s=>result=s).command({},'edit',key,m.capture(key));return result;}
 const left=await layout(-20),right=await layout(20),files=new Map(),folders=new Set(),hosts=new Map(),sources=new Map(),writes=new Map();
 const adapter={async stat(p){return files.has(p)?{type:'file',size:files.get(p).byteLength}:folders.has(p)?{type:'folder',size:0}:null;},async list(p){const child=n=>n.startsWith(p+'/')&&!n.slice(p.length+1).includes('/');return {files:[...files.keys()].filter(child),folders:[...folders].filter(child)};},async readBinary(p){return files.get(p);},async read(p){return new TextDecoder().decode(files.get(p));},async mkdir(p){folders.add(p);},async writeBinary(p,b){files.set(p,b.slice(0));}};

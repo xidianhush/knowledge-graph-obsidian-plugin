@@ -2,6 +2,7 @@ import {openObsidianOnboardingReview} from './obsidian-onboarding-review.mjs';
 import {openObsidianConflictReview,renderObsidianLayoutPreview} from './obsidian-conflict-review.mjs';
 import {createRecoveryDestination} from './recovery-export.mjs';
 import {randomSyncOperationId} from './author-prototype.mjs';
+import {openHistoricalLayoutReview} from './historical-layout-review.mjs';
 
 export function deriveSyncStatus(state,{result=null,error=null}={}){
  const s=state.session,p=state.publication;
@@ -18,6 +19,7 @@ export function deriveSyncStatus(state,{result=null,error=null}={}){
  else if(state.selectionPending)key='selection';
  else if(s?.attemptConflict)key='damaged';
  else if(/resolution-(choice|parent)-budget/.test(reason))key='conflictLimit';
+ else if(state.status==='join-required'&&!s?.initialized&&/^layout-/.test(reason))key='joinBlocked';
  else if(reason==='structure-path-review'||reason==='structure-path-budget')key='notes';
  else if(/paused/.test(state.status)||/budget|capacity|quota/.test(reason))key='capacity';
  else if(reason==='no-shared-conflict')key='noConflict';
@@ -28,7 +30,7 @@ export function deriveSyncStatus(state,{result=null,error=null}={}){
  else if(/quarantine|invalid|damaged|partial|unverified|shared-input-blocked|accepted-record|unknown-file|authentication|attempt-conflict-review/.test(reason))key='damaged';
  else if(state.status==='unselected')key='off';
  else if(state.status==='disabled'||state.status?.startsWith('local-'))key='disabled';
- else if(!s?.initialized)key=/graph|hidden|busy|closing/.test(reason)?'waiting':'join';
+ else if(!s?.initialized)key=/^layout-/.test(reason)?'joinBlocked':/graph|hidden|busy|closing/.test(reason)?'waiting':'join';
  else if(state.externalPending)key='settings';
  else if(s.localState?.layoutDraft||s.pending)key='queued';
  else if(last?.scope!=='receive'&&['accepted','accepted-deferred'].includes(last?.kind))key='written';
@@ -41,7 +43,7 @@ export function deriveSyncStatus(state,{result=null,error=null}={}){
 // One settings section; all persistent actions go through reviewed host APIs.
 export function mountObsidianSyncSettings({container,app,host,Modal,t,onCheck=()=>host.receive(),onExport}={}){
  const doc=container.ownerDocument,section=doc.createElement('section');section.className='kg-sync-settings';section.style.cssText='margin-top:28px;border-top:1px solid var(--background-modifier-border);padding-top:16px;min-width:0;';container.append(section);
- let closed=false,busy=false,active=null,lastResult=null,lastError=null,tail=Promise.resolve(),candidates=[],backup=null,exportId=null,folder='Knowledge Map Backups',choice='accepted',rollbackChoice='accepted',rollbackPath=null;
+ let closed=false,busy=false,active=null,lastResult=null,lastError=null,tail=Promise.resolve(),candidates=[],backup=null,exportId=null,folder='Knowledge Map Backups',choice='accepted',rollbackChoice='accepted',rollbackPath=null,historicalFile=null;
  const text=(parent,tag,value)=>{const el=doc.createElement(tag);el.textContent=value;parent.append(el);return el;};
  const button=(parent,key,action,id,disabled=false)=>{const el=text(parent,'button',t(key));el.type='button';el.dataset.syncAction=id;el.disabled=disabled||busy||!!active;el.style.cssText='white-space:normal;height:auto;min-height:36px;max-width:100%;padding:6px 12px;';el.addEventListener('click',()=>void run(action));return el;};
  function recordError(error){
@@ -91,6 +93,13 @@ export function mountObsidianSyncSettings({container,app,host,Modal,t,onCheck=()
   return simpleReview({title:'sync.recoveryTitle',intro:'sync.recoveryEffect',draw:el=>{for(const id of r.ids)text(el,'p',id);layouts(el,r.proposal);},onCancel:()=>host.discardReview(r.token),onConfirm:()=>host.confirmSharedRecovery(r.token)});
  }
  const destination=()=>createRecoveryDestination({vault:app.vault,folder});
+ async function historicalRestore(){
+  const file=historicalFile;if(file&&file.size>8388608)throw Error('historical-backup-size');
+  const r=await host.previewHistoricalRestore(file?{readBackup:async()=>JSON.parse(await file.text())}:{});
+  if(closed){if(r.token)host.discardHistoricalRestore(r.token);return {kind:'held',reason:'settings-closed'};}
+  if(r.kind!=='historical-restore-review')return r;
+  active=openHistoricalLayoutReview({app,Modal,t,review:r,onConfirm:groups=>modalAction(async()=>{const result=await host.confirmHistoricalRestore(r.token,{groups,destination:destination(),backupId:randomSyncOperationId()});return ['restore-staged','restored-local'].includes(result.kind)?{...result,reason:t(result.kind==='restore-staged'?'sync.historicalStaged':'sync.historicalRestored',{path:result.backup})}:result;}),onCancel:()=>host.discardHistoricalRestore(r.token),onClosed:closedModal});render();return r;
+ }
  async function exportBackup(){exportId??=randomSyncOperationId();const d=destination(),id=exportId,r=await host.exportRecovery({destination:d,id});if(r.kind==='exported'){backup={destination:d,id};exportId=null;}return r.kind==='exported'?{...r,reason:t('sync.backupSaved',{path:folder+'/'+id})}:r;}
  async function rollback(){
   if(!backup)return {kind:'held',reason:t('sync.backupFirst')};
@@ -122,6 +131,12 @@ export function mountObsidianSyncSettings({container,app,host,Modal,t,onCheck=()
   if(state.session?.initialized){button(actions,'sync.check',onCheck,'check',disabled);button(actions,'sync.conflict',conflict,'conflict',disabled||state.selected?.transport==='v2');button(actions,'sync.restore',restore,'restore',disabled||state.selected?.transport==='v2');button(actions,'sync.external',external,'external');}
   if(state.session?.attemptConflict)button(actions,'sync.recovery',recoverShared,'recover-shared',disabled||state.selected?.transport==='v2');
   if(onExport)button(actions,'sync.export',onExport,'export');
+  if(typeof host.previewHistoricalRestore==='function'){
+   const box=text(section,'div','');text(box,'h3',t('sync.historicalTitle'));text(box,'p',t('sync.historicalSource'));
+   const label=text(box,'label',t('sync.historicalFile')),input=doc.createElement('input');input.type='file';input.accept='.json,application/json';input.dataset.historicalFile='true';input.disabled=busy||!!active;input.onchange=()=>{historicalFile=input.files?.[0]??null;};label.append(input);
+   if(historicalFile)text(box,'p',historicalFile.name);
+   button(box,'sync.historicalReview',historicalRestore,'historical-restore',pending||state.status==='recovery-required');
+  }
   if(typeof host.exportRecovery==='function'&&(state.session?.initialized||state.rotationPending)){
    const box=text(section,'div','');text(box,'p',t('sync.backupEffect'));
    const label=text(box,'label',t('sync.backupFolder'));const input=doc.createElement('input');input.value=folder;input.dataset.syncBackupFolder='true';input.type='text';input.style.cssText='width:100%;max-width:480px;';input.disabled=busy||!!active||!!state.rotationPending;input.addEventListener('change',()=>{folder=input.value.trim();exportId=null;backup=null;rollbackPath=null;lastResult=null;lastError=null;render();});label.append(input);
