@@ -63,10 +63,17 @@
 ## 源码整合与最终字节验证（2026-11-22）
 
 - 整合基线为 HEAD `1c25526`（已含正式 0.0.16 `da0a59f` 全部源码及其后的 README 媒体/文档提交），在独立分支 `layout-recovery-integration` 按 **27 文件白名单**（16 修改 + 11 新增）整合，逐文件 SHA256 与源工作树一致；包含此前已验收的 join identity/current-layout 修正与本轮恢复修正。排除：接手前已截断的 3 个空文件（`LICENSE`、`COMPAT_MATRIX_RESULT.md`、`scripts/package.mjs`，保留 HEAD 版本）、2 个绑定本地证据的一次性候选打包器、专用交接/计划文档（本地保留）及约 180 项历史未跟踪内容。
-- 最终构建（与提交 blob 一致的规范 LF 源码）：`dist/main.js` **806991 字节**，SHA256 `62c6aed7012b277c64fbf713ab8dadcaf9c2af863f0db610d3a4645b7910fe87`；`styles.css` 3055 字节 `29429890…`；`manifest.json` 309 字节 `18d11571…`（版本仍 0.0.16，版本号待产品决定）。仓库 `.gitattributes` 规定 `eol=lf`：复制源工作字节后的首次构建为 807855 / `127f446b…`（混合行尾），把工作树规范化为提交 LF blob 后重建得到上述规范字节；CI 从提交源码将复现 `62c6aed7…`。
+- 最终构建（与提交 blob 一致的规范 LF 源码）：`dist/main.js` **806991 字节**，SHA256 `62c6aed7012b277c64fbf713ab8dadcaf9c2af863f0db610d3a4645b7910fe87`；`styles.css` 3055 字节 `29429890…`；`manifest.json` 309 字节 `18d11571…`（整合时为 0.0.16；版本决定见下节）。仓库 `.gitattributes` 规定 `eol=lf`：复制源工作字节后的首次构建为 807855 / `127f446b…`（混合行尾），把工作树规范化为提交 LF blob 后重建得到上述规范字节；CI 从提交源码将复现 `62c6aed7…`。
 - 与已验收候选 2 字节（807891 / `2248816d…`）的关系：唯一差异是 4 个模块的本地工作副本为 CRLF 行尾——`src/sync/recovery-export.mjs`（36 个 `\r`）、`src/i18n.sync.js`（164）、`src/sync/obsidian-sync-settings.mjs`（166）、`src/sync/obsidian-unified-host.mjs`（534），共 900 个 CR 字节——及其在构建溯源清单中的 4 处摘要。去除 CR 并替换该 4 处摘要后，两份 main.js 逐字节相等——**功能恒等已证明，不宣称字节相同**。
 - 对最终规范字节重跑验证（本整合轮新通过）：`npm test` 构建 + **43 脚本**（含 18 项升级/恢复场景，日志 `.local/integration-final-lf-test.log`）；磁盘真实退出/冷开 **3 项**（`disk/run-Y5XDqV`）；Chrome 桌面/窄屏 **6 项**（`browser-_eaa0qfq`）；原生 Windows Obsidian 真实 0.0.15 拖动→正式 0.0.16 对照→修复候选 **4 项**（`native-gcy26xov`，`runtimeSha256` 即 `62c6aed7…`）。此前 `run-aDJJ01`/`browser-bb2kudbe`/`native-tar7z8k4` 为对中间混合行尾构建 `127f446b…` 的重验。磁盘/浏览器/原生检查因沙箱命名管道限制需实际权限运行，与历史记录同类边界。
-- 公开文档已脱敏：新增内容不含共享布局 ID、备份 ID、绝对用户路径或日常库名；私有证据仍只在 `.local/`。本地 commit 于整合分支完成；**未 push/tag/Release**，版本号与发布范围待用户决定。iPad 本机历史恢复入口仍未真机验收。
+- 公开文档已脱敏：新增内容不含共享布局 ID、备份 ID、绝对用户路径或日常库名；私有证据仍只在 `.local/`。本地 commit 于整合分支完成；**未 push/tag/Release**。iPad 本机历史恢复入口仍未真机验收。
+
+## 版本决定与 iPad 短验准备（2026-11-22）
+
+- 用户决定：以 **0.0.17** 作为修复发布，Android 适配顺延 **0.0.18**；先在独立 iPad 测试库短验本机历史恢复入口，通过后再经明确授权发布。push/tag/Release/门户尚未执行，仍待最新明确授权。
+- 版本升级已本地完成：`manifest.json`/`package.json`/`versions.json` → 0.0.17（minAppVersion 仍 1.6.7）。重建确认 `main.js` 字节不变（806991 / `62c6aed7…`，版本号不进入 bundle）；新 `manifest.json` 309 字节，SHA256 `6ded0d9d7cd88de9cc94f68b133cd3435a0a40818c7220ba33fc2f284a684eee`。`npm test` 构建 + 43 脚本（18 项升级/恢复场景）复验通过（`.local/integration-017-test.log`）。
+- iPad 短验包（本地证据，不随公开仓库分发）：`.local/layout-upgrade/ipad-short-verify-017/KM-iPad-Restore-Short-Verify-0.0.17-20261122.zip`，241225 字节，SHA256 `f94c7c7264c519727f71ad94b0f086ef99efbbd4905aee908fd6ab2fa3d41378`，解压读回逐文件摘要一致（回执 `delivery.json`）。内容：即将发布的三运行文件（正式名称与 0.0.17 版本）、START-HERE.md、SHA256.json、合成笔记 Synthetic/A、B、C 与合成历史来源 historical-source.json（取自 `native-gcy26xov` 已验证归档，经契约校验）；全部合成数据，不含私有笔记/配置/身份/日志。
+- 短验由用户在 iPad 真机执行：全新独立测试库→安装→构图→选择历史 JSON→逐组预览（预期 Synthetic 单组“调整”/移动 3/最大位移父半径 8.172%）→备份并恢复→冷开保持；仅覆盖未加入状态入口，已加入状态的 iPad 本机恢复不在本次范围。通过前维持“iPad 本机历史恢复入口未真机验收”。
 
 ## 验收与交付边界
 
