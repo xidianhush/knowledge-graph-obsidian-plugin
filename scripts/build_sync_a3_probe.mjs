@@ -54,7 +54,7 @@ function bundleSyncHost(root,{replay=false,host,candidate,receive=false,attemptS
   for(const name of ['local-work','connection-lifecycle','settings-coordinator','private-config','persistence','obsidian-host','indexeddb-store','private-store-budget'])
     add('src/sync/'+name+'-prototype.mjs');
   if(graphHost){
-    if(unified){add('src/sync/obsidian-unified-host.mjs');add('src/sync/obsidian-layout-receiver.mjs');add('src/sync/obsidian-sync-settings.mjs');}
+    if(unified){add('src/sync/obsidian-unified-host.mjs');add('src/sync/obsidian-layout-receiver.mjs');add('src/sync/obsidian-sync-settings.mjs');add('src/sync/obsidian-easy-settings.mjs');}
     add('src/sync/obsidian-shared-history.mjs');
     if(receive){add('src/sync/obsidian-layout-receiver.mjs');add('src/sync/obsidian-conflict-review.mjs');add('src/sync/obsidian-onboarding-review.mjs');}
     if(attemptSuite)add('src/sync/attempt-history-prototype.mjs');

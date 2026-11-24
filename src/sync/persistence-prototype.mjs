@@ -2,7 +2,7 @@
 // Store.create must atomically install a COMPLETE file without replacement;
 // privateStore.acquire must exclude other writers and survive process crashes.
 import {cloneBoundedSyncJson,CAUSAL_PROTOTYPE_LIMITS as limits} from './causal-prototype.mjs';
-import {planSchema3Transactions,projectAcceptedSchema3History,validateSchema3Snapshot,inspectSchema3History} from './layout-prototype.mjs';
+import {planSchema3Transactions,projectAcceptedSchema3History,validateSchema3Snapshot,validateCurrentJoinCoverage,inspectSchema3History} from './layout-prototype.mjs';
 import {packSchema3Operation} from './wire-prototype.mjs';
 import {randomSyncOperationId} from './author-prototype.mjs';
 import {reviewSchema3Conflict,buildSchema3ConflictResolution} from './conflict-resolution-prototype.mjs';
@@ -55,11 +55,11 @@ export async function previewSharedJoin({sharedStore,vault,createModel}){
   return {kind:'shared-preview',fingerprint:scan.fingerprint,operations:candidate.index.ready.length,
     groups:Object.keys(candidate.proposal.groups).length};
 }
-export function createDurableSyncSession({privateStore,sharedStore,attemptHistory,vault,installation,createModel,getEpoch=()=>0,checkpoint=async()=>{},nextId=randomSyncOperationId,normalizeLocalLayout,readLocalData,access='sync',enableConflictResolution=false}={}) {
+export function createDurableSyncSession({privateStore,sharedStore,attemptHistory,vault,installation,createModel,getEpoch=()=>0,checkpoint=async()=>{},nextId=randomSyncOperationId,normalizeLocalLayout,projectLocalLayout,readLocalData,access='sync',enableConflictResolution=false}={}) {
   if(!['sync','local-only'].includes(access))fail('access');
   const requireSync=()=>{if(access!=='sync')fail('local-only');};
   if(!ID.test(vault)||!ID.test(installation)||typeof createModel!=='function'||typeof getEpoch!=='function'||typeof nextId!=='function'||
-    normalizeLocalLayout!==undefined&&typeof normalizeLocalLayout!=='function'||readLocalData!==undefined&&typeof readLocalData!=='function')fail('options');
+    normalizeLocalLayout!==undefined&&typeof normalizeLocalLayout!=='function'||projectLocalLayout!==undefined&&typeof projectLocalLayout!=='function'||readLocalData!==undefined&&typeof readLocalData!=='function')fail('options');
   for(const store of attemptHistory?[privateStore]:[privateStore,sharedStore])if(!store||['read','create','list'].some(k=>typeof store[k]!=='function'))fail('store');
   if(attemptHistory&&['scan','allocate','write','validPath'].some(k=>typeof attemptHistory[k]!=='function'))fail('attempt-store');
   if(typeof privateStore.acquire!=='function')fail('exclusive-store-required');
@@ -205,9 +205,9 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
       joining={source:d.source,sourceData,normalizedHash:null,normalized:null,choice:null,reason:null,id:null,completed:false};
     }else if(event.kind==='join-choice'){
       if(receipt||pending||!joining||joining.choice||!fields(d,['choice','reason','normalized','id'])||!['import','shared'].includes(d.choice)||
-        !['explicit','empty','same-layout'].includes(d.reason)||(d.choice==='import'?(!ID.test(d.id)||d.reason!=='explicit'):d.id!==null))fail('journal-join-choice');
-      const normalized=validateSchema3Snapshot(await loadBlob(d.normalized,limits.snapshotBytes));validateSourceCoverage(joining.sourceData,normalized);
-      if(d.choice==='import'&&!Object.keys(normalized.groups).length||d.reason==='empty'&&Object.keys(normalized.groups).length)fail('join-choice-shape');
+        !['explicit','empty','same-layout','current-layout'].includes(d.reason)||(d.choice==='import'?(!ID.test(d.id)||!['explicit','current-layout'].includes(d.reason)):d.id!==null))fail('journal-join-choice');
+      const normalized=validateSchema3Snapshot(await loadBlob(d.normalized,limits.snapshotBytes));validateSourceCoverage(joining.sourceData,normalized,d.reason==='current-layout');
+      if(d.choice==='import'&&d.reason!=='current-layout'&&!Object.keys(normalized.groups).length||d.reason==='empty'&&Object.keys(normalized.groups).length)fail('join-choice-shape');
       Object.assign(joining,{normalizedHash:d.normalized,normalized,choice:d.choice,reason:d.reason,id:d.id});
     }else if(event.kind==='join-consent'){
       if(receipt||pending||joining?.choice!=='shared'||joining.reason==='explicit'||!fields(d,[]))fail('journal-join-consent');joining.reason='explicit';
@@ -328,8 +328,9 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
     if(!readLocalData)return true;
     try{const data=cloneBoundedSyncJson(await readLocalData());return plainData(data)&&matchesJoinSource(data);}catch{return false;}
   }
-  function validateSourceCoverage(data,normalized){
+  function validateSourceCoverage(data,normalized,current=false){
     const raw=localLayout(data);
+    if(current){validateCurrentJoinCoverage(raw,normalized);return;}
     if(raw==null){if(Object.keys(normalized.groups).length)fail('migration-invented-layout');return;}
     if(!plainData(raw)||![1,2,3].includes(raw.schemaVersion)||!plainData(raw.groups))fail('local-layout-version');
     if(Object.keys(raw.groups).length!==Object.keys(normalized.groups).length)fail('migration-group-loss');
@@ -343,10 +344,17 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
     else fail('legacy-normalizer-required');
     normalized=validateSchema3Snapshot(normalized);validateSourceCoverage(data,normalized);return normalized;
   }
+  async function currentSource(data){
+    if(!projectLocalLayout)fail('current-layout-unavailable');
+    const raw=localLayout(data),projected=await projectLocalLayout(copy(raw));
+    const snapshot=validateSchema3Snapshot(projected.snapshot);validateSourceCoverage(data,snapshot,true);
+    return {snapshot,sourceGroups:Object.keys(raw.groups).length,omittedGroups:Object.keys(raw.groups).filter(key=>!Object.hasOwn(snapshot.groups,key))};
+  }
+  const importChanges=normalized=>Object.entries(normalized.groups).map(([group,record])=>({group,value:{schemaVersion:3,record,structures:record.note?{[record.note]:normalized.structures[record.note]}:{}}}));
   const joinScan=async()=>checkJoinHistory(await (attemptHistory&&pending?.meta.version===2?scanAttempts(pending):scanShared()),vault);
   async function stageImport(){
     const normalized=joining.normalized;
-    const changes=Object.entries(normalized.groups).map(([group,record])=>({group,value:{schemaVersion:3,record,structures:record.note?{[record.note]:normalized.structures[record.note]}:{}}}));
+    const changes=importChanges(normalized);if(!changes.length&&joining.reason==='current-layout')changes.push({group:'root',value:null});
     const operation=packSchema3Operation({vault,id:joining.id,parents:[],changes});
     const meta={version:2,mode:'import',installation,vault,id:operation.id,base:head,source:joining.source,operation:await blob(operation,limits.recordBytes),
       backup:joining.normalizedHash,proposal:joining.normalizedHash,appliedIds:[operation.id]};
@@ -566,21 +574,31 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
         const held=reason=>({kind:'review-required',reason});
         if(!plainData(localData))return held('local-data-shape');
         const epoch=getEpoch();
-        let local;try{local=await normalizeSource(localData);}catch(error){return held(error.message);}
+        let local=null,localIssue=null,current=null,currentFingerprint=null;
+        try{local=await normalizeSource(localData);}catch(error){localIssue=error.message;}
         if(joining&&!same(localLayout(localData),localLayout(joining.sourceData)))return held('local-layout-changed');
+        let canImport=!!local&&Object.keys(local.groups).length>0;
+        if(canImport)try{planSchema3Transactions([],{vault,baseline:local,createModel});}catch(error){canImport=false;localIssue=error.message;}
+        if(joining?.reason==='current-layout'&&joining.choice){
+          const raw=localLayout(joining.sourceData);current={snapshot:copy(joining.normalized),sourceGroups:Object.keys(raw.groups).length,omittedGroups:Object.keys(raw.groups).filter(key=>!Object.hasOwn(joining.normalized.groups,key))};
+        }else if(!canImport&&projectLocalLayout&&(localIssue||local&&Object.keys(local.groups).length))try{current=await currentSource(localData);}catch{/* Original failure stays visible when current projection is unavailable. */}
+        if(!local&&!current)return held(localIssue);
+        let canCurrent=!!current;
+        if(current){currentFingerprint=await syncContentHash(canonical(current.snapshot));try{planSchema3Transactions([],{vault,baseline:current.snapshot,createModel});}catch{canCurrent=false;}}
         const scan=await joinScan();if(scan.issue)return held(scan.issue);
-        const candidate=planSchema3Transactions(scan.records,{vault,baseline:empty(local.revision),createModel});
-        let canImport=Object.keys(local.groups).length>0;
-        try{planSchema3Transactions([],{vault,baseline:local,createModel});}catch{canImport=false;}
+        let currentIssue=null;
+        if(current&&scan.records.length&&!(joining?.reason==='current-layout'&&joining.choice==='import'&&scan.records.every(op=>op.id===joining.id))){canCurrent=false;currentIssue='history-not-empty';}
+        const candidate=planSchema3Transactions(scan.records,{vault,baseline:empty(local?.revision??current.snapshot.revision),createModel});
         if(getEpoch()!==epoch)return held('epoch-changed');
         return {kind:'join-preview',fingerprint:scan.fingerprint,local,shared:candidate.status==='candidate'?candidate.proposal:null,
-          operations:scan.records.length,canImport,sharedStatus:candidate.status,choice:joining?.choice??null,pendingId:joining?.id??null};
+          current,currentFingerprint,canCurrent,currentIssue,localIssue,operations:scan.records.length,canImport,sharedStatus:candidate.status,choice:joining?.choice==='import'&&joining.reason==='current-layout'?'current':joining?.choice??null,pendingId:joining?.id??null};
       });
     },
-    async join({localData,choice,expectedSharedFingerprint}={}){
+    async join({localData,choice,expectedSharedFingerprint,expectedCurrentFingerprint}={}){
       requireSync();
-      localData=cloneBoundedSyncJson(localData);if(!plainData(localData)||choice!==undefined&&!['import','shared'].includes(choice))fail('join-request');
-      if(expectedSharedFingerprint!==undefined&&(!['shared','import'].includes(choice)||typeof expectedSharedFingerprint!=='string'||!HASH.test(expectedSharedFingerprint)))fail('join-fingerprint');
+      localData=cloneBoundedSyncJson(localData);if(!plainData(localData)||choice!==undefined&&!['import','shared','current'].includes(choice))fail('join-request');
+      if(expectedSharedFingerprint!==undefined&&(!['shared','import','current'].includes(choice)||typeof expectedSharedFingerprint!=='string'||!HASH.test(expectedSharedFingerprint)))fail('join-fingerprint');
+      if(expectedCurrentFingerprint!==undefined&&!HASH.test(expectedCurrentFingerprint)||choice==='current'&&expectedCurrentFingerprint===undefined)fail('join-current-consent');
       return enqueue(async()=>{
         const held=reason=>({kind:'review-required',reason,state:state()});
         async function reviewedScan(){
@@ -614,26 +632,37 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
           let live;try{live=cloneBoundedSyncJson(await readLocalData());}catch{return held('local-layout-changed');}
           if(!plainData(live)||!same(localLayout(live),localLayout(localData)))return held('local-layout-changed');
         }
+        let projected=null;
+        if(!joining?.choice&&(choice==='current'||choice==='shared'&&expectedCurrentFingerprint)){
+          try{projected=await currentSource(localData);}catch(error){return held(error.message);}
+          if(await syncContentHash(canonical(projected.snapshot))!==expectedCurrentFingerprint)return held('current-layout-changed');
+        }
+        if(choice==='current'){
+          const scan=reviewed??await reviewedScan();if(scan.issue)return held(scan.issue);
+          if(scan.records.length&&!(joining?.reason==='current-layout'&&joining.choice==='import'&&scan.records.every(op=>op.id===joining.id)))return held('current-history-not-empty');
+        }
+        if(joining?.reason==='current-layout'&&expectedCurrentFingerprint&&await syncContentHash(canonical(joining.normalized))!==expectedCurrentFingerprint)return held('current-layout-changed');
         if(!joining){
           if(pending||attemptConflict)fail('join-state');const source=await blob(localData,limits.snapshotBytes);
           await append('join-backup',{source});joining={source,sourceData:copy(localData),normalizedHash:null,normalized:null,choice:null,reason:null,id:null,completed:false};
           await checkpoint('after-join-backup');
         }
         if(!sourceMatches())return held('local-layout-changed');
-        if(joining.choice&&choice!==undefined&&choice!==joining.choice&&!(joining.reason==='empty'&&choice==='import'))return held('join-choice-changed');
+        const requested=choice==='current'?'import':choice;
+        if(joining.choice&&choice!==undefined&&(requested!==joining.choice||choice==='current'&&joining.reason!=='current-layout')&&!(joining.reason==='empty'&&choice==='import'))return held('join-choice-changed');
         if(!joining.choice){
-          let normalized;try{normalized=await normalizeSource(joining.sourceData);}catch(error){return held(error.message);}
+          let normalized;try{normalized=projected?.snapshot??await normalizeSource(joining.sourceData);}catch(error){return held(error.message);}
           const scan=reviewed??await reviewedScan();if(scan.issue)return held(scan.issue);
           const shared=planSchema3Transactions(scan.records,{vault,baseline:empty(normalized.revision),createModel});
-          let selected=choice,reason='explicit';
-          if(!Object.keys(normalized.groups).length){selected='shared';reason='empty';}
+          let selected=requested,reason=projected?'current-layout':'explicit';
+          if(!projected&&!Object.keys(normalized.groups).length){selected='shared';reason='empty';}
           else if(selected===undefined){if(shared.status!=='candidate'||!sameLayout(shared.proposal,normalized))return held('join-choice-required');selected='shared';reason='same-layout';}
           if(selected==='shared'&&shared.status!=='candidate')return held('shared-candidate-blocked');
           let id=null;
           if(selected==='import'){
             try{
               planSchema3Transactions([],{vault,baseline:normalized,createModel});
-              const changes=Object.entries(normalized.groups).map(([group,record])=>({group,value:{schemaVersion:3,record,structures:record.note?{[record.note]:normalized.structures[record.note]}:{}}}));
+              const changes=importChanges(normalized);if(!changes.length&&reason==='current-layout')changes.push({group:'root',value:null});
               packSchema3Operation({vault,id:'0'.repeat(32),parents:[],changes});
             }catch(error){return held(error.message);}
             const known=new Set(scan.records.map(op=>op.id));for(let i=0;i<8;i++){
@@ -645,7 +674,7 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
           if(getEpoch()!==epoch)return held('epoch-changed');
           await append('join-choice',{choice:selected,reason,normalized:normalizedHash,id});Object.assign(joining,{normalizedHash,normalized,choice:selected,reason,id});
           await checkpoint('after-join-choice');
-        }else if(joining.choice==='shared'&&joining.reason!=='explicit'&&choice==='shared'){
+        }else if(joining.choice==='shared'&&!['explicit','current-layout'].includes(joining.reason)&&choice==='shared'){
           await append('join-consent',{});joining.reason='explicit';
         }
         if(getEpoch()!==epoch)return held('epoch-changed');

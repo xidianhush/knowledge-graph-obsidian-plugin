@@ -18,6 +18,7 @@ export function deriveSyncStatus(state,{result=null,error=null}={}){
  else if(state.selectionPending)key='selection';
  else if(s?.attemptConflict)key='damaged';
  else if(/resolution-(choice|parent)-budget/.test(reason))key='conflictLimit';
+ else if(state.status==='join-required'&&!s?.initialized&&/^layout-/.test(reason))key='joinBlocked';
  else if(reason==='structure-path-review'||reason==='structure-path-budget')key='notes';
  else if(/paused/.test(state.status)||/budget|capacity|quota/.test(reason))key='capacity';
  else if(reason==='no-shared-conflict')key='noConflict';
@@ -28,7 +29,7 @@ export function deriveSyncStatus(state,{result=null,error=null}={}){
  else if(/quarantine|invalid|damaged|partial|unverified|shared-input-blocked|accepted-record|unknown-file|authentication|attempt-conflict-review/.test(reason))key='damaged';
  else if(state.status==='unselected')key='off';
  else if(state.status==='disabled'||state.status?.startsWith('local-'))key='disabled';
- else if(!s?.initialized)key=/graph|hidden|busy|closing/.test(reason)?'waiting':'join';
+ else if(!s?.initialized)key=/^layout-/.test(reason)?'joinBlocked':/graph|hidden|busy|closing/.test(reason)?'waiting':'join';
  else if(state.externalPending)key='settings';
  else if(s.localState?.layoutDraft||s.pending)key='queued';
  else if(last?.scope!=='receive'&&['accepted','accepted-deferred'].includes(last?.kind))key='written';

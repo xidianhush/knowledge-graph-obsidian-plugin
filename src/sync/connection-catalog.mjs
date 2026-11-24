@@ -1,4 +1,5 @@
 import {createAttemptHistory} from './attempt-history-prototype.mjs';
+import {createDefaultLayoutBootstrap,DEFAULT_LAYOUT_VAULT_ID} from './default-layout-bootstrap.mjs';
 import {inspectSchema3History} from './layout-prototype.mjs';
 import {cloneBoundedSyncJson,CAUSAL_PROTOTYPE_LIMITS as limits} from './causal-prototype.mjs';
 import {syncContentHash} from './persistence-prototype.mjs';
@@ -55,9 +56,34 @@ export function createSyncConnectionCatalog({adapter}={}){
      }
      const {index}=inspectSchema3History(records,{vault});
      if(index.issues.length||index.quarantined.length||index.pending.length)fail('unresolved-input');
-     if(records.length)candidates.push({vault,transport,access:transport==='v2'?'read-only':'read-write',operations:new Set(records.map(op=>op.id)).size});
+     if(records.length)candidates.push({vault,transport,access:transport==='v2'?'read-only':'read-write',operations:new Set(records.map(op=>op.id)).size,bootstrapOnly:false});
     }
    }
+   // SYNC-UX-A1: the fixed default namespace may be discoverable through an
+   // immutable bootstrap record before any layout operation exists. Discovery
+   // still never chooses, joins or accepts anything.
+   const bootstrapBase='Knowledge Map Sync/bootstrap-v1',bootstrapRoot=await remember(bootstrapBase),bootstrapFacts=new Set();
+   if(bootstrapRoot){
+    if(bootstrapRoot.files.length)fail('root-file');
+    const known=new Set(namespaces.map(row=>row.vault+'|'+row.transport));
+    const additions=bootstrapRoot.folders.filter(directory=>!known.has(directory.slice(bootstrapBase.length+1)+'|attempts-v1'));
+    if(namespaces.length+additions.length>SYNC_CONNECTION_LIMIT)fail('namespace-budget');
+    for(const directory of bootstrapRoot.folders){
+     const vault=directory.slice(bootstrapBase.length+1);
+     if(vault!==DEFAULT_LAYOUT_VAULT_ID)fail('bootstrap-namespace');
+     if(!known.has(vault+'|attempts-v1')){namespaces.push({vault,transport:'attempts-v1'});known.add(vault+'|attempts-v1');}
+     if(target&&(target.vault!==vault||target.transport!=='attempts-v1'))continue;
+     const namespace=await remember(directory);if(!namespace)continue;
+     if(namespace.folders.length)fail('bootstrap-scope');
+     files+=namespace.files.length;if(files>limits.operations)fail('file-budget');
+     const scan=await createDefaultLayoutBootstrap({stat:p=>adapter.stat(p),list:async p=>{if(p!==directory)fail('scope');return namespace;},readBinary:async p=>(await read(p)).buffer}).scan();
+     if(scan.blockers.length)fail('unresolved-input');
+     inventory.push(...scan.inventory);
+     if(scan.facts)bootstrapFacts.add(vault);
+    }
+   }
+   for(const vault of bootstrapFacts)if(!candidates.some(row=>row.vault===vault&&row.transport==='attempts-v1'))
+    candidates.push({vault,transport:'attempts-v1',access:'read-write',operations:0,bootstrapOnly:true});
    // A root or namespace added while its children were inspected expires this
    // observation. Content races still require the join/publish scan gate later.
    for(const {directory,row}of topology)if(canonical(await listing(directory))!==canonical(row))fail('scan-changed');

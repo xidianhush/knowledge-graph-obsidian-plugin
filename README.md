@@ -49,7 +49,7 @@ For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a
 ## Platforms and limits
 
 - **Desktop:** Obsidian 1.6.7+.
-- **iPadOS (0.0.15):** user testing covered iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0. The demos show desktop controls. iPhone is unverified; Android adaptation is planned for 0.0.17. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
+- **iPadOS (0.0.15):** user testing covered iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0. The demos show desktop controls. iPhone is unverified; Android adaptation is planned for 0.0.19. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
 - Layout editing supports up to **128 siblings per group** and **5000 affected nodes**. Undo keeps **50 steps** within the session and clears on structural changes or plugin reload.
 - The map canvas stays dark, including with a light Obsidian theme.
 
@@ -57,13 +57,13 @@ For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a
 
 **Knowledge Map（知识地图）** 用嵌套圆展示知识的包含层级，用连线展示知识之间的联系。拖动画布探索，缩放查看层级，预览笔记内容；点 ✥「调整布局」，把核心知识放在中间、细节放在周围，再点一次结束。
 
-桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；Android 适配留到0.0.17。
+桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；SYNC-UX 易用性改造（核心流程已于 2026-11-24 用户真机验收通过，定版 0.0.17，尚未发布）把首次使用简化为一次「开启布局同步」开关；Android 适配留到0.0.19。
 
 ## Sync layouts across Windows and iPad
 
-**0.0.16** adds reviewed layout sync using ordinary vault files transferred by your own sync service. Windows ↔ iPadOS with Nutstore is the tested transport scope. Select the same shared layout on each device, then explicitly review the first join. Compatible saved edits are queued automatically while sync is enabled; conflicts and drafts saved while sync was off require review. Turning sync off keeps local work.
+**0.0.16** adds reviewed layout sync using ordinary vault files transferred by your own sync service. Windows ↔ iPadOS with Nutstore is the tested transport scope. The **SYNC-UX ease-of-use update** (core flow user-accepted on Windows ↔ iPadOS + Nutstore, 2026-11-24; targeted for 0.0.17, not yet released) reduces first use to a single **Turn on layout sync** switch: the plugin prepares a default shared layout, connects and receives later layouts automatically — no need to drag a circle first, create or look up a shared ID, or manually confirm an empty layout. Both devices must use the same build scope, and your sync tool must transfer the `Knowledge Map Sync` folder. Compatible saved edits are queued automatically while sync is enabled; conflicts, differing existing layouts, and drafts saved while sync was off still require review. Turning sync off keeps local work.
 
-Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_GUIDE.md) before joining, backing up or rolling back. Large histories can take longer to replay; transport rate limits and the disclosed original iPad anomaly remain unresolved. Android adaptation is planned for 0.0.17; iPhone remains unverified.
+Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_GUIDE.md) before joining, backing up or rolling back. Large histories can take longer to replay; transport rate limits and the disclosed original iPad anomaly remain unresolved. Android adaptation is planned for 0.0.19; iPhone remains unverified.
 
 ## Data and development
 
