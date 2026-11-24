@@ -32,8 +32,10 @@ const dist = path.join(root, 'dist');
 
 for (const name of whitelist) {
   const file = path.join(dist, name);
-  if (!fs.existsSync(file)) throw new Error(`missing dist/${name}; run "node scripts/build.mjs" first`);
+  if (!fs.existsSync(file) || !fs.statSync(file).isFile() || !fs.statSync(file).size) throw new Error(`missing or empty dist/${name}; run "node scripts/build.mjs" first`);
 }
+const built = JSON.parse(fs.readFileSync(path.join(dist, 'manifest.json'), 'utf8'));
+if (built.version !== manifest.version || built.id !== manifest.id || built.minAppVersion !== manifest.minAppVersion) throw new Error('built manifest version or identity mismatch; rebuild first');
 // guard: never ship local snapshot payload or private data even if present in dist
 for (const forbidden of ['smoke-payload.json', 'data.json']) {
   if (fs.existsSync(path.join(dist, forbidden))) {
@@ -41,6 +43,16 @@ for (const forbidden of ['smoke-payload.json', 'data.json']) {
   }
 }
 
+// Do not silently leave private or unrelated files in a reused output folder.
+// Reject them in place, rather than deleting somebody's data.
+if (fs.existsSync(out)) {
+  const allowed = new Set([...whitelist, 'SHA256SUMS', 'RELEASE_NOTES.md']);
+  for (const name of fs.readdirSync(out)) {
+    if (!allowed.has(name) || !fs.statSync(path.join(out, name)).isFile()) {
+      throw new Error(`refusing unexpected package output: ${name}; choose a clean output directory`);
+    }
+  }
+}
 fs.mkdirSync(out, { recursive: true });
 const rows = [];
 for (const name of whitelist) {

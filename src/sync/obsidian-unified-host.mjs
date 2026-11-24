@@ -1,4 +1,6 @@
 import {createSyncConnectionCatalog} from './connection-catalog.mjs';
+import {createDefaultLayoutBootstrap,DEFAULT_LAYOUT_VAULT_ID} from './default-layout-bootstrap.mjs';
+import {createEasySyncAuthorization} from './easy-sync-setup.mjs';
 import {openSyncConnections} from './connection-registry.mjs';
 import {createLifecycleDevice,createSyncLifecycle,exportRecoveryParts} from './connection-lifecycle-prototype.mjs';
 import {verifyRecoveryExport} from './recovery-export.mjs';
@@ -16,15 +18,17 @@ import {createSettingsCoordinator} from './settings-coordinator-prototype.mjs';
 import {createAutoPublishQueue,createLayoutDraftPublisher} from './auto-publish-queue.mjs';
 import {createLayoutActionAuthor} from './author-prototype.mjs';
 import {cloneBoundedSyncJson} from './causal-prototype.mjs';
-import {normalizeRestoreLayout,validateSchema3Snapshot,probeSchema3Snapshot,planSchema3Transactions,inspectSchema3History} from './layout-prototype.mjs';
+import {normalizeRestoreLayout,normalizeJoinLayout,projectCurrentJoinLayout,validateSchema3Snapshot,probeSchema3Snapshot,planSchema3Transactions,inspectSchema3History} from './layout-prototype.mjs';
+import {readHistoricalLayout,reconcileLocalLayout,planHistoricalLayout,mergeHistoricalGroups,localLayoutChanged,validateUnjoinedLayoutEdit} from './historical-layout.mjs';
 const copy=v=>cloneBoundedSyncJson(v),equal=(a,b)=>JSON.stringify(copy(a))===JSON.stringify(copy(b));
 const layoutOf=v=>v.layoutOverrides??null,held=reason=>({kind:'held',reason});
 function unwrap(r){return r?.kind==='completed'?unwrap(r.value):r;}
 export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalThis.navigator?.locks,readSource,saveUnjoined,createStore,validateSettings,openBackend,getGraph,getEpoch,onData=()=>{},budgetLimits,checkpoint=async()=>{}}={}){
  if([readSource,saveUnjoined,createStore,validateSettings,openBackend,getGraph,getEpoch,onData].some(fn=>typeof fn!=='function'))throw Error('unified-options');
  let registry=null,lifecycle=null,bundle=null,publisherQueue=null,rotation=null,rotationData=null,closed=false,freezing=false,error=null,externalEpoch=0,tail=Promise.resolve();
- const joinTokens=new WeakMap(),reviews=new WeakMap(),listeners=new Set(),exportTasks=new Map();let saveError=null,outcome=null,pathBasis=null,pathOverflow=false,structureWaiting=false,privateBudget=null;const pathChanges=[];
+ const joinTokens=new WeakMap(),reviews=new WeakMap(),historicalReviews=new WeakMap(),listeners=new Set(),exportTasks=new Map();let saveError=null,outcome=null,pathBasis=null,pathOverflow=false,structureWaiting=false,privateBudget=null;const pathChanges=[];
  let exportFolders=null;
+ let easyAuth=null;const easy={phase:'idle',reason:null,candidates:null,target:null};
  async function withExportFolders(destination,id,fn){
   if(typeof destination.location!=='string')return fn();
   const parts=destination.location.split('/'),folders=[];for(let n=1;n<=parts.length;n++)folders.push(parts.slice(0,n).join('/'));
@@ -65,7 +69,7 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
   const privateStore=createDeviceBoundPrivateStore({store:quota.store,device,vault,access});
   const attempts=writable()?createAttemptHistory(adapter,vault):null;
   const session=createDurableSyncSession({privateStore,...(attempts?{attemptHistory:attempts}:{sharedStore:createReadOnlyLayoutHistory(adapter,vault)}),vault,installation:device.state().installation,access,
-   createModel:model,getEpoch:epoch,readLocalData:async()=>rotationData??source(),nextId:()=>rotation?.state()?.target===vault?rotation.state().rootId:randomSyncOperationId(),normalizeLocalLayout:raw=>normalizeRestoreLayout(raw,model),enableConflictResolution:!!attempts,checkpoint});
+   createModel:model,getEpoch:epoch,readLocalData:async()=>rotationData??source(),nextId:()=>rotation?.state()?.target===vault?rotation.state().rootId:randomSyncOperationId(),normalizeLocalLayout:raw=>normalizeJoinLayout(raw,model),projectLocalLayout:raw=>projectCurrentJoinLayout(raw,model),enableConflictResolution:!!attempts,checkpoint});
   const projection=createPrivateConfigProjection({session,validateSettings,getExternalEpoch:()=>externalEpoch});
   const coordinator=createSettingsCoordinator({session,documentStore:projection.documentStore,validateSettings,createModel:model,getGraphEpoch:epoch});
   const b={session,projection,coordinator,backend,quota,attempts,ready:false,async open(){await quota.recover(async()=>{await session.open();if(session.state().initialized&&rotation?.state()?.target!==vault)await setupProjection(b);});await inspectBudget();}};
@@ -90,6 +94,7 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  async function ensure(){
   if(registry)return;
   registry=await openSyncConnections({app,pluginId,catalog:createSyncConnectionCatalog({adapter}),locks,checkpoint:step=>checkpoint('selection:'+step)});
+  easyAuth=await createEasySyncAuthorization({app,pluginId,device:registry.device,checkpoint});
   rotation=await openRotationControl({app,pluginId,device:registry.device});
   const device=await createLifecycleDevice({device:registry.device,app,pluginId,locks});
   lifecycle=createSyncLifecycle({device,openBundle:makeBundle,checkpoint:step=>checkpoint('lifecycle:'+step)});if(!registry.state().pending)await lifecycle.open();
@@ -129,6 +134,23 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  }
  function reserveReview(joinRecovery=false){const captured=epoch(),guard=store.reserveExternal(value=>{if(!probeSchema3Snapshot(value,model).ok)throw Error('unified-graph-incompatible');return validateSchema3Snapshot(value);});return guard&&{guard,current:()=>(joinRecovery?recoveryGate():gate())===true&&epoch()===captured};}
  const hashValue=v=>syncContentHash(JSON.stringify(copy(v)));
+ async function historicalBasis(){
+  const scan=bundle?.attempts?await bundle.attempts.scan():null;
+  if(scan&&(scan.issue||scan.blockers.length||scan.quarantined.length))throw Error('shared-input-blocked');
+  return hashValue({source:await source(),view:store.snapshot(),epoch:epoch(),selected:registry?.state().selected??null,status:lifecycle?.state().status??'unselected',session:bundle?.session.state()??null,inventory:scan?.inventory??null});
+ }
+ function historicalGate(){
+  assertSave();if(registry?.state().pending||rotation?.state())return false;
+  const g=getGraph(),s=bundle?.session.state();
+  return !!g?.isCurrent()&&!g.hidden&&(!s?.initialized||bundle.ready&&!s.pending&&!s.faulted&&!s.attemptConflict&&!s.localState?.layoutDraft&&!s.localState?.pendingSave&&!s.localState?.settingsDraft&&!externalPending());
+ }
+ async function writeLocalRecovery(destination,id,data){
+  if(!/^[a-f0-9]{32}$/.test(id)||typeof destination?.create!=='function'||typeof destination?.read!=='function')throw Error('historical-backup-options');
+  const body=JSON.stringify(copy(data)),hash=await syncContentHash(body),bytes=new TextEncoder().encode(body).length;
+  await destination.create(id+'/initial-config.json',body);if(await destination.read(id+'/initial-config.json',bytes)!==body)throw Error('historical-backup-content');
+  const manifest=JSON.stringify({version:1,id,scope:'unjoined-config-recovery',bytes,hash});await destination.create(id+'/manifest.json',manifest);
+  if(await destination.read(id+'/manifest.json',262144)!==manifest||await syncContentHash(await destination.read(id+'/initial-config.json',bytes))!==hash)throw Error('historical-backup-content');
+ }
  async function rotationBasis(){const s=bundle?.session.state();return hashValue({sequence:s?.sequence,accepted:s?.accepted?.fingerprint,local:s?.localState,pending:s?.pending,configuration:bundle?.session.getLocalDocument(),source:await source()});}
  async function rotationInput({destination,id,choice},intent=null){
   if(!getGraph()?.isCurrent()||getGraph().hidden||saveError)throw Error('rotation-graph-or-unsaved');
@@ -201,6 +223,114 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
    if(epoch()===captured)guard.apply(bundle.session.state().accepted.snapshot);await deliver();await inspectBudget();
    return report({kind:'rotated',from:intent.from,target:intent.target,rootId:intent.rootId},'rotation');
   }finally{freezing=false;guard.release();startQueue();}
+ }
+ const easySameLayout=(a,b)=>JSON.stringify(copy({groups:a.groups,structures:a.structures}))===JSON.stringify(copy({groups:b.groups,structures:b.structures}));
+ function easyActiveReason(){
+  const s=bundle?.session.state();if(!s)return 'clean';
+  if(s.pending)return 'waiting';
+  if(s.localState?.layoutDraft)return 'draft-pending';
+  const last=publisherQueue?.state().lastResult;
+  if(last&&String(last.kind).startsWith('accepted'))return 'written';
+  if(!s.accepted?.operations?.length)return 'awaiting-transfer';
+  return 'clean';
+ }
+ // Internal (already-enqueued) forms of the public review methods. The easy
+ // orchestration calls these inside a single host task; it never awaits a public
+ // enqueued method from within a queued task (that would deadlock the serial queue).
+ async function joinPreviewInternal(){
+  if(rotation?.state())return held('rotation-review-required');
+  if(!getGraph()?.isCurrent())return held('graph-unavailable');
+  if(!bundle||bundle.ready)return held('join-not-required');const data=await source(),before=epoch();const result=unwrap(await lifecycle.join(b=>b.session.previewJoin({localData:data})));
+  if(result.kind!=='join-preview')return result;
+  const token=Object.freeze({});joinTokens.set(token,{data,epoch:before,fingerprint:result.fingerprint,currentFingerprint:result.currentFingerprint,canImport:result.canImport,canCurrent:result.canCurrent,bundle});return {...result,token,canImport:result.canImport&&writable(),canCurrent:result.canCurrent&&writable()};
+ }
+ async function joinConfirmInternal(token,choice){
+  if(!getGraph()?.isCurrent())return held('graph-unavailable');
+  const review=joinTokens.get(token);joinTokens.delete(token);if(!review||review.bundle!==bundle||review.epoch!==epoch()||!['import','shared','current'].includes(choice)||choice==='current'&&!review.canCurrent)return held('join-review-changed');
+  const current=await source();if(!equal(layoutOf(current),layoutOf(review.data))||choice!=='shared'&&!writable())return held('join-source-changed');
+  const guard=store.reserveExternal(value=>{if(!probeSchema3Snapshot(value,model).ok)throw Error('unified-graph-incompatible');return validateSchema3Snapshot(value);});if(!guard)return held('layout-busy');
+  try{
+   const result=unwrap(await lifecycle.join(async b=>{
+    const joined=await b.session.join({localData:current,choice,expectedSharedFingerprint:review.fingerprint,...(choice!=='import'&&review.currentFingerprint?{expectedCurrentFingerprint:review.currentFingerprint}:{})});
+    if(b.session.state().initialized)await setupProjection(b);return joined;
+   }));
+   if(!bundle.ready)return result;
+   startQueue();
+   if(epoch()!==review.epoch||!getGraph()?.isCurrent())return held('join-view-deferred');
+   guard.apply(bundle.session.state().accepted.snapshot);await deliver();return {kind:'joined',result};
+  }finally{guard.release();}
+ }
+ async function selectInternal(token){
+  if(rotation?.state())return held('rotation-review-required');
+  if(bundle&&registry.device.state().connection?.enabled&&!registry.state().pending)return held('disable-before-selection');await ensure();await stopQueue();await lifecycle.close();bundle=null;
+  const result=await registry.confirm(token);
+  const device=await createLifecycleDevice({device:registry.device,app,pluginId,locks});lifecycle=createSyncLifecycle({device,openBundle:makeBundle,checkpoint:step=>checkpoint('lifecycle:'+step)});if(!registry.state().pending)await lifecycle.open();
+  if(lifecycle.state().status==='disabled'&&registry.device.state().connection&&!registry.device.state().connection.enabled)await lifecycle.openLocal();
+  startQueue();return result;
+ }
+ async function enableInternal(vault){await stopQueue();await lifecycle.enable(vault);startQueue();return {kind:'enabled'};}
+ async function easyJoin(){
+  if(!getGraph()?.isCurrent()){easy.phase='preparing';easy.reason='graph-unavailable';return held('graph-unavailable');}
+  const preview=await joinPreviewInternal();
+  if(preview.kind!=='join-preview'){easy.phase='paused';easy.reason=preview.reason??preview.kind;return preview;}
+  const local=preview.local,localEmpty=!local||Object.keys(local.groups||{}).length===0;
+  let choice=null;
+  if(preview.localIssue){easy.phase='review-required';easy.reason='local-layout-review';easy.target=preview;return {kind:'easy-review-required',reason:'local-layout-review',preview};}
+  if(localEmpty)choice='shared';
+  else if(preview.canImport&&preview.operations===0)choice='import';
+  else if(preview.canImport&&preview.operations>0&&preview.shared&&easySameLayout(local,preview.shared))choice='shared';
+  else {easy.phase='review-required';easy.reason='join-choice-required';easy.target=preview;return {kind:'easy-review-required',reason:'join-choice-required',preview};}
+  easy.phase='joining';easy.reason=null;
+  const result=await joinConfirmInternal(preview.token,choice);
+  if(['joined','adopted','adopted-deferred','imported','imported-deferred','already-joined'].includes(result.kind)){easy.phase='active';easy.reason=easyActiveReason();easy.target=null;return {kind:'easy-joined',result};}
+  easy.phase=result.kind==='review-required'?'review-required':'paused';easy.reason=result.reason??result.kind;easy.target=preview;return result;
+ }
+ async function easySelect(candidate){
+  easy.phase='preparing';easy.reason=null;easy.target={vault:candidate.vault,transport:candidate.transport};
+  const p=await registry.preview({action:'join',vault:candidate.vault,transport:candidate.transport});
+  if(p.kind!=='selection-preview'){easy.phase='paused';easy.reason=p.reason;return p;}
+  const result=await selectInternal(p.token);
+  if(result.kind!=='selected'){easy.phase='paused';easy.reason=result.reason;return result;}
+  const st=lifecycle.state().status;
+  if(st==='join-required')return await easyJoin();
+  if(st==='ready'||st==='paused'){easy.phase='active';easy.reason=easyActiveReason();return {kind:'easy-active'};}
+  easy.phase='preparing';easy.reason=st;return {kind:'easy-preparing'};
+ }
+ async function easyResume({reenable=false}={}){
+  const auth=easyAuth.state();
+  if(!auth.authorized){easy.phase='idle';easy.reason=null;return held('easy-sync-not-authorized');}
+  if(!auth.enabled&&!reenable){easy.phase='off';easy.reason=null;return {kind:'easy-off'};}
+  if(error){easy.phase='paused';easy.reason=error;return held(error);}
+  if(rotation?.state()){easy.phase='paused';easy.reason='rotation-review-required';return held('rotation-review-required');}
+  if(registry.state().pending){const r=await registry.resume();if(r.kind!=='selected'&&r.kind!=='ready'){easy.phase='paused';easy.reason=r.reason;return r;}}
+  const selected=registry.state().selected;
+  if(selected){
+   const conn=registry.device.state().connection;
+   if(!conn?.enabled){
+    if(reenable)await enableInternal(selected.vault);
+    else {easy.phase='off';easy.reason=null;return {kind:'easy-off'};}
+   }
+   const st=lifecycle.state().status;
+   if(st==='join-required')return await easyJoin();
+   if(st==='ready'||st==='paused'){easy.phase='active';easy.reason=easyActiveReason();return {kind:'easy-active'};}
+   if(st==='recovery-required'){easy.phase='paused';easy.reason='recovery-required';return held('recovery-required');}
+   easy.phase='preparing';easy.reason=st;return {kind:'easy-preparing'};
+  }
+  const scan=await createSyncConnectionCatalog({adapter}).scan();
+  if(scan.kind!=='catalog'){easy.phase='paused';easy.reason=scan.reason;return scan;}
+  const writableCandidates=scan.candidates.filter(c=>c.transport==='attempts-v1');
+  const readonlyCandidates=scan.candidates.filter(c=>c.transport==='v2');
+  if(writableCandidates.length===1)return await easySelect(writableCandidates[0]);
+  if(writableCandidates.length>1){easy.phase='selecting';easy.reason=null;easy.candidates=copy(scan.candidates);return {kind:'easy-selecting',candidates:copy(scan.candidates)};}
+  if(readonlyCandidates.length>0){easy.phase='review-required';easy.reason='legacy-read-only';easy.candidates=copy(readonlyCandidates);return {kind:'easy-legacy-read-only',candidates:copy(readonlyCandidates)};}
+  const boot=createDefaultLayoutBootstrap(adapter);
+  const ensured=await boot.ensure();
+  if(ensured.kind==='held'){easy.phase='paused';easy.reason=ensured.reason;return ensured;}
+  const rescan=await createSyncConnectionCatalog({adapter}).scan();
+  if(rescan.kind!=='catalog'){easy.phase='paused';easy.reason=rescan.reason;return rescan;}
+  const def=rescan.candidates.find(c=>c.vault===DEFAULT_LAYOUT_VAULT_ID&&c.transport==='attempts-v1');
+  if(def)return await easySelect(def);
+  easy.phase='awaiting-transfer';easy.reason=null;return {kind:'easy-awaiting-transfer'};
  }
  const host={store,
   state:()=>({status:error?'recovery-required':rotation?.state()?'rotation-review-required':registry?.state().pending?'selection-review-required':lifecycle?.state().status??'unselected',rotationPending:rotation?.state()??null,error,saveError,outcome,privateBudget,externalPending:externalPending(),selectionPending:registry?.state().pending?.selection??null,selected:registry?.state().selected??null,installation:registry?.device.state().installation??null,session:bundle?.session.state()??null,externalEpoch,publication:publisherQueue?.state()??null}),
@@ -292,21 +422,8 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
   }),
   previewSelection:options=>enqueue(async()=>{await ensure();return rotation.state()?held('rotation-review-required'):registry.preview(options);}),
   discardSelection:token=>registry?.discard(token),
-  confirmSelection:token=>enqueue(async()=>{
-   if(rotation?.state())return held('rotation-review-required');
-   if(bundle&&registry.device.state().connection?.enabled&&!registry.state().pending)return held('disable-before-selection');await ensure();await stopQueue();await lifecycle.close();bundle=null;
-   const result=await registry.confirm(token);
-   const device=await createLifecycleDevice({device:registry.device,app,pluginId,locks});lifecycle=createSyncLifecycle({device,openBundle:makeBundle,checkpoint:step=>checkpoint('lifecycle:'+step)});if(!registry.state().pending)await lifecycle.open();
-   if(lifecycle.state().status==='disabled'&&registry.device.state().connection&&!registry.device.state().connection.enabled)await lifecycle.openLocal();
-   startQueue();return result;
-  }),
-  previewJoin:()=>enqueue(async()=>{
-   if(rotation?.state())return held('rotation-review-required');
-   if(!getGraph()?.isCurrent())return held('graph-unavailable');
-   if(!bundle||bundle.ready)return held('join-not-required');const data=await source(),before=epoch();const result=unwrap(await lifecycle.join(b=>b.session.previewJoin({localData:data})));
-   if(result.kind!=='join-preview')return result;
-   const token=Object.freeze({});joinTokens.set(token,{data,epoch:before,fingerprint:result.fingerprint,bundle});return {...result,token,canImport:result.canImport&&writable()};
-  }),
+  confirmSelection:token=>enqueue(()=>selectInternal(token)),
+  previewJoin:()=>enqueue(joinPreviewInternal),
   discardJoin:token=>joinTokens.delete(token),
   discardReview(token){const r=reviews.get(token);if(r?.sessionToken){if(r.kind==='shared-recovery')r.bundle.session.discardSharedRecovery(r.sessionToken);else r.bundle.session.discardConflictReview(r.sessionToken);}reviews.delete(token);},
   previewSharedRecovery:()=>enqueue(async()=>{
@@ -370,26 +487,57 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
    const result=await run(b=>b.projection.resolveExternal(r.id,{choice}));await deliver();return result;
   }),
   joinEvidence:()=>enqueue(async()=>bundle?{backup:bundle.session.getJoinBackup(),proof:bundle.session.getJoinProof()}:null),
-  confirmJoin:(token,choice)=>enqueue(async()=>{
-   if(!getGraph()?.isCurrent())return held('graph-unavailable');
-   const review=joinTokens.get(token);joinTokens.delete(token);if(!review||review.bundle!==bundle||review.epoch!==epoch()||!['import','shared'].includes(choice))return held('join-review-changed');
-   const current=await source();if(!equal(layoutOf(current),layoutOf(review.data))||choice==='import'&&!writable())return held('join-source-changed');
-   const guard=store.reserveExternal(value=>{if(!probeSchema3Snapshot(value,model).ok)throw Error('unified-graph-incompatible');return validateSchema3Snapshot(value);});if(!guard)return held('layout-busy');
+  confirmJoin:(token,choice)=>enqueue(()=>joinConfirmInternal(token,choice)),
+  prepareLocalGraph:({createModel,isCurrent,epoch:expected}={})=>enqueue(async()=>{
+   if(bundle?.session.state().initialized)return held('already-joined');assertSave();
+   if(typeof createModel!=='function'||typeof isCurrent!=='function'||expected!==getEpoch()||!isCurrent())return held('graph-changed');
+   const current=await source(),raw=current.layoutOverrides;if(raw==null)return {kind:'unchanged'};
+   const next=reconcileLocalLayout(raw,createModel);if(!localLayoutChanged(raw,next))return {kind:'unchanged'};
+   const guard=store.reserveExternal(x=>x);if(!guard)return held('layout-busy');
    try{
-    const result=unwrap(await lifecycle.join(async b=>{
-     const joined=await b.session.join({localData:current,choice,expectedSharedFingerprint:review.fingerprint});
-     if(b.session.state().initialized)await setupProjection(b);return joined;
-    }));
-    if(!bundle.ready)return result;
-    startQueue();
-    if(epoch()!==review.epoch||!getGraph()?.isCurrent())return held('join-view-deferred');
-    guard.apply(bundle.session.state().accepted.snapshot);await deliver();return {kind:'joined',result};
+    if(expected!==getEpoch()||!isCurrent())return held('graph-changed');
+    next.revision=raw.revision+1;
+    const data={...current,layoutOverrides:next,layoutUpgradeOriginal:current.layoutUpgradeOriginal??{version:1,layoutOverrides:copy(raw)}};
+    await saveUnjoined(data,{expected:current});guard.apply(next);
+    return {kind:'local-reconciled',deferred:expected!==getEpoch()||!isCurrent()};
    }finally{guard.release();}
   }),
+  previewHistoricalRestore:({readBackup=async()=>await bundle?.session.getJoinBackup()??await source()}={})=>enqueue(async()=>{
+   if(typeof readBackup!=='function')throw Error('historical-backup-options');
+   await publisherQueue?.settled();if(!historicalGate())return held('historical-restore-unavailable');
+   const before=await historicalBasis(),data=copy(await readBackup()),sourceLayout=readHistoricalLayout(data),currentLayout=store.snapshot();
+   const plan=planHistoricalLayout({sourceLayout,currentLayout,createModel:model});
+   if(before!==await historicalBasis())return held('historical-restore-changed');
+   const token=Object.freeze({});historicalReviews.set(token,{readBackup,hash:await hashValue(data),basis:before,plan,sourceLayout});
+   return {kind:'historical-restore-review',token,...copy(plan)};
+  }),
+  discardHistoricalRestore:token=>historicalReviews.delete(token),
+  confirmHistoricalRestore:(token,{groups,destination,backupId}={})=>enqueue(async()=>{
+   const r=historicalReviews.get(token);historicalReviews.delete(token);
+   if(!r||!groups?.length)return held('historical-restore-selection');
+   if(!historicalGate()||r.basis!==await historicalBasis()||r.hash!==await hashValue(await r.readBackup()))return held('historical-restore-changed');
+   const fresh=planHistoricalLayout({sourceLayout:r.sourceLayout,currentLayout:store.snapshot(),createModel:model});
+   if(!equal(fresh,r.plan))return held('historical-restore-changed');
+   const next=mergeHistoricalGroups(store.snapshot(),fresh.rows,groups),joined=!!bundle?.session.state().initialized;
+   if(joined){validateSchema3Snapshot(next);if(!probeSchema3Snapshot(next,model).ok)return held('graph-incompatible');}
+   const guard=store.reserveExternal(x=>x);if(!guard)return held('layout-busy');
+   freezing=true;await stopQueue();
+   try{
+    const before=await source();
+    if(joined){
+     const data=await lifecycle.exportRecovery({capture:value=>value});
+     await withExportFolders(destination,backupId,()=>exportRecoveryParts({destination,id:backupId,...data}));await verifyRecoveryExport({source:destination,id:backupId});
+    }else await withExportFolders(destination,backupId,()=>writeLocalRecovery(destination,backupId,before));
+    await checkpoint('historical:after-backup');
+    if(r.basis!==await historicalBasis()||r.hash!==await hashValue(await r.readBackup())||!getGraph()?.isCurrent())return held('historical-restore-changed');
+    if(joined){const draft=await run(b=>b.coordinator.stageLayoutDraft(next));await checkpoint('historical:after-draft');guard.apply(next);return {kind:'restore-staged',id:draft.id,backup:destination.location+'/'+backupId};}
+    await saveUnjoined({...before,layoutOverrides:next,layoutUpgradeOriginal:before.layoutUpgradeOriginal??{version:1,layoutOverrides:copy(before.layoutOverrides??{schemaVersion:3,revision:0,groups:{},structures:{}})}},{expected:before});guard.apply(next);return {kind:'restored-local',backup:destination.location+'/'+backupId};
+   }finally{freezing=false;guard.release();startQueue();}
+  }),
   saveLayout:value=>enqueue(async()=>{
-   const layout=validateSchema3Snapshot(value),before=epoch();if(!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-incompatible');
-   assertSave();
-   if(!bundle?.ready){const data=await source();if(before!==epoch())throw Error('unified-graph-changed');await saveUnjoined({...data,layoutOverrides:layout},{expected:data});return {kind:'saved-local'};}
+   const before=epoch();assertSave();
+   if(!bundle?.ready){if(bundle?.session.state().initialized)throw Error('reopen-required');const data=await source(),layout=validateUnjoinedLayoutEdit(data.layoutOverrides,copy(value),model);if(before!==epoch())throw Error('unified-graph-changed');await saveUnjoined({...data,layoutOverrides:layout},{expected:data});return {kind:'saved-local'};}
+   const layout=validateSchema3Snapshot(value);if(!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-incompatible');
    const draft=await run(b=>{if(before!==epoch()||!probeSchema3Snapshot(layout,model).ok)throw Error('unified-graph-changed');return b.coordinator.stageLayoutDraft(layout);});publisherQueue?.notifySaved(draft.id);return {kind:'saved-draft',id:draft.id};
   }),
   saveSettings:value=>enqueue(async()=>{
@@ -459,6 +607,25 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
   },
   async disable(){if(rotation?.state())return held('rotation-review-required');if(registry?.state().pending)return held('selection-review-required');freezing=true;await stopQueue();return enqueue(async()=>{try{await lifecycle?.disable();bundle=null;await lifecycle?.openLocal();return {kind:'disabled'};}finally{freezing=false;}});},
   enable:()=>enqueue(async()=>{if(rotation?.state())return held('rotation-review-required');if(!registry?.state().selected)return held('selection-required');if(registry.state().pending)return held('selection-review-required');await stopQueue();await lifecycle.enable(registry.state().selected.vault);startQueue();return {kind:'enabled'};}),
+  // One-switch easy setup. startEasySync is the only entry that persists a fresh
+  // authorization; resumeEasySync continues an existing one without expanding it.
+  // Both run inside a single host task and call internal forms only (no nested
+  // public enqueue, which would deadlock the serial queue).
+  startEasySync:()=>enqueue(async()=>{await ensure();await easyAuth.authorize();return easyResume({reenable:true});}),
+  resumeEasySync:()=>enqueue(async()=>{await ensure();if(!easyAuth.state().authorized){easy.phase='idle';easy.reason=null;return held('easy-sync-not-authorized');}return easyResume({reenable:false});}),
+  stopEasySync:()=>enqueue(async()=>{
+   await ensure();
+   if(rotation?.state())return held('rotation-review-required');
+   if(registry.state().pending)return held('selection-review-required');
+   if(easyAuth.state().authorized)await easyAuth.setEnabled(false);
+   freezing=true;await stopQueue();
+   try{await lifecycle?.disable();bundle=null;await lifecycle?.openLocal();easy.phase='off';easy.reason=null;return {kind:'disabled'};}finally{freezing=false;}
+  }),
+  easySyncState:()=>{
+   let authorization={authorized:false,enabled:false};try{authorization=easyAuth?.state()??authorization;}catch{authorization={authorized:false,enabled:false};}
+   const active=easy.phase==='active';
+   return {phase:easy.phase,reason:active?easyActiveReason():easy.reason,candidates:easy.candidates,target:easy.target,authorization,selected:registry?.state().selected??null,status:host.state().status};
+  },
   async settled(){await tail.catch(()=>{});await publisherQueue?.settled();await lifecycle?.settled();},
   async close(){if(closed)return;freezing=true;await stopQueue();await tail.catch(()=>{});try{await lifecycle?.close();}finally{closed=true;stopLayoutIdle();bundle=null;await registry?.close();listeners.clear();}},
  };

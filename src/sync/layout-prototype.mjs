@@ -172,6 +172,70 @@ export function validateSchema3Snapshot(input) {
   return base;
 }
 
+// First join reads device-local working data, which may retain old outline
+// guards after a rebuild. Shared validation and explicit restore stay strict.
+// A reduced first-join source is valid only after a distinct explicit choice.
+// Replay uses this static proof rather than requiring the old graph to exist.
+export function validateCurrentJoinCoverage(raw, snapshot) {
+  if(raw?.schemaVersion!==3||!plain(raw.groups)||!Number.isSafeInteger(raw.revision)||raw.revision<0||snapshot.revision!==raw.revision)fail('current-source');
+  for(const [key,record]of Object.entries(snapshot.groups)){
+    const old=raw.groups[key];
+    if(!old||!same(old.shape,record.shape)||!same(old.points,record.points)||old.note!==record.note||old.structure!==record.structure)fail('current-coverage');
+  }
+}
+
+// Match the renderer: apply compatible records, leaving other groups automatic.
+// Capture effective manual positions on isolated nodes, never repair stale groups.
+export function projectCurrentJoinLayout(input, createModel) {
+  const source=cloneBoundedSyncJson(input);
+  if(source?.schemaVersion!==3||!plain(source.groups)||!Number.isSafeInteger(source.revision)||source.revision<0)fail('current-source');
+  const entries=Object.entries(source.groups);
+  if(entries.length>LAYOUT_PROTOTYPE_LIMITS.groups)fail('current-group-budget');
+  const model=createModel();model.apply(structuredClone(source));
+  const groups={},structures={};
+  for(const [key,old]of entries){
+    const captured=model.capture(key);if(!captured)continue;
+    if(!same(old.shape,captured.shape)||old.note!==captured.note||old.structure!==captured.structure||!Array.isArray(old.points)||old.points.length!==captured.points.length||old.points.some((p,i)=>p.id!==captured.points[i].id||Math.abs(p.x-captured.points[i].x)>1e-9||Math.abs(p.y-captured.points[i].y)>1e-9))fail('current-capture-changed');
+    const record={shape:captured.shape,points:structuredClone(old.points)};
+    if(captured.note){record.note=captured.note;record.structure=captured.structure;structures[captured.note]=captured.identity;}
+    groups[key]=record;
+  }
+  const snapshot=validateSchema3Snapshot({schemaVersion:3,revision:source.revision,groups,structures});
+  validateCurrentJoinCoverage(source,snapshot);
+  if(!probeSchema3Snapshot(snapshot,createModel).ok)fail('current-graph-incompatible');
+  return {snapshot,sourceGroups:entries.length,omittedGroups:entries.map(([key])=>key).filter(key=>!Object.hasOwn(groups,key))};
+}
+
+export function normalizeJoinLayout(input, createModel) {
+  try{return normalizeRestoreLayout(input,createModel);}catch(error){
+    if(input?.schemaVersion!==3||error.message!=='layout-identity')throw error;
+  }
+  const source=cloneBoundedSyncJson(input),entries=Object.entries(source.groups);
+  if(entries.length>LAYOUT_PROTOTYPE_LIMITS.groups)fail('group-budget');
+  const notes=new Set(entries.map(([,record])=>record?.note).filter(Boolean));
+  if(Object.keys(source.structures).some(note=>!notes.has(note)))fail('baseline-incompatible');
+  for(const [group,record]of entries){
+    const rows=record.note?source.structures[record.note]:undefined;
+    const value={schemaVersion:3,record,structures:record.note?{[record.note]:rows}:{}};
+    try{checkValue(group,value);}catch(error){
+      if(error.message!=='layout-identity')throw error;
+      // A stale count cannot conceal malformed evidence or changed siblings.
+      // Missing tables require the reconciler's existing whole-outline guard.
+      if(rows!==undefined){
+        if(!Array.isArray(rows)||!rows.length||typeof record.structure!=='string')throw error;
+        checkValue(group,{...value,record:{...record,structure:record.structure.replace(/:\d+$/,':'+rows.length)}});
+      }
+    }
+  }
+  const reconciled=createModel().reconcile(structuredClone(source));
+  const result=validateSchema3Snapshot({...source,...reconciled});
+  if(Object.keys(result.groups).length!==entries.length||entries.some(([key,record])=>{
+    const next=result.groups[key];return !next||record.note!==next.note||!same(record.shape,next.shape)||!same(record.points,next.points);
+  }))fail('join-points-changed');
+  if(!probeSchema3Snapshot(result,createModel).ok)fail('join-graph-incompatible');
+  return result;
+}
+
 // Restore accepts a format migration only when the original geometry already
 // applies to the current graph. Reconciliation may repair or rename groups in
 // other flows; an explicit restore preview must keep every saved point.

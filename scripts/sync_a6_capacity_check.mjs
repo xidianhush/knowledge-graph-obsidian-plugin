@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';
+import {capacityFixtures,measureCapacityScan,capacityLimits} from './sync-a6-capacity-fixture.mjs';
+const suite='a'.repeat(32),id='b'.repeat(32),f=await capacityFixtures(suite,id);
+const entries=new Map(f.near.map(name=>[name,f.normal]));
+const adapter={stat:async name=>name===f.directory?{type:'folder'}:entries.has(name)?{type:'file',size:entries.get(name).length}:null,
+ list:async()=>({files:[...entries.keys()],folders:[]}),readBinary:async name=>Uint8Array.from(entries.get(name)).buffer};
+const checks=[];
+let result=await measureCapacityScan(adapter,suite);
+assert.equal(result.blocked,false);assert.equal(result.total,33521664);assert.equal(result.count,1023);
+assert.deepEqual(result.recognized,[id]);assert.equal(result.fingerprint,f.fingerprint);
+checks.push('1023 physical attempts / 32MiB minus 32KiB verify and deduplicate to one operation');
+entries.set(f.exact,f.normal);result=await measureCapacityScan(adapter,suite);
+assert.equal(result.blocked,false);assert.equal(result.total,capacityLimits.totalBytes);assert.equal(result.count,1024);
+checks.push('Exact 1024-file and 32MiB limits are admitted');
+entries.set(f.count,f.normal);result=await measureCapacityScan(adapter,suite);
+assert.equal(result.error,'attempt-file-budget');assert.equal(result.io.readCalls,0);
+checks.push('1025 files reject before reading any body');
+entries.delete(f.count);entries.delete(f.exact);
+entries.set(f.total,f.extra[2].bytes);result=await measureCapacityScan(adapter,suite);
+assert.equal(result.error,'attempt-file-budget');assert.ok(result.io.readBytes<=capacityLimits.totalBytes);
+checks.push('Aggregate 32MiB plus one byte rejects without reading beyond budget');
+entries.delete(f.total);entries.set(f.oversized,f.extra[3].bytes);result=await measureCapacityScan(adapter,suite);
+assert.equal(result.error,'attempt-file-budget');assert.equal(result.io.readCalls,0);
+checks.push('2MiB plus one byte sorts first and rejects before any read');
+entries.delete(f.oversized);result=await measureCapacityScan(adapter,suite);
+assert.equal(result.blocked,false);assert.equal(result.fingerprint,f.fingerprint);
+checks.push('Removing only test additions restores identical near-limit inventory');
+console.log(JSON.stringify({checks,nearElapsedMs:result.elapsedMs,nearBytes:result.total}));

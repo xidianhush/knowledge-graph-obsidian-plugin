@@ -5,6 +5,7 @@ test-profile/
 test-vault-layout-fix/
 test-profile-layout-fix/
 node_modules/
+.integration-tmp/
 __pycache__/
 real-vault-trial/
 real-trial-profile/

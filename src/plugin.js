@@ -169,7 +169,9 @@ class KnowledgeGraphView extends ItemView {
         nextServices.layoutStore = this.plugin.layoutStore;
         nextServices.onRebuild = () => { if (!this.closed) void this.rebuild(); };
         const decoded=decodeGraphPayload(payload);
-        if (!layoutDriver) await this.plugin.layoutStore.reconcile(createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius),
+        if (layoutDriver?.prepareGraph) await layoutDriver.prepareGraph({payload,epoch:layoutEpoch,
+          isCurrent:()=>generation===this.generation && !this.closed && !controller.signal.aborted && layoutEpoch===this.plugin.layoutEpoch});
+        else if (!layoutDriver) await this.plugin.layoutStore.reconcile(createLayoutModel(decoded.nodes,decoded.meta.layout_root_radius),
           ()=>generation===this.generation && !this.closed && !controller.signal.aborted && layoutEpoch===this.plugin.layoutEpoch);
         if(generation!==this.generation || this.closed || controller.signal.aborted || layoutEpoch!==this.plugin.layoutEpoch){nextServices?.dispose?.();return;}
         const shape=JSON.stringify(decoded.nodes.map(n=>[n.id,n.parent,n.r,n.kind,n.title]));

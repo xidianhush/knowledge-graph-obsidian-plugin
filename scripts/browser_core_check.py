@@ -6,6 +6,11 @@ import threading
 import json
 from playwright.sync_api import sync_playwright
 
+import argparse
+parser=argparse.ArgumentParser(description='Browser core checks with explicit private JSON fixture')
+parser.add_argument('--snapshot',required=True,type=Path)
+args=parser.parse_args();SNAPSHOT=args.snapshot.resolve()
+assert SNAPSHOT.is_file() and SNAPSHOT.suffix.lower()=='.json'
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / '.local/evidence'
 RESULTS = []
@@ -17,6 +22,10 @@ def check(name, passed, detail=None):
     assert passed, name
 class QuietHandler(SimpleHTTPRequestHandler):
     extensions_map = {**SimpleHTTPRequestHandler.extensions_map, '.mjs':'text/javascript', '.js':'text/javascript'}
+    def do_GET(self):
+        if self.path.split('?',1)[0]=='/smoke-payload.json':
+            body=SNAPSHOT.read_bytes();self.send_response(200);self.send_header('Content-Type','application/json');self.end_headers();self.wfile.write(body)
+        else:super().do_GET()
     def log_message(self, *args): pass
 server = ThreadingHTTPServer(('127.0.0.1', 0), partial(QuietHandler, directory=str(ROOT / 'dist')))
 threading.Thread(target=server.serve_forever, daemon=True).start()

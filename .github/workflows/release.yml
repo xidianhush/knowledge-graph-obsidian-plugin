@@ -3,18 +3,16 @@
 # Release that contains ONLY those three assets. Flow, prerequisites and
 # verification commands are documented in docs/RELEASE_CI.md.
 #
-# Tag convention: `0.0.<patch>` (no `v` prefix, e.g. `0.0.14`). A `v0.0.14`
+# Tag convention: `X.Y.Z` (no `v` prefix, e.g. `1.0.0`). A `v1.0.0`
 # tag does not match this trigger and must not be used.
 #
-# This repository has no npm runtime dependencies and no lockfile. The build is
-# a single Node script, so there is deliberately NO `npm ci` / `npm install`
-# step here. Do not add one unless dependencies are introduced.
+# Runtime remains dependency-free. npm ci installs locked development checks.
 name: Release
 
 on:
   push:
     tags:
-      - '0.0.*'
+      - '[0-9]*.[0-9]*.[0-9]*'
   # Manual runs are dry runs (build + validate + attestation check only); they
   # never create or modify a Release, even when dispatched from a tag ref.
   workflow_dispatch:
@@ -78,8 +76,8 @@ jobs:
             echo "Manual dry run (workflow_dispatch): validating tag/version '${tag}'. No Release will be created."
           fi
 
-          if ! printf '%s' "$tag" | grep -Eq '^0\.0\.[0-9]+$'; then
-            echo "::error title=Invalid tag format::'${tag}' must look like 0.0.<patch> (no 'v' prefix, no suffix)."
+          if ! printf '%s' "$tag" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'; then
+            echo "::error title=Invalid tag format::'${tag}' must be X.Y.Z (no 'v' prefix, leading zeroes or suffix)."
             exit 1
           fi
 
@@ -89,12 +87,16 @@ jobs:
           fi
 
           echo "TAG=${tag}" >> "$GITHUB_ENV"
+          test -s "docs/RELEASE_NOTES_${tag}.md" || { echo "::error::Missing release notes for ${tag}"; exit 1; }
           echo "Validated ${tag}: manifest.json ${manifest_version}, package.json ${package_version}."
 
-      - name: Build the plugin bundle
+      - name: Install locked development tools
+        run: npm ci
+
+      - name: Validate source, contracts and release integrity
         run: |
           set -euo pipefail
-          node scripts/build.mjs
+          npm run check
 
       - name: Package and stage the three release assets
         run: |
@@ -198,9 +200,8 @@ jobs:
           title="Knowledge Map ${TAG}"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "Release ${TAG} already exists; updating notes and re-uploading assets with --clobber."
-            gh release edit "$TAG" --title "$title" --notes-file "$RELEASE_BODY"
-            gh release upload "$TAG" "${assets[@]}" --clobber
+            echo "::error title=Immutable release::Release ${TAG} already exists. Refusing to overwrite published assets."
+            exit 1
           else
             echo "Creating Release ${TAG}."
             gh release create "$TAG" --verify-tag --title "$title" --notes-file "$RELEASE_BODY" "${assets[@]}"
@@ -220,6 +221,6 @@ jobs:
           printf '%s\n' "$actual"
 
           if [ "$actual" != "$expected" ]; then
-            echo "::error title=Unexpected release assets::a 0.0.x Release must contain exactly main.js, manifest.json and styles.css."
+            echo "::error title=Unexpected release assets::a Release must contain exactly main.js, manifest.json and styles.css."
             exit 1
           fi

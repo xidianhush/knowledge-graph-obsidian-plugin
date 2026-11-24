@@ -1,62 +1,46 @@
-# Clone 后开发与验证
+> 当前活动分支与三条基线见[工作区规则](docs/WORKSPACE.md)。先运行npm run workspace:check。当前源码为dddf14a一键同步+已发布恢复修复的整合候选，0.0.17版本标签不表示与已发布资产相同。旧分步引导不参与构建，详细新证据见基线收敛结果。
 
-当前 GitHub 发布为 **0.0.15**（tag `0.0.15` → `8b82e4b`；Actions run `42355198309` 成功，三资产 + attestations）。11 个合成脚本、独立库原生回归、三资产哈希及正式下载文件安装已核验；社区门户 0.0.15 / 审核 Completed、原生安装器直连安装启用已确认，详见 [发布记录](docs/RELEASE_PREP_0.0.15.md)。
+# 开发与验证
 
-使用 Node.js 22 或更新版本。纯 JS 构建只用 Node 标准库，没有 npm 依赖安装步骤。
+本地发布记录为0.0.17；本工作区为新整合开发候选，尚未发布/体验验收。当前任务见[TODO](TODO.md)，本轮证据见[执行记录](docs/QUALITY_IMPLEMENTATION_2026-11-24.md)。历史开发记录见[归档](docs/archive/DEVELOPMENT_before_quality_2026-11-24.md)，不能当本轮重新通过。
 
-```sh
-git clone https://github.com/xidianhush/knowledge-graph-obsidian-plugin.git
-cd knowledge-graph-obsidian-plugin
-npm test
-```
+## 从干净源码开始
 
-`npm test` 先构建，再串行执行 **11 个**合成检查脚本：核心生命周期、管线契约、设置、原型几何、正式拖动、保存状态、基础改名、扩展改名、增删修复、schema3 迁移、i18n 文案（`scripts/i18n_check.mjs`：两套字典 key 一致、模板绑定、无裸中文残留）。无需 Obsidian、Python、网络或个人笔记。报告写入被忽略的 `.local/evidence/`。Node 性能样本随机器而变，不是速度门槛。
-
-只构建：`npm run build`。输出 `dist/main.js`、`dist/manifest.json`、`dist/styles.css` 及供测试使用的模块；运行插件只需前三个文件。若本地存在 `.local/smoke-payload.json`，历史构建脚本会额外复制私有快照到 dist，**不能直接打包整个 dist**。
-
-生成交付包（白名单三个运行文件 + SHA256SUMS，拒绝快照与 data.json）：
+开发工具使用Node 22.13+的22 LTS或Node 24+，npm及Python（仅浏览器/原生专项）；运行插件不需要Node/npm。先读AGENTS、TODO和README。
 
 ```sh
-node scripts/build.mjs
-node scripts/package.mjs            # 输出 .local/release/<version>/
+npm ci
+npm run check
 ```
 
-使用者可见的安装/升级/卸载与已知限制见 `docs/INSTALL.md`。
+check依次运行ESLint、Prettier检查、基线契约模块JSDoc类型检查、默认构建与合成契约、交付完整性/真实打包负例、输入边界及有限防漏检查。无Obsidian、网络服务、个人笔记或私有快照前提；npm ci需要开发依赖或缓存。CI在PR/主分支运行同一检查，远端运行记录与本地结果分别记载。
 
-历史 0.0.13 交付记录：**0.0.13（已正式发布，tag `0.0.13`，Release 见 https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.13）**。构建 `main.js` 333,570 B sha256 `37589a6f32203026ff82a564ad83013b72dbb19c8a8180f7c04da67a49ba8ab5`；打包产物 `.local/release/0.0.13/`（三文件 + SHA256SUMS + RELEASE_NOTES），发布说明草稿 `docs/RELEASE_NOTES_0.0.13.md`。2026-11-04 修复候选验收反馈：`repairGroup` 对「同名且正文为空」标题的保守校验会把整篇笔记的 H1 组判为不可修复（笔记内 H1 全部退回自动布局），现仅在同名计数变化或 evidence 不一致时回退，纯增删保留已保存布局（新增 2 条合成回归）；编辑提示改为「再次点击顶栏 ✥ 退出」。在「日常库副本 vault-013」（Obsidian 1.15.0 / CDP 9249）原生复算 H1 相对偏差 0.0px、`errors []`。历史：0.0.12 为内部候选 2026-11-04 晚发布门禁：A 打包/版本一致、B 空白库安装建图、C 日常库副本真实数据 reconcile 4 场景全部通过；门禁 C 发现并修复同族边界（含同名空正文标题的笔记重命名会整篇回退），新增 1 条合成回归，原生复算重命名后 H1 偏差 0.0px。（已装日常库完成 1–2 天自用体验并通过，报告见 `product-site-acceptance/`）；0.0.11 已 push 并发布 GitHub pre-release；社区目录条目已于 2026-11-04 上线（<https://community.obsidian.md/plugins/knowledge-graph-smoke>），2026-11-05 目录镜像同步后客户端可搜到。0.0.12 的 manifest 名称为 Knowledge Map、`minAppVersion` 1.6.7、`isDesktopOnly: true`（0.0.13 沿用）；布局存储为 schema3，旧 schema1/2 数据会在首次协调写入时自动迁移；0.0.13 只改 HUD/样式，不改数据格式与交互契约。0.0.10 及更早版本读到 schema3 会禁用调整并保留原数据，回退须先备份 `data.json` 的 `layoutOverrides`。
+静态规范只覆盖本轮新增/整理模块，精确范围见package scripts与eslint配置；不是全仓lint/typecheck已通过。旧源码渐进纳入。格式与逻辑分别审阅。
 
-历史 0.0.14 发布记录：**0.0.14（已 tag `0.0.14` 并由 GitHub Actions 发布，三资产 + attestations；门户图标/Overview 已更新）**。2026-11-06 之前的描述「已构建未发布」已过期。构建 `main.js` 396,234 B sha256 `b022a4d810c38280e23068e718e68f9e0030bd4ba763b2dc0abae0b847903dc5`；`npm test` 为 **11 个合成脚本**（新增 `scripts/i18n_check.mjs`）。0.0.14 起 Release 由 tag 触发的 GitHub Actions 产出，只上传 `main.js` / `manifest.json` / `styles.css` 三资产，`SHA256SUMS` 与发布说明写入 Release 正文并附构建来源证明（见 `.github/workflows/release.yml`、`docs/RELEASE_CI.md`）。发布说明 `docs/RELEASE_NOTES_0.0.14.md`。
+## 构建和交付
 
-2026-11-06 交接 **0.0.14**：用户结束 0.0.13 验收、要求图标工作到此为止，并把 0.0.14 交下一位 agent。0.0.13 之后的未发布增量只有 `src/plugin.js` 的自绘图标（`addIcon('knowledge-map')` + ribbon/tab），构建 `main.js` 334,284 B sha256 `9211f03133ac257bb596ebb48e4aecace6d3a43f29b5cf6dddd7e6849fff2245`（未升版本、未打包）。0.0.14 范围：i18n 中英双语、`:has` 改 JS 类切换、Release 精简三资产 + attestations、localStorage 审查、in-app 安装验证、README 理念教程+动图、插件 id/URL 去 smoke（需先决策迁移与门户方案）。详情与 open 项见 `HANDOFF_NEXT.md`「本版交接：0.0.14」。
+```sh
+npm run build
+npm run test:release
+node scripts/package.mjs --out .local/release/review-candidate
+node scripts/quality_clean_check.mjs
+```
 
-首次接手读 `AGENTS.md`、`TODO.md`、`README.md`、`HANDOFF_NEXT.md`。活动构建入口是根目录 `src/`、`scripts/build.mjs` 与 `upstream/`；点目录 `.stage4/`、`.graphcore/`、`.pipeline/`、`.native/` 保留历史代码，仅供追溯。
+正式三个运行文件是dist/main.js、dist/manifest.json、dist/styles.css。dist还有测试模块，不能整包交付。默认构建不会复制私有快照，并只清理已知的旧smoke-payload副本；存在其他私有产物时打包拒绝。输出目录存在未知文件也拒绝，不自动删除它们。私有快照测试须显式指定隔离测试输入与输出，不再依赖build复制。
 
-## 可独立运行的补充测试
+clean_check把明确的当前候选源码/脚本/夹具复制到新临时目录，在没有.git、node_modules和私有状态时构建、跑默认契约并打包。它验证候选导出，不代表尚未提交源码已出现在HEAD/公开仓库。仅三个运行文件上传，摘要与说明另附发布正文。
 
-构建后可执行 `node scripts/layout_scale_ab.mjs`（多组规模）、`node scripts/continuous_layout_benchmark.mjs`（连续核心编辑）、`node scripts/layout_performance_check.mjs`（几何性能）。A/B 使用仓库内冻结的 0.0.9 纯核心代码，来源及哈希见 `tests/fixtures/README.md`；`node scripts/layout_scale_ab_0_0_10.mjs` 则在同机同进程内对照冻结的 0.0.10（schema2）与当前 0.0.11（schema3）。
+## 根据改动选专项
 
-`core_check.mjs` 默认用合成输入；只有显式添加 `--private-snapshot` 才读取本机冻结快照。合成通过不能代替历史快照逐像素回归。
+- 提示/控件：默认i18n与状态契约，加npm run test:sync-settings-browser（Python Playwright及Chrome，独立合成页面/IndexedDB，非真实Obsidian）。
+- 保存/身份/恢复：package中的test:sync-*-disk及受影响的故障/中断脚本；使用临时合成目录，不编辑日常库。
+- 图谱/宿主/触屏：默认契约加受影响的浏览器/原生合成场景；像素、真实Markdown、Windows/iPad与第三方传输不能互相替代。
+- 性能：固定样本、同一构建/设备、明确起止点；报告原始数据与局限，不事后挑数值。
 
-## 需要另行准备的测试
+旧Python脚本可能有本机路径/端口约定，先读再运行；Playwright/Pillow环境未锁定，不宣称跨系统即装即跑。旧A/B依赖真实历史包，缺失时报告未执行。不得拿新包冒充旧版。
 
-- Python 集成脚本需要 Playwright；像素比较还需要 Pillow；实际依赖和启动参数看各脚本。没有锁定的 Python 环境，本轮未验证跨系统安装。
-- 原生测试依赖本机 Obsidian / Chrome、独立 vault、独立 profile、CDP 端口。多数脚本按 `Path(__file__)` 定位项目，但旧脚本含 Windows 绝对路径，必须先读脚本再适配。不要照搬日常库安装、复制或启动脚本。
-- 原生主窗口合成测试通常连接 9242 / `test-vault-layout-fix`；旧冒烟 9238 / `test-vault`；真实副本 9239 / `real-vault-trial`。这些目录与端口是原机器约定，clone 不包含它们，也不保证实例存在。
-- `prepare_smoke.py`、`export_pipeline_golden.py`、旧像素对照等依赖原渲染项目或 `.local` 快照；缺少时应报告未执行，不能改成跳过后报全通过。
-- `native_ab_check.py` 还需要 `.local/releases/` 下 0.0.9/0.0.10 冻结 ZIP；仓库没有这些本地产物。不要把当前代码打包冒充旧版。`prepare_native_ab.mjs` 可生成合成输入，但不能补齐缺失历史安装包。
-- `.local` 的历史 JSON、图片、安装回执及真实副本都未提交。`*_RESULT.md` 是历史结果摘要，不代表 clone 后已复跑。
+## 维护与发布
 
-集成测试须先核对实际 vault 绝对路径、运行插件版本与设置；串行操作同一 Obsidian 实例，备份程序和配置，finally 恢复范围与布局。只编辑测试库的合成探针，不编辑日常笔记或副本原文。
+流程见[贡献指南](CONTRIBUTING.md)，模块见[架构](docs/ARCHITECTURE.md)，数据见[安全边界](docs/DATA_SAFETY.md)。发布CI接受无前缀X.Y.Z正式版本，先运行相同门禁；手动dispatch仍仅验证，不创建Release。已有Release拒绝覆盖。正式发布前另验最终设备、备份/升级/回退与用户体验，源码及字节冻结后按明确授权推tag。
 
-## 移动端（0.0.15 iPadOS 发布交接，2026-11-07）
-
-- 计划与差距清单：`docs/MOBILE_PLAN.md`；执行清单：`TODO.md` 的 `MOB-P1` / `MOB-A1…A10`；接手入口：docs/HANDOFF_0.0.15_README_RELEASE.md；README 计划：docs/README_PLAN_0.0.15.md。
-- 2026-11-07 用户已验收 iPad 功能用例、PC-F1/PC-F2 及精简 README。0.0.15 本地候选版本/安装与发布说明/门户草稿/三资产已准备；11 脚本与 Windows Obsidian 1.15.0 独立合成库 10 项原生回归通过，三文件版本/哈希/二次构建一致。本轮明确授权后已 commit/push/tag 并发布 GitHub Release 0.0.15，门户同步状态见发布记录。Android 下一版、iPhone 与未测性能项如实披露；本轮未重测 iPad，详见 docs/RELEASE_PREP_0.0.15.md。
-- 手机构建（未发布时）验证方式：把 `dist/main.js`、`dist/manifest.json`、`dist/styles.css` 放进手机端 vault 的 `.obsidian/plugins/knowledge-graph-smoke/`，重启 Obsidian 后启用；Android 可用 `adb push`，iOS 通过 Obsidian Sync 或文件 App。
-- Android 调试：`adb devices` + Chrome `chrome://inspect`（WebView 可调试时）或 `adb logcat`；本机无 macOS，iOS 只能由用户手动验证，结论须如实标注。
-- MOB-A7：同步 buildGraph 与分块 buildGraphAsync 共用生成器。管线契约脚本覆盖结果一致性、分阶段取消及 Worker 故障清理，仍为 11 脚本门禁；性能来源与局限见 docs/MOBILE_PLAN.md §6。
-- 移动端构建/测试命令不变：`node scripts/build.mjs`、`node scripts/test.mjs`；桌面 CDP 回归继续用 `.local/native/` 下的脚本（需 danger-full-access）。
-
-## 交付边界
-
-源码已 push 到公开仓库，0.0.13 为首次正式 Release（tag `0.0.13`、五资产；0.0.14 起改为三资产 + attestations，`SHA256SUMS`/说明进正文），仓库含 MIT LICENSE 与 `versions.json`。**社区目录条目已上线**（<https://community.obsidian.md/plugins/knowledge-graph-smoke>，自动评审 Completed、仅建议项）；2026-11-05 目录镜像同步后客户端「浏览」可搜到。0.0.12 候选已按 48-P2 决定收紧 manifest：名称 Knowledge Map、`minAppVersion` 1.6.7（已在 Obsidian 1.6.7 与 1.14.5 实测）、`isDesktopOnly: true`；描述已由用户确认（即 manifest 现有英文）；0.0.12 已按授权装入日常库并完成 1–2 天自用体验（2026-11-03 通过）。0.0.13 在此基础上只改 HUD 结构与样式（顶栏重建按钮、2 秒构建状态胶囊、布局工具横带、窄窗口紧凑化），布局数据与交互契约不变；本地已构建、跑完 10 个合成脚本、打包到 `.local/release/0.0.13/` 并在合成库 vault-012 + Obsidian 1.15.0 做过原生 UI 验证，0.0.13 已 push 到 GitHub 并发布首次正式 Release（资产 main.js/manifest.json/styles.css/SHA256SUMS/RELEASE_NOTES.md）；用户日常库验收已通过。社区目录提交入口已变更为官方门户 <https://community.obsidian.md>（`obsidianmd/obsidian-releases` 的 PR 通道已废弃/禁用），需 Obsidian 账号登录后提交，属 48-P3 的剩余步骤。
+原生设备验证先核对实际库、安装三文件摘要和运行版本。私有报告/截图/配置留在.local；公开仅合成夹具与脱敏结论。产品验收由用户确认，未执行检查不记通过。
