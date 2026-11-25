@@ -12,18 +12,18 @@ First use needs only one tap of “Enable layout sync” per device. The plugin 
 
 ## 1. 准备 / Prepare
 
-- 两台设备：Windows PC 与 iPad（验证范围）。两个**独立全新测试库**，内容/建图范围一致（本候选预置 `Synthetic/**` 两篇合成笔记）。
+- 两台设备：Windows PC 与 iPad（验证范围）。两个**独立全新测试库**，图谱包含相同笔记，插件设置中的“包含范围”“排除范围”和“排除笔记”一致（本候选预置 `Synthetic/**` 两篇合成笔记）。
 - 一个外部同步工具（如坚果云），负责在两端之间传输库内的 **`Knowledge Map Sync`** 文件夹。本候选不控制同步队列、不加云账号设置。
 - 远端同步目录：`{{REMOTE}}`（仅用于本次独立测试，勿与日常库远端混用）。
 - 候选已预置在提供的 pristine 库中（插件 ID `knowledge-map-sync-ux`，名称 Knowledge Map Sync UX Candidate）。若手动安装：仅替换 `main.js`/`manifest.json`/`styles.css` 三个运行文件到测试库的 `.obsidian/plugins/knowledge-map-sync-ux/`，保留该库 `data.json` 与 App 私有状态。
 
-Two devices (Windows PC + iPad), two independent fresh test vaults with the same build scope (`Synthetic/**`). An external sync tool (e.g. Nutstore) transfers the in-vault **`Knowledge Map Sync`** folder. Remote folder: `{{REMOTE}}`. The candidate is preinstalled in the provided pristine vaults.
+Two devices (Windows PC + iPad), two independent fresh test vaults with the same notes and matching Include scope, Exclude scope and Excluded notes settings (`Synthetic/**`). An external sync tool (e.g. Nutstore) transfers the in-vault **`Knowledge Map Sync`** folder. Remote folder: `{{REMOTE}}`. The candidate is preinstalled in the provided pristine vaults.
 
 ## 2. 主验收：两台全新设备，无需预先拖动 / Headline: two fresh devices, no prior drag
 
 1. 两端安装并启用候选插件，打开/构建当前库图谱（命令面板 Open graph）。
 2. 两端分别进入 设置 → Knowledge Map → **布局同步**，点一次开关“开启布局同步”。**无需先拖动任何元素。**
-3. 插件自动准备固定默认图谱与初始化资料。状态显示：“已准备共享资料。请让同步工具传输 Knowledge Map Sync 文件夹。”
+3. 插件自动准备固定默认图谱与初始化资料。状态显示：“本机已准备好。请用同步工具传输 Knowledge Map Sync 文件夹。”
 4. 让同步工具把 `Knowledge Map Sync` 文件夹经 `{{REMOTE}}` 在两端之间传输完成。
 5. 文件到达后，两端自动连接并加入**同一默认图谱**，状态进入正常使用。**无需选择/核对 ID，无需手动确认空布局。**
 6. 在 PC 移动一个元素并结束调整；传输完成后 iPad 对应图谱显示相同位置。再在 iPad 移动 → PC 接收。两端重开后布局保持。

@@ -34,7 +34,8 @@ const idle=await open('demo-idle',null);
 const ready=await open('demo-ready',null);await ready.startEasySync();await ready.settled();
 const active=await open('demo-active',null);await seedShared('demo-active',DEFAULT_LAYOUT_VAULT_ID,left,'a'.repeat(32));await active.startEasySync();await active.settled();
 const conflict=await open('demo-conflict',null);await conflict.startEasySync();await conflict.saveLayout(right);await conflict.settled();await collideShared('demo-conflict');await conflict.receive();await conflict.settled();
-const demos=[['idle','未开启 / Off',idle],['ready','准备完成 / Prepared',ready],['active','正常使用 / Normal',active],['conflict','冲突 / Conflict',conflict]];
+const draft=await open('demo-draft',null);await seedShared('demo-draft',DEFAULT_LAYOUT_VAULT_ID,left,'b'.repeat(32));await draft.startEasySync();await draft.stopEasySync();await draft.saveLayout(right);await draft.startEasySync();await draft.settled();
+const demos=[['idle','未开启 / Off',idle],['ready','准备完成 / Prepared',ready],['active','正常使用 / Normal',active],['conflict','冲突 / Conflict',conflict],['draft','待审草稿 / Draft',draft]];
 const panels=new Map(),stage=document.getElementById('settings');
 for(const [key,,h]of demos){const box=document.createElement('div');box.dataset.demoBox=key;box.hidden=true;stage.append(box);
  panels.set(key,mountObsidianEasySettings({container:box,app:{vault:backupVault},host:h,Modal,t:(...args)=>window.kgT(...args),onCheck:()=>h.receive()}));}

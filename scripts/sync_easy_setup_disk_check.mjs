@@ -13,6 +13,7 @@ import {testLockManager} from './sync-host-test-helpers.mjs';
 import {validateTestSettings} from './sync-settings-test-helpers.mjs';
 import {createNodeSyncStore} from './sync-node-store.mjs';
 import {createDefaultLayoutBootstrap,DEFAULT_LAYOUT_VAULT_ID} from '../src/sync/default-layout-bootstrap.mjs';
+import {describeEasySync} from '../src/sync/obsidian-easy-settings.mjs';
 const base=path.resolve('.local/sync-ux/a2-disk'),pluginId='knowledge-graph-smoke';
 const right=await layout(20);
 function io(root){
@@ -62,5 +63,17 @@ const c2=await hostFor(rootC);const rc=await c2.host.resumeEasySync();assert.equ
 assert.equal(c2.host.state().selected.vault,DEFAULT_LAYOUT_VAULT_ID);assert.equal(c2.host.state().session.accepted.operations.length,0);
 assert.equal((await createDefaultLayoutBootstrap(io(rootC)).scan()).facts,1);assert.equal(c2.host.state().selectionPending,null);await c2.host.close();
 checks.push({case:'selection-exit-recovery',pass:true,resumedSelection:true,noDuplicateBootstrap:true});
+// 4. Off-period draft survives a real-file reopen and stays behind review.
+const rootD=await fs.mkdtemp(path.join(out,'draft-'));await seed(rootD);
+const d=await hostFor(rootD,{local:right});await d.host.startEasySync();await d.host.stopEasySync();await d.host.saveLayout(await layout(-20));await d.host.startEasySync();await d.host.settled();
+const draftBefore=d.host.state().session.localState.layoutDraft,opsBefore=d.host.state().session.accepted.operations.length;
+async function inventory(root){const base=path.join(root,'shared'),rows=[];for(const name of (await fs.readdir(base,{recursive:true})).sort()){const file=path.join(base,name);if((await fs.stat(file)).isFile())rows.push([name,(await fs.readFile(file)).toString('hex')]);}return rows;}
+const sharedBefore=await inventory(rootD);await d.host.close();
+const d2=await hostFor(rootD);await d2.host.resumeEasySync();await d2.host.settled();
+assert.deepEqual(describeEasySync(d2.host.easySyncState(),d2.host.state()),{status:'draftReview',action:'publish'});
+assert.equal(d2.host.state().session.localState.layoutDraft.id,draftBefore.id);assert.equal(d2.host.state().session.accepted.operations.length,opsBefore);
+const review=await d2.host.previewPublication();assert.equal(review.kind,'publication-review');await d2.host.discardReview(review.token);await d2.host.settled();assert.deepEqual(await inventory(rootD),sharedBefore);
+const accepted=await d2.host.previewPublication();await d2.host.confirmPublication(accepted.token);await d2.host.settled();assert.equal(d2.host.state().session.accepted.operations.length,opsBefore+1);await d2.host.close();
+checks.push({case:'off-period-draft-review-after-reopen',pass:true,noWritesOnCancel:true,explicitConfirmation:true});
 await fs.writeFile(path.join(out,'verification.json'),JSON.stringify({pass:true,out,checks,scope:'Real shared/private files and file-backed App contract with injected locks; exchange is local file copy, not Nutstore, iPad or real transfer.'},null,2));
 console.log(JSON.stringify({pass:true,out,checks}));

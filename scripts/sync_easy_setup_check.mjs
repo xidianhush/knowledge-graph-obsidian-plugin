@@ -11,6 +11,7 @@ import {packSchema3Operation} from '../src/sync/wire-prototype.mjs';
 import {cloneBoundedSyncJson} from '../src/sync/causal-prototype.mjs';
 import {syncContentHash} from '../src/sync/persistence-prototype.mjs';
 import {easySyncKey} from '../src/sync/easy-sync-setup.mjs';
+import {describeEasySync} from '../src/sync/obsidian-easy-settings.mjs';
 const checks=[],left=await layout(-20),right=await layout(20);
 async function test(name,fn){await fn();checks.push(name);}
 function memoryAdapter(){
@@ -94,10 +95,17 @@ await test('An existing joined connection is preserved by the switch without rej
 await test('Turning off blocks shared writes and keeps local work; turning on does not auto-publish the off-period draft',async()=>{
  const f=await setup({local:left});await f.host.startEasySync();await f.host.settled();const ops=f.host.state().session.accepted.operations.length;
  await f.host.stopEasySync();assert.equal(f.host.easySyncState().phase,'off');assert.equal(f.host.easySyncState().authorization.enabled,false);
+ assert.deepEqual(describeEasySync(f.host.easySyncState(),f.host.state()),{status:'off',action:null});
  await f.host.saveLayout(right);await f.host.settled();assert.equal(f.host.state().session.accepted.operations.length,ops);const draft=f.host.state().session.localState.layoutDraft;assert.ok(draft);
  await f.host.startEasySync();await f.host.settled();assert.equal(f.host.state().session.accepted.operations.length,ops);assert.equal(f.host.state().session.localState.layoutDraft.id,draft.id);
  assert.equal(f.host.easySyncState().authorization.enabled,true);
- await f.host.resumePublication({confirmed:true});await f.host.settled();assert.equal(f.host.state().session.accepted.operations.length,ops+1);await f.close();
+ assert.deepEqual(describeEasySync(f.host.easySyncState(),f.host.state()),{status:'draftReview',action:'publish'});
+ const filesBefore=[...f.adapter.memory].map(([p,b])=>[p,Array.from(b)]);
+ const review=await f.host.previewPublication();assert.equal(review.kind,'publication-review');assert.equal(review.draft.id,draft.id);
+ await f.host.discardReview(review.token);await f.host.settled();
+ assert.deepEqual([...f.adapter.memory].map(([p,b])=>[p,Array.from(b)]),filesBefore);assert.equal(f.host.state().session.accepted.operations.length,ops);
+ const confirmed=await f.host.previewPublication();assert.equal(confirmed.kind,'publication-review');await f.host.confirmPublication(confirmed.token);await f.host.settled();
+ assert.equal(f.host.state().session.accepted.operations.length,ops+1);const view=describeEasySync(f.host.easySyncState(),f.host.state());assert.equal(view.action,'check');assert.ok(['written','clean'].includes(view.status));await f.close();
 });
 await test('Reopen resumes the authorized flow without reimporting or reassigning the target',async()=>{
  const f=await setup({local:left});await f.host.startEasySync();const vault=f.host.state().selected.vault,ops=f.host.state().session.accepted.operations.length;await f.host.close();
@@ -115,5 +123,21 @@ await test('Damaged bootstrap input pauses the automatic flow instead of reiniti
  await f.adapter.writeBinary(dir+'/'+'f'.repeat(64)+'.'+'3'.repeat(32)+'.json',new TextEncoder().encode('{"version":9}').buffer);
  const r=await f.host.startEasySync();assert.equal(r.kind,'held');assert.equal(f.host.easySyncState().phase,'paused');
  assert.equal(f.host.state().selected,null);assert.equal((await createDefaultLayoutBootstrap(f.adapter).scan()).facts,0);await f.close();
+});
+await test('Cold reopen retains a draft review entry without publishing or changing the draft',async()=>{
+ const f=await setup({local:left});await f.host.startEasySync();await f.host.stopEasySync();await f.host.saveLayout(right);await f.host.startEasySync();await f.host.settled();
+ const before=f.host.state(),filesBefore=[...f.adapter.memory].map(([p,b])=>[p,Array.from(b)]);await f.close();
+ const h=await createUnifiedSyncHost(f.options);try{
+  await h.resumeEasySync();await h.settled();assert.deepEqual(describeEasySync(h.easySyncState(),h.state()),{status:'draftReview',action:'publish'});
+  assert.equal(h.state().session.localState.layoutDraft.id,before.session.localState.layoutDraft.id);assert.deepEqual(h.state().session.accepted,before.session.accepted);
+  const review=await h.previewPublication();assert.equal(review.kind,'publication-review');await h.discardReview(review.token);await h.settled();
+  assert.deepEqual([...f.adapter.memory].map(([p,b])=>[p,Array.from(b)]),filesBefore);
+ }finally{await h.close();}
+});
+await test('An armed ordinary draft keeps its automatic-queue status rather than requiring manual review',async()=>{
+ const f=await setup({local:left});await f.host.startEasySync();f.hide(true);await f.host.saveLayout(right);await f.host.settled();
+ assert.ok(f.host.state().session.localState.layoutDraft);assert.equal(f.host.state().publication.armed,true);
+ assert.deepEqual(describeEasySync(f.host.easySyncState(),f.host.state()),{status:'draft',action:'check'});
+ f.hide(false);await f.host.resumePublication();await f.host.settled();assert.equal(f.host.state().session.localState.layoutDraft,null);await f.close();
 });
 await fs.mkdir('.local/sync-ux/a2',{recursive:true});await fs.writeFile('.local/sync-ux/a2/easy-setup-check.json',JSON.stringify({passed:checks.length,checks},null,2));console.log(JSON.stringify({passed:checks.length,checks}));

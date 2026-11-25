@@ -11,7 +11,10 @@ import {openObsidianConflictReview,renderObsidianLayoutPreview} from './obsidian
 export function describeEasySync(easy,state){
  const phase=easy?.phase??'idle',reason=easy?.reason??null,s=state?.session;
  const conflict=!!s?.attemptConflict||s?.pending?.mode==='resolution'||/conflict/.test(reason??'');
- const draftReview=!!s?.localState?.layoutDraft&&/publication-review-required|local-layout-review-required/.test(reason??'');
+ // A restored/off-period draft leaves the existing publisher queue unarmed.
+ // Surface its review action without arming or resuming publication from UI state.
+ const draftReview=!!s?.localState?.layoutDraft&&(/publication-review-required|local-layout-review-required/.test(reason??'')||
+  (state?.publication?.armed===false&&!state.publication.closed));
  switch(phase){
   case 'idle':return {status:'idle',guidance:true,action:null};
   case 'off':return {status:'off',action:null};

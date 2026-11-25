@@ -1,5 +1,5 @@
 """SYNC-UX-A3 clickable sketch check: owned headless Chrome renders the real
-simplified easy-sync panel in four states with real DOM clicks. Captures
+simplified easy-sync panel in five states with real DOM clicks. Captures
 zh/en, dark/light and narrow screenshots for user visual/copy confirmation.
 Not Obsidian, Nutstore or iPad validation; no user browser/profile is opened.
 """
@@ -69,7 +69,7 @@ checks=[]
 def note(v):checks.append(v);(OUT/'progress.json').write_text(json.dumps({'checks':checks},ensure_ascii=False,indent=2),encoding='utf-8');print(v,flush=True)
 def shot(name):
  js('scrollTo(0,0)');data=call('Page.captureScreenshot',{'format':'png','captureBeyondViewport':False})['data'];(OUT/name).write_bytes(base64.b64decode(data))
-expected={'idle':'idle','ready':'awaitingTransfer','active':'clean','conflict':'conflict'}
+expected={'idle':'idle','ready':'awaitingTransfer','active':'clean','conflict':'conflict','draft':'draftReview'}
 try:
  wait('window.qaEasyReady===true');wait('window.qaControlsReady===true')
  # Each demo renders the expected status, one switch, at most one primary action, collapsed advanced.
@@ -81,7 +81,7 @@ try:
   assert js(f'document.querySelectorAll("{box} [data-easy-action]").length')<=1
   assert js(f'document.querySelector("{box} [data-easy-advanced]").open')==False
   note(f'{key} state renders status={status} with one switch, <=1 action and collapsed advanced')
- # Screenshots: four states across language/theme/width for user confirmation.
+ # Screenshots: five states across language/theme/width for user confirmation.
  for width,cls in [(1360,''),(390,'narrow')]:
   call('Emulation.setDeviceMetricsOverride',{'width':width,'height':960,'deviceScaleFactor':1,'mobile':False})
   narrow=str(cls=='narrow').lower()
@@ -95,7 +95,7 @@ try:
      js(f'qaEasy.show("{key}")');js('qaEasy.settled()')
      assert js('document.documentElement.scrollWidth<=innerWidth'),(width,lang,theme,key)
      shot(f'{width}-{lang}-{theme}-{key}.png')
- note('Four states captured in zh/en, dark/light, wide/narrow without horizontal overflow')
+ note('Five states captured in zh/en, dark/light, wide/narrow without horizontal overflow')
  # Real click: the switch turns the off demo on; a primary action is clickable.
  js('qaEasy.show("idle")');js('qaEasy.language("zh")');js('document.body.classList.remove("light","narrow")')
  call('Emulation.setDeviceMetricsOverride',{'width':1360,'height':960,'deviceScaleFactor':1,'mobile':False})
@@ -116,6 +116,25 @@ try:
  assert js('!!document.querySelector("[data-demo-box=active] [data-historical-file]")')
  assert js('document.querySelectorAll("[data-demo-box=active] [data-easy-action]").length')<=1
  note('Production one-switch panel retains historical restore inside collapsed advanced area')
+ # Real off-period draft: review is reachable, cancellation preserves history,
+ # and publication only happens after confirming the existing preview.
+ js('qaEasy.show("draft")');js('qaEasy.language("zh")');js('qaEasy.settled()')
+ before_draft=js('qaEasy.state().session.localState.layoutDraft.id')
+ before_ops=js('qaEasy.state().session.accepted.operations.length')
+ js('qaEasy.action("publish")');wait('!!document.querySelector(".modal [data-sync-cancel]")')
+ assert js('qaEasy.state().session.accepted.operations.length')==before_ops
+ page.locator('.modal [data-sync-cancel]').click();js('qaEasy.settled()')
+ assert js('qaEasy.state().session.localState.layoutDraft.id')==before_draft
+ assert js('qaEasy.state().session.accepted.operations.length')==before_ops
+ assert js('qaEasy.status()')=='draftReview'
+ note('Off-period draft exposes one review action; opening and cancelling preview preserves draft and accepted history')
+ js('qaEasy.action("publish")');wait('!!document.querySelector(".modal [data-sync-confirm]")')
+ page.locator('.modal [data-sync-confirm]').click()
+ wait('!document.querySelector(".modal")');js('qaEasy.settled()')
+ assert js('qaEasy.state().session.accepted.operations.length')==before_ops+1
+ assert js('qaEasy.state().session.localState.layoutDraft') is None
+ assert js('qaEasy.status()') in ('clean','written')
+ note('Confirming the existing preview publishes exactly once and clears the draft review state')
  result={'pass':True,'out':str(OUT),'checks':checks,'states':expected,'scope':'Owned headless Chrome real DOM/buttons and IndexedDB; injected App/shared-file/Modal APIs. Not native Obsidian, Nutstore or iPad.'}
  (OUT/'verification.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8');print(json.dumps(result,ensure_ascii=False))
 except Exception as error:
