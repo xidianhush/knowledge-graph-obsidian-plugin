@@ -27,7 +27,7 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  if([readSource,saveUnjoined,createStore,validateSettings,openBackend,getGraph,getEpoch,onData].some(fn=>typeof fn!=='function'))throw Error('unified-options');
  let registry=null,lifecycle=null,bundle=null,publisherQueue=null,rotation=null,rotationData=null,closed=false,freezing=false,error=null,externalEpoch=0,tail=Promise.resolve();
  const joinTokens=new WeakMap(),reviews=new WeakMap(),historicalReviews=new WeakMap(),listeners=new Set(),exportTasks=new Map();let saveError=null,outcome=null,pathBasis=null,pathOverflow=false,structureWaiting=false,privateBudget=null;const pathChanges=[];
- let exportFolders=null;
+ let exportFolders=null,publicationWrite=null;
  let easyAuth=null;const easy={phase:'idle',reason:null,candidates:null,target:null};
  async function withExportFolders(destination,id,fn){
   if(typeof destination.location!=='string')return fn();
@@ -67,7 +67,16 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  async function makeBundle({device,vault,access}){
   const backend=await openBackend({installation:device.state().installation,vault}),quota=createPrivateStoreBudget({store:backend,...(budgetLimits?{limits:budgetLimits}:{})});
   const privateStore=createDeviceBoundPrivateStore({store:quota.store,device,vault,access});
-  const attempts=writable()?createAttemptHistory(adapter,vault):null;
+  // Native watcher callbacks can run before an adapter write promise settles.
+  // Only that I/O window may account for its own event; later callbacks must
+  // invalidate the epoch even when they reference a locally allocated path.
+  const transportWrite=async(path,folder,action)=>{
+   const writing=publicationWrite;if(!writing||writing.bundle!==bundle)return action();
+   const io={path,folder};writing.io=io;
+   try{return await action();}finally{if(writing.io===io)writing.io=null;}
+  };
+  const attempts=writable()?createAttemptHistory({stat:p=>adapter.stat(p),list:p=>adapter.list(p),readBinary:p=>adapter.readBinary(p),
+   mkdir:p=>transportWrite(p,true,()=>adapter.mkdir(p)),writeBinary:(p,b)=>transportWrite(p,false,()=>adapter.writeBinary(p,b))},vault):null;
   const session=createDurableSyncSession({privateStore,...(attempts?{attemptHistory:attempts}:{sharedStore:createReadOnlyLayoutHistory(adapter,vault)}),vault,installation:device.state().installation,access,
    createModel:model,getEpoch:epoch,readLocalData:async()=>rotationData??source(),nextId:()=>rotation?.state()?.target===vault?rotation.state().rootId:randomSyncOperationId(),normalizeLocalLayout:raw=>normalizeJoinLayout(raw,model),projectLocalLayout:raw=>projectCurrentJoinLayout(raw,model),enableConflictResolution:!!attempts,checkpoint});
   const projection=createPrivateConfigProjection({session,validateSettings,getExternalEpoch:()=>externalEpoch});
@@ -78,7 +87,10 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
  function startQueue(){
   if(!bundle?.ready||!bundle.attempts||publisherQueue||rotation?.state())return;
   const b=bundle,publisher=createLayoutDraftPublisher({session:b.session,coordinator:b.coordinator,attemptHistory:b.attempts,vault:registry.state().selected.vault,createModel:model,getEpoch:epoch,
-   reserve(){const captured=epoch(),guard=store.reserveExternal(x=>x);return guard&&{release:()=>guard.release(),isCurrent:()=>gate()===true&&captured===epoch()};},
+   reserve(){const captured=epoch(),guard=store.reserveExternal(x=>x);if(!guard)return null;
+    const directory=b.attempts.directory,parts=directory.split('/');
+    const writing={bundle:b,attempts:new Set(b.session.state().pending?.attempts??[]),folders:new Set(parts.map((_,i)=>parts.slice(0,i+1).join('/')))};publicationWrite=writing;
+    return {release(){if(publicationWrite===writing)publicationWrite=null;guard.release();},isCurrent:()=>gate()===true&&captured===epoch()};},
    runExclusive:fn=>lifecycle.run(()=>fn()).then(unwrap)});
   b.publisher=publisher;
   publisherQueue=createAutoPublishQueue({readLocal:()=>b.session.state(),publish:publisher.publish,canRun:gate,onResult:r=>{
@@ -550,7 +562,17 @@ export async function createUnifiedSyncHost({app,pluginId,adapter,locks=globalTh
    if(!bundle?.ready){const data=await source();await saveUnjoined({...data,ui:{...data.ui,[key]:String(value)}},{expected:data});return {kind:'saved-local'};}
    const result=await run(b=>b.coordinator.saveUi(key,value));await deliver();return result;
   }),
-  notifyExternalChange(){externalEpoch++;return enqueue(async()=>{if(!bundle?.ready)return {kind:'local-input'};const result=await run(observe);await deliver();return result;});},
+  notifyExternalChange(change){
+   // Native vault events also echo our current immutable publication. Ignore
+   // epoch invalidation only for its new paths, never an existing consent input.
+   // The session still scans/readbacks every byte and validates reviewed inventory.
+   const writing=publicationWrite,event=change?.event,path=change?.path;
+   const echoed=writing?.bundle===bundle&&!change?.oldPath&&(
+    change?.folder===true&&writing.io?.folder===true&&event==='create'&&writing.folders.has(path)&&writing.io.path.startsWith(path)||
+    change?.folder===false&&writing.io?.folder===false&&writing.io.path===path&&['create','modify'].includes(event)&&!writing.attempts.has(path)&&bundle?.session.state().pending?.attempts?.includes(path));
+   if(!echoed)externalEpoch++;
+   return enqueue(async()=>{if(!bundle?.ready)return {kind:'local-input'};const result=await run(observe);await deliver();return result;});
+  },
   effective:()=>enqueue(deliver),
   receive:options=>{if(gate(false)!==true)return Promise.resolve(held(gate(false).reason));return lifecycle.run(b=>b.session.acceptExternal(options)).then(unwrap).then(r=>report(r,'receive'));},
   canReceive:()=>gate(false)===true,

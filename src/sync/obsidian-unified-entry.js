@@ -72,7 +72,7 @@ module.exports=class KnowledgeMapUnifiedCandidate extends BasePlugin{
    // drive the existing external-observe path. Coalesced by scheduleEasy.
    for(const event of ['modify','create','delete','rename'])this.registerEvent(this.app.vault.on(event,(file,oldPath)=>{
     if(![file?.path,oldPath].filter(Boolean).some(p=>p==='Knowledge Map Sync'||p.startsWith('Knowledge Map Sync/')))return;
-    void host.notifyExternalChange();scheduleEasy();
+    void host.notifyExternalChange({event,path:file?.path,oldPath,folder:Array.isArray(file?.children)});scheduleEasy();
    }));
    scheduleEasy();
   }

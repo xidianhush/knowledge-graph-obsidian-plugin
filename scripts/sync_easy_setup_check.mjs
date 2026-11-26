@@ -16,12 +16,12 @@ const checks=[],left=await layout(-20),right=await layout(20);
 async function test(name,fn){await fn();checks.push(name);}
 function memoryAdapter(){
  const memory=new Map(),folders=new Set();
- return {memory,folders,
+ return {memory,folders,onChange:null,
   async stat(p){return memory.has(p)?{type:'file',size:memory.get(p).length}:folders.has(p)?{type:'folder',size:0}:null;},
   async list(p){const inScope=n=>n.startsWith(p+'/')&&!n.slice(p.length+1).includes('/');return {files:[...memory.keys()].filter(inScope),folders:[...folders].filter(inScope)};},
   async readBinary(p){return Uint8Array.from(memory.get(p)).buffer;},
-  async mkdir(p){const parts=p.split('/');for(let i=1;i<=parts.length;i++)folders.add(parts.slice(0,i).join('/'));},
-  async writeBinary(p,bytes){memory.set(p,new Uint8Array(bytes));}};
+  async mkdir(p){const parts=p.split('/');for(let i=1;i<=parts.length;i++){const path=parts.slice(0,i).join('/');if(!folders.has(path)){folders.add(path);this.onChange?.({event:'create',path,folder:true});}}},
+  async writeBinary(p,bytes){const event=memory.has(p)?'modify':'create';memory.set(p,new Uint8Array(bytes));this.onChange?.({event,path:p,folder:false});}};
 }
 function copyShared(from,to){for(const [k,v] of from.memory)if(k.startsWith('Knowledge Map Sync'))to.memory.set(k,new Uint8Array(v));for(const f of from.folders)if(f.startsWith('Knowledge Map Sync'))to.folders.add(f);}
 async function seedLayout(adapter,vault,snapshot,opId){
@@ -139,5 +139,38 @@ await test('An armed ordinary draft keeps its automatic-queue status rather than
  assert.ok(f.host.state().session.localState.layoutDraft);assert.equal(f.host.state().publication.armed,true);
  assert.deepEqual(describeEasySync(f.host.easySyncState(),f.host.state()),{status:'draft',action:'check'});
  f.hide(false);await f.host.resumePublication();await f.host.settled();assert.equal(f.host.state().session.localState.layoutDraft,null);await f.close();
+});
+await test('Native transport events from this publication do not revoke its own reviewed consent',async()=>{
+ const f=await setup({local:empty});await f.host.startEasySync();await f.host.stopEasySync();await f.host.saveLayout(right);await f.host.startEasySync();await f.host.settled();
+ const events=[],notifications=[];f.adapter.onChange=change=>{events.push(change);notifications.push(f.host.notifyExternalChange(change));};
+ const review=await f.host.previewPublication();assert.equal(review.kind,'publication-review');const result=await f.host.confirmPublication(review.token);await f.host.settled();await Promise.all(notifications);
+ assert.ok(['accepted','accepted-deferred'].includes(result.kind),JSON.stringify({result:result.kind,reason:result.reason,events}));
+ assert.ok(events.some(e=>e.folder));assert.ok(events.some(e=>!e.folder));assert.equal(f.host.state().session.accepted.operations.length,1);assert.equal(f.host.state().session.localState.layoutDraft,null);await f.close();
+});
+for(const kind of ['foreign-create','delete','rename','settings','graph'])await test('Publication still stops for '+kind+' changes during native event handling',async()=>{
+ const f=await setup({local:empty});await f.host.startEasySync();await f.host.stopEasySync();await f.host.saveLayout(right);await f.host.startEasySync();await f.host.settled();
+ let injected=false;const notifications=[];
+ f.adapter.onChange=change=>{notifications.push(f.host.notifyExternalChange(change));if(injected)return;injected=true;
+  if(kind==='graph')f.bump();
+  else if(kind==='settings')notifications.push(f.host.notifyExternalChange());
+  else notifications.push(f.host.notifyExternalChange({event:kind==='foreign-create'?'create':kind,path:change.path+(kind==='foreign-create'?'/foreign.json':''),oldPath:kind==='rename'?change.path:undefined,folder:kind!=='foreign-create'}));};
+ const review=await f.host.previewPublication(),result=await f.host.confirmPublication(review.token);await f.host.settled();await Promise.all(notifications);
+ assert.equal(result.kind,'held');assert.equal(f.host.state().session.accepted.operations.length,0);assert.ok(f.host.state().session.localState.layoutDraft);await f.close();
+});
+await test('An echoed own attempt still fails byte validation when an external writer corrupts it',async()=>{
+ const f=await setup({local:empty});await f.host.startEasySync();await f.host.stopEasySync();await f.host.saveLayout(right);await f.host.startEasySync();await f.host.settled();
+ let corrupted=false;const notifications=[];f.adapter.onChange=change=>{
+  notifications.push(f.host.notifyExternalChange(change));if(!change.folder&&!corrupted){corrupted=true;f.adapter.memory.set(change.path,new TextEncoder().encode('{'));notifications.push(f.host.notifyExternalChange({...change,event:'modify'}));}
+ };
+ const review=await f.host.previewPublication(),result=await f.host.confirmPublication(review.token);await f.host.settled();await Promise.all(notifications);
+ assert.ok(corrupted);assert.equal(result.kind,'held');assert.equal(f.host.state().session.accepted.operations.length,0);assert.ok(f.host.state().session.localState.layoutDraft);await f.close();
+});
+await test('A late change after the own attempt readback still invalidates acceptance',async()=>{
+ const f=await setup({local:empty});await f.host.startEasySync();await f.host.stopEasySync();await f.host.saveLayout(right);await f.host.startEasySync();await f.host.settled();
+ let ownPath=null,reads=0,changed=false;const notifications=[],read=f.adapter.readBinary.bind(f.adapter);
+ f.adapter.onChange=change=>{if(!change.folder)ownPath=change.path;notifications.push(f.host.notifyExternalChange(change));};
+ f.adapter.readBinary=async path=>{const bytes=await read(path);if(path===ownPath&&++reads===2){changed=true;f.adapter.memory.set(path,new TextEncoder().encode('{'));notifications.push(f.host.notifyExternalChange({event:'modify',path,folder:false}));}return bytes;};
+ const review=await f.host.previewPublication(),result=await f.host.confirmPublication(review.token);await f.host.settled();await Promise.all(notifications);
+ assert.ok(changed);assert.equal(result.kind,'held');assert.equal(f.host.state().session.accepted.operations.length,0);assert.ok(f.host.state().session.localState.layoutDraft);await f.close();
 });
 await fs.mkdir('.local/sync-ux/a2',{recursive:true});await fs.writeFile('.local/sync-ux/a2/easy-setup-check.json',JSON.stringify({passed:checks.length,checks},null,2));console.log(JSON.stringify({passed:checks.length,checks}));
