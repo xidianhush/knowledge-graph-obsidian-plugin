@@ -89,7 +89,7 @@ kgI18nRegister('en', {
  'sync.easy.status.selecting':'Multiple shared layouts were found. Choose the one to use.','sync.easy.status.different':'Review and confirm which layout to use on this device.',
  'sync.easy.status.off':'Sync is off; local work is retained.','sync.easy.status.paused':'Sync is paused.','sync.easy.status.legacy':'Only read-only legacy history was found.',
  'sync.easy.status.conflict':'A layout conflict needs your decision.','sync.easy.status.draftReview':'Saved local work needs review before publishing.',
- 'sync.easy.action.select':'Choose a layout','sync.easy.action.review':'Review layouts','sync.easy.action.conflict':'Resolve conflict','sync.easy.action.publish':'Review & publish','sync.easy.action.check':'Check shared layout','sync.easy.action.recover':'Recovery options','sync.easy.action.readonly':'View read-only history',
+ 'sync.easy.action.select':'Choose a layout','sync.easy.action.review':'Review layouts','sync.easy.action.conflict':'Resolve conflict','sync.easy.action.publish':'Review and save to sync folder','sync.easy.action.check':'Check shared layout','sync.easy.action.recover':'Recovery options','sync.easy.action.readonly':'View read-only history',
 });
 kgI18nRegister('zh', {
  'sync.historicalTitle':'恢复历史布局',
@@ -182,5 +182,5 @@ kgI18nRegister('zh', {
  'sync.easy.status.selecting':'发现多份图谱，请选择要使用的一份。','sync.easy.status.different':'请审阅并确认这台设备要使用的布局。',
  'sync.easy.status.off':'同步已关闭，本地工作保留。','sync.easy.status.paused':'同步已暂停。','sync.easy.status.legacy':'只发现旧版只读历史。',
  'sync.easy.status.conflict':'布局冲突需要你来决定。','sync.easy.status.draftReview':'本机保存的工作需先审阅再发布。',
- 'sync.easy.action.select':'选择图谱','sync.easy.action.review':'审阅布局','sync.easy.action.conflict':'处理冲突','sync.easy.action.publish':'审阅并发布','sync.easy.action.check':'检查共享布局','sync.easy.action.recover':'恢复选项','sync.easy.action.readonly':'查看只读历史',
+ 'sync.easy.action.select':'选择图谱','sync.easy.action.review':'审阅布局','sync.easy.action.conflict':'处理冲突','sync.easy.action.publish':'审阅并保存到同步文件夹','sync.easy.action.check':'检查共享布局','sync.easy.action.recover':'恢复选项','sync.easy.action.readonly':'查看只读历史',
 });
