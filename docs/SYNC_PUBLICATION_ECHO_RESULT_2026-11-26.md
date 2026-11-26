@@ -1,6 +1,6 @@
 # 原生审阅发布阻断：定因与复验
 
-更新：2026-11-26（Asia/Shanghai）。起点为`ff5931d`，继续保留`dddf14a`的一次开关体验。本轮修复原生确认发布的自身文件事件误判，未增加设置步骤或改动图谱交互。原生确认发布及文件核对完成；用户体验判断仍待用户验收。
+更新：2026-11-26（Asia/Shanghai）。修复起点为`ff5931d`，本地修复检查点为`28a5149`，继续保留`dddf14a`的一次开关体验。修复原生确认发布的自身文件事件误判，未增加设置步骤或改动图谱交互。原生确认发布、文件核对、重开及新状态报告补验完成；用户体验判断仍待用户验收。
 
 ## 实际问题与原因
 
@@ -41,8 +41,21 @@
 
 有效清册在原trial的`g1-native/bounded-before-confirm.json`、`bounded-after-cancel.json`、`bounded-after-confirm.json`；比较结果为`.local/native-g1-diagnostic/bounded-native-verification.json`，页面文字为`bounded-native-clean-ui.txt`。私有报告、截图、配置和笔记均不加入公共包。旧短验曾因MAX_PATH漏计文件的清册不作为本轮证据，本轮均使用扩展路径。
 
+## 重开与新报告补验续报
+
+用户要求先补技术验收，需要体验判断时再通知。本轮使用同一独立库及原profile，实际关闭窗口并确认退出后重新启动Obsidian。启动后窗口激活两次失败，暂停UI；用户还原到前台后恢复正常操作，成功导出新的原生同步状态报告。此窗口控制问题未改判为插件故障。
+
+- 重开后的普通区仍为“本机布局已保存，当前没有待处理修改。”，同步保持开启。
+- 新报告status为ready，pending、layoutDraft、pendingSave均null；无fault、saveError、attemptConflict或externalPending，共享扫描无blocker、无quarantine。队列未运行、未暂停；其lastResult为启动时的publication-review-required，不能将历史结果字段代替当前待审状态判断。
+- 接受历史只有1条操作，接受快照与失败现场保留的pending.proposal完整相同，且与当时最新草稿分组相同；恢复后画布view.groups与接受快照分组一致。布局恢复由新报告核对，不依赖data.json推断；该文件只含此测试库的设置/范围投影。
+- 关闭前、重开后及报告导出后的共享目录摘要一致，仍为1条bootstrap与1条布局操作；两篇合成笔记、data.json设置投影和安装main摘要不变，没有重复发布。新报告所列34个运行模块摘要与当前源码逐一一致，且不含临时publicationTrace。
+
+有效文件证据为原trial的`g1-native/reopen-before.json`、`reopen-after.json`及`reopen-final.json`；新报告副本`.local/native-g1-diagnostic/reopen-native-report.json`，自动断言结果`reopen-verification.json`，页面文字`reopen-clean-ui.txt`。全部保留在私有目录。本轮workspace:check退出0，只补原生重开/报告与文件核对，没有重跑上一节完整代码、磁盘或浏览器套件，也没有改动运行源码或候选字节。
+
+已折叠高级区，停在正常同步设置页，等待用户在当前候选上操作“关闭同步→调整图谱并保存→开启→审阅，先取消再确认”。本轮重开技术通过不等于用户体验通过，也未替用户执行此轮体验判断。
+
 ## 候选与剩余范围
 
 最终main.js为846298字节，SHA-256：`22c773a72240d49d0607a7bd5e20709874271187868652bfe4ab1f7c03a9b096`。本轮完整检查构建、打包目录及独立库安装一致。候选位于`.local/sync-copy/candidate-publication-bounded-fix-20261126/`，只含三运行文件及摘要，版本仍为0.0.17开发候选，不能覆盖已发布同名资产。
 
-G1的入口与原生确认阻断已技术处置；待用户判断该提示和审阅过程是否清楚。补充原生重开/新报告及当前最终候选跨端短验，沿用[发布准备清单](RELEASE_READINESS_2026-11-25.md)安排。没有验证本轮真实云传输、iPad、规模边界、新用户或远端CI；没有日常库操作、版本/tag调整、推送或正式发布。1.0.0仍未放行。
+G1的入口与原生确认阻断已技术处置，原生重开和新报告补验完成；待用户判断该提示和审阅过程是否清楚。当前最终候选跨端短验仍沿用[发布准备清单](RELEASE_READINESS_2026-11-25.md)安排。没有验证本轮真实云传输、iPad、规模边界、新用户或远端CI；没有日常库操作、版本/tag调整、推送或正式发布。1.0.0仍未放行。
