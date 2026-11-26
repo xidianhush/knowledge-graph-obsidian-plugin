@@ -11,13 +11,46 @@
 - 用户确认iPad新建独立测试库，使用Nutstore Sync；约三十个旧测试库均保留。本轮PC只复用Knowledge Map Copy Trial，iPad只新增Knowledge Map G2 iPad，其余库不操作。
 - 原Windows库更新前清册记录3个共享文件、2篇合成笔记。用户还原窗口后仍有主窗口激活故障，随后用户手动关闭原独立库，工具核对无Obsidian窗口后备份原三运行文件，只替换同一三文件并核对字节。data.json、两篇合成笔记及3个共享文件摘要均不变；安装摘要已为5319a531…ec6b916。
 - 使用原profile重开Obsidian 1.15.1，实际看到用户原布局的图谱及正常设置状态。后续准备进入待审状态查看新按钮时，输入再报`failed to activate captured window`，刷新捕获为时间/日期背景，已停止UI；未切换同步或修改布局，新按钮原生显示仍未核对。没有把浏览器显示检查代替该项原生观察。
-- 独立PC库当前只安装Knowledge Map，尚未安装/授权Nutstore Sync。建议独立远端名称已生成在私有说明中，没有配置或上传任何远端路径；iPad安装、真实传输和双向/重开短验均未执行。两端Nutstore Sync安装和账号授权交由用户操作。
+- 准备轮PC库只安装Knowledge Map；两端Nutstore Sync安装和账号授权已交由用户操作，Codex未配置或上传远端。用户后续回报准备完成见下节，不沿用此前“尚未安装”作为当前用户状态；真实双向/重开结果仍待回报。
 
 私有准备清册`.local/g2-20261126/latest.json`，包和模板位于其out所指的`short-qljhqdov`目录。运行文件ZIP摘要为`c017233e1d7c6761ce3409dbda286c29ec896be3136fc7755e9e9599ff6d8b52`，新库ZIP摘要为`424b22b182425af81c3ada585bd26b5c6cd499c94eb121af5f2b6b710b04d0af`；包摘要不等于已安装证明。
 
 PC安装清册为`.local/g2-20261126/pc-install.json`，原三运行文件在`before-pc-update-tik_z841`；重开后文件核对为`pc-reopen-verification.json`。它们不是完整恢复导出，不包含或替代设备私有状态备份。
 
-## 现在需要用户完成的准备
+## 用户准备回报与本次短验
+
+2026-11-26用户回报“两端准备好了”，提供iPadOS 26.5.2、Obsidian 1.15.1（404）、Nutstore Sync v1.6.2，并询问PC库名。已明确本轮配对为PC的Knowledge Map Copy Trial与iPad的Knowledge Map G2 iPad。版本来自用户回报；本轮未新增iPad运行文件/首次传输核验，也未将该Nutstore Sync版本推定为PC端版本。iPad机型本轮未补报。
+
+后续已完成PC→iPad、iPad→PC及两端重开短验。双向和iPad重开来自用户明确回报，PC重开由Codex受托原生补验；分项证据见下节。本轮未运行新的工程套件。
+
+## PC→iPad用户验收结果
+
+2026-11-26用户明确回报：两端布局同步开启，PC已经结束调整，PC和iPad坚果云同步均完成，两端位置一致且无异常提示，称“同步成功”；用户说明PC保留该布局，未再修改。按这个方向和场景记录用户验收通过。
+
+用户截图1是开启时的准备页，显示awaiting-transfer及“本机已准备好”，不据此推断传输后仍卡在该状态。截图2是同步完成后的最终图谱，Synthetic中B在上、A在下。未取得同步完成后的iPad状态报告，不将截图写成最终clean或无待审字段的技术证明；两端位置一致和无异常来自用户明确回报。原截图仅留本机，不纳入公共交付包。
+
+本轮只读补采PC共享目录及两篇合成笔记摘要：安装main仍为5319a531…ec6b916，笔记与上一阶段一致，原3个共享文件均未变，新增恰好1条attempt记录，当前共享文件共4个。补采没有移动圆、切换同步或写测试库文件。证据为原trial的`g1-native/g2-pc-to-ipad.json`及`.local/g2-20261126/pc-to-ipad-verification.json`；文件清册支持PC写入事实，不单独证明iPad已接收。
+
+该方向的用户验收通过保留；后续反向和重开结果如下。
+
+## iPad→PC与两端重开结果
+
+2026-11-26用户明确回报：在iPad移动一个圆并结束调整，经坚果云上传、PC下载后同步成功；iPad重开Obsidian后图谱无变化，暂无异常。新截图显示Synthetic中B在左、A在右，两圆位于父圆下部。按该方向及iPad重开场景记录用户验收通过。用户已经关闭PC测试库，因忘记路径而明确委托Codex重开并判断，不要求用户重复双向移动。
+
+工具先核对没有运行中的Obsidian窗口，用原独立profile重开同一Knowledge Map Copy Trial / Windows Obsidian 1.15.1；实际画布B左/A右，与用户iPad截图一致，5节点/1关系。设置同步保持开启，显示“本机布局已保存，当前没有待处理修改。”。成功导出本轮新状态报告后关闭设置页，将图谱保留打开。没有移动圆、切换同步、重建图谱、改运行文件或读取Nutstore账号配置。
+
+PC技术补验：
+
+- 重开前、重开后及新报告导出后的共享目录摘要完全一致，均7个文件，两篇合成笔记及安装main摘要不变；该次重开未新增共享发布记录。
+- 新报告status为ready，pending、layoutDraft、pendingSave均null，无error/saveError/attemptConflict/faulted/externalPending，共享扫描无blocker或quarantine。
+- 共享扫描得到5条有效布局操作，ID集合与接受历史一致；使用原只读历史投影得到的快照等于接受快照，画布view.groups也等于该快照。恢复分组中B.x小于A.x，与原生观察一致；没有把离线投影写回视图。
+- 新报告所列34个运行模块摘要逐项匹配当前源码，安装main仍为5319a531…ec6b916。iPad本轮未单独导出运行摘要，PC端Nutstore版本也未核对，不将已提供包的摘要写成iPad实际安装摘要。
+
+私有证据：原trial的`g1-native/g2-reverse-before-reopen.json`、`g2-reverse-after-reopen.json`和`g2-reverse-final.json`；`.local/g2-20261126/pc-reverse-reopen-report.json`、`pc-reverse-reopen-verification.json`、`pc-reopen-graph-ui.txt`、`pc-reopen-clean-ui.txt`。报告原件留在独立库，截图/配置/私有原件不公开。额外生成的状态报告属于本机诊断文件，不计作共享布局操作。
+
+至此，本轮小规模双向布局修改及两端重开短验完成：PC→iPad、iPad→PC及iPad重开由用户确认，PC重开由Codex原生技术补验。它不证明任意规模、所有异常恢复、长期稳定性或所有设备均通过。新按钮文案本轮状态为clean，未触发待审页面，因此未另记新按钮原生显示通过。
+
+## 已交给用户的准备步骤
 
 1. iPad按自己熟悉的方式，将提供的全新合成库模板放入本地Obsidian库目录并打开Knowledge Map G2 iPad。确认插件实际路径为`.obsidian/plugins/knowledge-graph-smoke/`，main.js为846330字节，标准文件名未变；若出现信任或第三方插件提示，由用户检查确认。
 2. 在PC的Knowledge Map Copy Trial及新的iPad测试库安装、授权Nutstore Sync。两端选择同一个本轮独立远端目录，使用双向同步。本轮先手动触发，观察首轮操作预览及完成结果。Nutstore Sync的双向策略、远端目录选择、操作预览和配置目录选项已核对[官方说明](https://github.com/nutstore/obsidian-nutstore-sync#readme)。
@@ -39,4 +72,4 @@ PC安装清册为`.local/g2-20261126/pc-install.json`，原三运行文件在`be
 
 本轮workspace:check通过，交付包进行上述实际字节/成员核对。源码没有变化，上一轮完整check及浏览器11项/40组合来自[按钮文案记录](SYNC_PUBLICATION_ECHO_RESULT_2026-11-26.md)，未在本轮重复计为新跑。
 
-只有两端实际安装一致、双向接收和重开得到用户回报后，才更新G2设备验收状态。G3新用户、G4历史边界决定、G5 README最终呈现及G6最终远端门禁仍见[发布准备清单](RELEASE_READINESS_2026-11-25.md)。本轮不操作日常库，不推送、创建tag、发布Release或放行1.0。
+本轮必要功能短验已完成，设备实际资产摘要的独立核验限制仍保留；正式冻结/发布时仍需让最终源码、两端安装与构建资产对齐。G3新用户、G4历史边界决定、G5 README最终呈现及G6最终远端门禁仍见[发布准备清单](RELEASE_READINESS_2026-11-25.md)。本轮不操作日常库，不推送、创建tag、发布Release或放行1.0。

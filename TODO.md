@@ -2,7 +2,7 @@
 
 最后更新：2026-11-26（Asia/Shanghai）。共同维护者：用户（产品负责人）与 Codex（技术负责人）。
 
-## 当前执行：G2跨端候选已统一，PC已更新；待用户准备iPad及Nutstore Sync
+## 当前执行：G2双向同步及两端重开短验完成；PC图谱已重开
 
 用户已批准[正式计划](docs/superpowers/plans/2026-11-24-quality-1.0.md)并要求实施；结果与实际证据见[执行记录](docs/QUALITY_IMPLEMENTATION_2026-11-24.md)。本地发布记录已到0.0.17（恢复修复）；当前一键同步+恢复整合候选未发布，不升1.0。活动基线见[工作区规则](docs/WORKSPACE.md)和[本轮结果](docs/WORKSPACE_BASELINE_RESULT.md)。
 
@@ -15,7 +15,9 @@
 
 ### 活动任务
 
-- **QUALITY-G2（候选及交付包准备完成，PC已安装重开；设备短验待执行）**：用户要求统一候选并准备Windows↔iPad/坚果云短验，确认iPad新建独立库、使用Nutstore Sync，原三十余旧测试库保留。本轮只复用原PC库并提供一个新iPad模板。固定0903dbd源码、main5319a531…ec6b916及原插件ID；运行文件ZIP/全新iPad合成库模板白名单、CRC、解压字节及相同资产核对通过，未复制已用库身份/账本/历史。用户关闭原PC主窗口后，核对无Obsidian窗口，只替换三运行文件并用原profile重开；data.json、用户原3份共享文件及2篇合成笔记摘要不变，原图谱和正常设置状态已观察。随后窗口捕获再次为时间/日期背景，已停止UI，没有切换同步或移动布局，新按钮原生显示仍待补看。PC测试库尚未装Nutstore Sync；已准备用户安装/授权及新iPad库操作步骤，独立远端未配置，未上传或操作iPad，未记跨端通过。workspace:check通过，本轮未改运行源码或重跑工程套件。详见[G2准备与记录](docs/SYNC_G2_RESULT_2026-11-26.md)。
+- **QUALITY-G2-DEVICE（双向同步及两端重开短验完成）**：2026-11-26用户回报iPadOS 26.5.2、Obsidian 1.15.1（404）、Nutstore Sync v1.6.2；配对PC的Knowledge Map Copy Trial和iPad的Knowledge Map G2 iPad。PC→iPad位置一致、无异常已由用户确认，阶段PC只读证据新增1条attempt、笔记与旧共享文件不变，共4份共享文件。后续用户明确回报iPad移动圆并结束调整→上传坚果云→PC下载同步成功，iPad重开保留、暂无异常；新截图为B左/A右。用户已关闭PC库并委托Codex重开：使用原profile实际重开，画布与该截图一致，正常设置无待处理修改；新报告pending/layoutDraft/pendingSave均null、无fault/冲突/共享blocker。7份共享文件及笔记在重开前/后/报告导出后摘要完全相同，5条有效操作重放结果等于接受快照及画布，34模块摘要匹配当前源码。双向及iPad重开来自用户回报，PC重开为本轮原生技术补验，不替用户泛化体验结论。未独立取得iPad运行摘要或PC端Nutstore版本；小规模场景通过，不扩大为全部同步或发布通过。未改布局/运行源码或重跑工程套件；PC图谱保持打开。
+
+- **QUALITY-G2（候选统一及必要功能短验完成，证据限制保留）**：用户要求统一候选并准备Windows↔iPad/坚果云短验；复用原PC库、只提供一个新iPad模板，旧测试库保留。固定0903dbd源码、main5319a531…ec6b916及原插件ID，运行文件和新模板白名单/CRC/字节核对通过，未复制已用库身份/账本/历史。PC只替换三运行文件并原profile重开，原data.json、笔记及历史保留；两端Nutstore Sync授权/远端由用户完成。双向/重开结果及本轮PC报告见QUALITY-G2-DEVICE，必要功能短验已完成；iPad安装字节未独立核对、新按钮原生显示仍未观察，不将功能通过扩大为资产逐字节验明或发布放行。准备轮及本轮workspace:check通过；本轮无运行源码变更，未重跑工程套件。详见[G2结果](docs/SYNC_G2_RESULT_2026-11-26.md)。
 
 - **QUALITY-G1-NATIVE（技术验证及用户流程验收通过）**：87bcc4ef候选关闭→编辑→开启→确认后held/publication-unavailable，草稿及pending保留，技术建议P1。临时原生诊断及真实宿主RED定位自身mkdir事件误增externalEpoch；最终修复仅在实际mkdir/writeBinary等待窗口识别自己的新路径事件，保留扫描/字节回读/epoch及其他外部变化门禁。独立审查发现并纠正首版豁免过宽，首版未装原生库。修复轮npm run check（45脚本，easy23场景）、磁盘4项、浏览器11项/40组合通过。22c773a7…a9b096安装原独立库后，取消不写共享，确认新增1条与原pending相同的操作，bootstrap和合成笔记不变；实际重开及新报告确认pending/layoutDraft/pendingSave均null、快照/画布恢复、无重复发布及共享blocker/quarantine，模块摘要与源码一致。窗口激活故障经用户还原后恢复。2026-11-26用户在该候选完整操作关闭→调整圆布局→开启→审阅，先取消再确认，并明确反馈提示清楚、取消后工作保留、确认恢复正常，功能无问题；按该场景记录用户验收通过。按钮文字反馈另列QUALITY-G1-COPY；当前候选跨端仍待验，不扩大为全部同步或发布通过。详见[结果与用户反馈](docs/SYNC_PUBLICATION_ECHO_RESULT_2026-11-26.md)。未改日常库、未推送或发布。
 
