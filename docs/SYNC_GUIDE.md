@@ -33,6 +33,8 @@ On iPad, verify the actual open vault and target plugin directory, complete the 
 
 ## Protection limits and disclosed limitations
 
+Current development-candidate measurement (2026-11-26): a synthetic Windows Node host with 409 accepted operations took 122.298 / 125.022 / 122.669 seconds to reconstruct and replay. These results exceed the 30-second investigation line and need investigation; they are not native Obsidian or iPad timings. Backup, paused-save refusal and reviewed rotation passed in memory adapters. See [method and results](G4_MEASUREMENT_RESULT_2026-11-26.md). The previously accepted release figures below remain historical G8 evidence, not a current-candidate speed claim.
+
 Keep originals and backups when capacity or integrity checks pause an operation. Use reviewed recovery/rotation to a new logical library when appropriate; each device must explicitly select and join the new ID. Offline old devices may continue the old history, which does not automatically merge into the new one. Do not delete operation files to bypass limits.
 
 The user accepted these release boundaries: large synthetic histories have slow replay (about 29–44 seconds for a 409-operation Node host sample; not an iPad benchmark); general Nutstore rate limiting remains unresolved; an original iPad trial anomaly remains unassigned despite a later controlled successful rollback/return trial; extremely long messages may cover undo controls at narrow widths. Objective iPad capacity timing, OS free disk and mobile memory ceilings remain unmeasured. A small iPad test backup felt under a second with no stall, which is subjective and does not establish large-history performance.
