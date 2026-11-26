@@ -252,7 +252,15 @@ module.exports = class KnowledgeGraphSmokePlugin extends Plugin {
     this.layoutEpoch=0;
     for(const event of ['modify','create','delete','rename'])this.registerEvent(this.app.vault.on(event,(file,oldPath)=>{
       if(this.vaultLayoutDriver?.isTransportEvent?.(file?.path,oldPath,event,Array.isArray(file?.children)))return;
-      if(!this.vaultLayoutDriver||Array.isArray(file?.children)||[file?.path,oldPath].some(path=>/\.md$/i.test(path||'')))this.layoutEpoch++;
+      if(this.vaultLayoutDriver&&!Array.isArray(file?.children)){
+        const paths=[file?.path,oldPath].filter(path=>/\.md$/i.test(path||''));
+        if(!paths.length)return;
+        // Match watchVault's input scope. Expiring an excluded note without a
+        // rebuild leaves the current graph unable to receive shared layouts.
+        try{const config=graphScopeConfig(this);if(!paths.some(path=>selectGraphFiles([{path}],config).files.length))return;}
+        catch{/* Invalid configuration must still invalidate and reach rebuild. */}
+      }
+      this.layoutEpoch++;
     }));
     this.layoutStore = this.vaultLayoutDriver?.store ?? createLayoutStore(this.savedData.layoutOverrides, layout => {
       const operation=this.settingsSaveQueue.catch(()=>{}).then(async()=>{

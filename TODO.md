@@ -2,7 +2,7 @@
 
 最后更新：2026-11-26（Asia/Shanghai）。共同维护者：用户（产品负责人）与 Codex（技术负责人）。
 
-## 当前执行：G2双向同步及两端重开短验完成；PC图谱已重开
+## 当前执行：G2自动更新异常重新打开；范围外笔记失效缺陷已修复，待设备复验
 
 用户已批准[正式计划](docs/superpowers/plans/2026-11-24-quality-1.0.md)并要求实施；结果与实际证据见[执行记录](docs/QUALITY_IMPLEMENTATION_2026-11-24.md)。本地发布记录已到0.0.17（恢复修复）；当前一键同步+恢复整合候选未发布，不升1.0。活动基线见[工作区规则](docs/WORKSPACE.md)和[本轮结果](docs/WORKSPACE_BASELINE_RESULT.md)。
 
@@ -15,9 +15,11 @@
 
 ### 活动任务
 
-- **QUALITY-G2-DEVICE（双向同步及两端重开短验完成）**：2026-11-26用户回报iPadOS 26.5.2、Obsidian 1.15.1（404）、Nutstore Sync v1.6.2；配对PC的Knowledge Map Copy Trial和iPad的Knowledge Map G2 iPad。PC→iPad位置一致、无异常已由用户确认，阶段PC只读证据新增1条attempt、笔记与旧共享文件不变，共4份共享文件。后续用户明确回报iPad移动圆并结束调整→上传坚果云→PC下载同步成功，iPad重开保留、暂无异常；新截图为B左/A右。用户已关闭PC库并委托Codex重开：使用原profile实际重开，画布与该截图一致，正常设置无待处理修改；新报告pending/layoutDraft/pendingSave均null、无fault/冲突/共享blocker。7份共享文件及笔记在重开前/后/报告导出后摘要完全相同，5条有效操作重放结果等于接受快照及画布，34模块摘要匹配当前源码。双向及iPad重开来自用户回报，PC重开为本轮原生技术补验，不替用户泛化体验结论。未独立取得iPad运行摘要或PC端Nutstore版本；小规模场景通过，不扩大为全部同步或发布通过。未改布局/运行源码或重跑工程套件；PC图谱保持打开。
+- **QUALITY-G2-LIVE（P1技术建议；已复现同类缺陷并修复，待原生及用户复验）**：2026-11-26用户补充首次iPad→PC下载后已打开画布未自动更新，关闭标签并重新建图才恢复；重复一轮自动更新顺畅。期望文件到达即自动更新，不能以最后一致覆盖首次异常。生产onload/watchVault合成回归确定复现范围外START-HERE.md使epoch失效却不安排重建的问题；修复全局监听的范围过滤，保留范围内/跨范围重命名/文件夹/配置错误及自动更新关闭的原门禁，不改一键UI或协议。新增15项针对性断言先失败后通过，npm run check退出0及一键磁盘4项通过。历史当次无事件轨迹，根因未唯一定因。iPad已用库包中三资产与原5319a531候选相同、8份共享文件及两篇笔记与PC一致；实际传输包含说明及诊断报告，修正“报告留本机”的范围判断。新main为e236fdc9…4754a4，仅白名单打包，尚未安装。G2自动更新验收重新打开，最终一致/重开证据保留。详见[调查与修复](docs/SYNC_LIVE_UPDATE_RESULT_2026-11-26.md)。
 
-- **QUALITY-G2（候选统一及必要功能短验完成，证据限制保留）**：用户要求统一候选并准备Windows↔iPad/坚果云短验；复用原PC库、只提供一个新iPad模板，旧测试库保留。固定0903dbd源码、main5319a531…ec6b916及原插件ID，运行文件和新模板白名单/CRC/字节核对通过，未复制已用库身份/账本/历史。PC只替换三运行文件并原profile重开，原data.json、笔记及历史保留；两端Nutstore Sync授权/远端由用户完成。双向/重开结果及本轮PC报告见QUALITY-G2-DEVICE，必要功能短验已完成；iPad安装字节未独立核对、新按钮原生显示仍未观察，不将功能通过扩大为资产逐字节验明或发布放行。准备轮及本轮workspace:check通过；本轮无运行源码变更，未重跑工程套件。详见[G2结果](docs/SYNC_G2_RESULT_2026-11-26.md)。
+- **QUALITY-G2-DEVICE（最终一致及两端重开证据保留；自动更新待修复候选复验）**：2026-11-26用户回报iPadOS 26.5.2、Obsidian 1.15.1（404）、Nutstore Sync v1.6.2，配对PC Knowledge Map Copy Trial与iPad Knowledge Map G2 iPad。PC→iPad位置一致由用户确认；首次iPad→PC最终成功，但后续补充已打开画布曾不更新、关闭标签重新建图才恢复，不能沿用“过程无异常”。重复一轮自动更新顺畅，最后A上/B下、靠父圆左侧。此前iPad重开保留由用户确认，PC原profile原生重开B左/A右、5条有效操作及7份共享文件证据保留，不冒充新布局重开。现有两端8份共享文件与合成笔记摘要相同；iPad已用压缩包三资产与原候选相同，补齐该快照的字节核验，PC端Nutstore版本仍未独立取得。自动更新重新打开，见QUALITY-G2-LIVE；不替用户泛化体验或发布结论。
+
+- **QUALITY-G2（原候选统一已完成；自动更新验收重新打开）**：原0903dbd源码、main5319a531…ec6b916及原插件ID固定，PC安装及交付包核对通过，现由用户提供的已用iPad库包核实三资产相同；仅证明该压缩包时点。原PC只替换三运行文件并原profile重开，data.json、笔记及历史保留；两端Nutstore Sync授权/远端由用户完成。最终一致/重开证据保留，新增自动更新异常及修复见QUALITY-G2-LIVE，不再将整个必要功能短验记为已关闭。新修复main e236fdc9…4754a4已技术检查/打包，尚未安装；新按钮原生显示及PC端Nutstore版本仍未独立核验，不据包相同或重复一次成功放行发布。详见[G2结果](docs/SYNC_G2_RESULT_2026-11-26.md)。
 
 - **QUALITY-G1-NATIVE（技术验证及用户流程验收通过）**：87bcc4ef候选关闭→编辑→开启→确认后held/publication-unavailable，草稿及pending保留，技术建议P1。临时原生诊断及真实宿主RED定位自身mkdir事件误增externalEpoch；最终修复仅在实际mkdir/writeBinary等待窗口识别自己的新路径事件，保留扫描/字节回读/epoch及其他外部变化门禁。独立审查发现并纠正首版豁免过宽，首版未装原生库。修复轮npm run check（45脚本，easy23场景）、磁盘4项、浏览器11项/40组合通过。22c773a7…a9b096安装原独立库后，取消不写共享，确认新增1条与原pending相同的操作，bootstrap和合成笔记不变；实际重开及新报告确认pending/layoutDraft/pendingSave均null、快照/画布恢复、无重复发布及共享blocker/quarantine，模块摘要与源码一致。窗口激活故障经用户还原后恢复。2026-11-26用户在该候选完整操作关闭→调整圆布局→开启→审阅，先取消再确认，并明确反馈提示清楚、取消后工作保留、确认恢复正常，功能无问题；按该场景记录用户验收通过。按钮文字反馈另列QUALITY-G1-COPY；当前候选跨端仍待验，不扩大为全部同步或发布通过。详见[结果与用户反馈](docs/SYNC_PUBLICATION_ECHO_RESULT_2026-11-26.md)。未改日常库、未推送或发布。
 

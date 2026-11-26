@@ -4,10 +4,10 @@ import vm from 'node:vm';
 const read = name => fs.readFileSync(new URL('../' + name, import.meta.url), 'utf8');
 const notices = [];
 const context = vm.createContext({ structuredClone, console, module: {},
-  require: () => ({ Plugin: class {}, ItemView: class {}, PluginSettingTab: class {}, Setting: class {},
-    Notice: class { constructor(message) { notices.push(message); } }, moment: { locale: () => 'en' } }) });
+  require: () => ({ Plugin: class {}, ItemView: class { constructor(leaf) { this.app=leaf.app; } }, PluginSettingTab: class {}, Setting: class {},
+    Notice: class { constructor(message) { notices.push(message); } }, Scope: class { register() {} }, addIcon() {}, moment: { locale: () => 'en' } }) });
 vm.runInContext(['src/i18n.js','src/i18n.obsidian.js','src/pipeline/defaults.js','src/pipeline/input.js','src/settings.js','src/plugin.js'].map(read).join('\n')
-  + '\nthis.api={graphSettingsDraft,validateGraphSettings,graphPathAllowed,kgT,kgI18nPreference};', context);
+  + '\nthis.api={graphSettingsDraft,validateGraphSettings,graphPathAllowed,kgT,kgI18nPreference,KnowledgeGraphView};', context);
 const { graphSettingsDraft, validateGraphSettings, graphPathAllowed, kgT, kgI18nPreference } = context.api;
 const legacy = { unrelated: { keep: 42 }, pipeline: { config: { include: ['Course/**'], layout: { padding: 1.3 }, preview: { total_chars_budget: 1234 } }, annotations: { manual: 1 }, candidates: { accepted: [1] } } };
 const original = JSON.stringify(legacy), migrated = validateGraphSettings(legacy);
@@ -55,4 +55,40 @@ assert.equal(kgI18nPreference(), 'zh');
 assert.equal(kgT('settings.title'), '知识图谱设置');
 assert.ok(notices.some(message => message.includes('语言已应用')));
 assert.equal(applied, 3);
+// An excluded downloaded note must not expire a graph that watchVault leaves
+// unchanged: the unified receiver uses this epoch to admit incoming layouts.
+async function scopeEvent({event,path,oldPath,folder=false,config={},autoUpdate=true}) {
+  const callbacks=new Map(),timers=new Map(),p=new context.module.exports();
+  p.loadData=async()=>({pipeline:{config:{include:['Synthetic/**'],...config}},settings:{autoUpdate}});
+  p.registerEvent=()=>{};p.registerView=()=>{};p.addCommand=()=>{};p.addRibbonIcon=()=>{};p.addSettingTab=()=>{};
+  p.app={vault:{on(type,fn){if(!callbacks.has(type))callbacks.set(type,[]);callbacks.get(type).push(fn);return {type,fn};}},workspace:{getLeavesOfType:()=>[]}};
+  p.vaultLayoutDriver={store:{},isTransportEvent:(path,oldPath)=>[path,oldPath].filter(Boolean).every(x=>x==='Knowledge Map Sync'||x.startsWith('Knowledge Map Sync/'))};
+  await p.onload();
+  const v=new context.api.KnowledgeGraphView({app:p.app},p,'vault');v.closed=false;
+  const element=()=>({dataset:{},setAttribute(){},replaceChildren(){},appendChild(child){return child;}});
+  v.contentEl={...element(),ownerDocument:{createElement:element,defaultView:{clearTimeout:id=>timers.delete(id),setTimeout:fn=>{timers.set(1,fn);return 1;}}}};
+  v.watchVault();
+  const captured=p.layoutEpoch,file={path,...(folder?{children:[]}:{} )};
+  for(const fn of callbacks.get(event)||[])fn(file,oldPath);
+  return {epochChanged:p.layoutEpoch!==captured,rebuildScheduled:timers.size>0};
+}
+for(const sample of [
+  {event:'create',path:'START-HERE.md'},
+  {event:'modify',path:'Other/Guide.md'},
+  {event:'rename',path:'Other/New.md',oldPath:'Other/Old.md'},
+  {event:'modify',path:'Synthetic/Private.md',config:{exclude:['Synthetic/Private.md']}},
+  {event:'delete',path:'Synthetic/Hidden.md',config:{exclude_notes:['Hidden']}},
+  {event:'create',path:'Knowledge-Map-Sync-Report-example.json'},
+  {event:'create',path:'Knowledge Map Sync/attempts-v1/example',folder:true},
+])assert.deepEqual(await scopeEvent(sample),{epochChanged:false,rebuildScheduled:false},'out-of-scope event must keep the current graph usable: '+sample.path);
+for(const sample of [
+  {event:'create',path:'Synthetic/New.md'},
+  {event:'modify',path:'Synthetic/A.md'},
+  {event:'delete',path:'Synthetic/A.md'},
+  {event:'rename',path:'Other/A.md',oldPath:'Synthetic/A.md'},
+  {event:'rename',path:'Synthetic/A.md',oldPath:'Other/A.md'},
+  {event:'rename',path:'OtherFolder',oldPath:'OldFolder',folder:true},
+  {event:'modify',path:'Synthetic/A.md',config:{include:['[z-a]']}},
+])assert.deepEqual(await scopeEvent(sample),{epochChanged:true,rebuildScheduled:true},'graph input change must invalidate and rebuild: '+sample.path);
+assert.deepEqual(await scopeEvent({event:'modify',path:'Synthetic/A.md',autoUpdate:false}),{epochChanged:true,rebuildScheduled:false},'manual rebuild is still required for changed graph inputs when auto-update is off');
 console.log('SETTINGS_CHECK: legacy defaults, preservation, validation, exclusions, language switch, save failure and serialized persistence passed');
