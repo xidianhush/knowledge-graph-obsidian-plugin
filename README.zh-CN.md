@@ -9,10 +9,12 @@
 ## 安装后，开始第一张地图
 
 1. 在 Obsidian「设置 → 第三方插件 → 浏览」搜索 **Knowledge Map**，安装并启用。也可打开[目录页](https://community.obsidian.md/plugins/knowledge-graph-smoke)。
-2. 点击左侧插件图标，或在命令面板运行 **Build knowledge graph from current vault**。
-3. 在插件设置中选择要纳入的文件夹。可以拖动画布、缩放层级，并预览笔记；界面支持中文和英文，默认跟随应用语言。
+2. 在插件设置中选择要纳入的文件夹。
+3. 点击左侧插件图标，或在命令面板运行「**从当前库构建知识图谱**」（英文界面为 **Build knowledge graph from current vault**）。可以拖动画布、缩放层级，并预览笔记；界面支持中文和英文，默认跟随应用语言。
 
 手动安装时，将 [Release](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases) 中的 main.js、manifest.json 和 styles.css 放入本库 .obsidian/plugins/knowledge-graph-smoke/。升级、备份和回退见[安装指南](docs/INSTALL.md)。
+
+本分支介绍的是**尚未发布的一键同步候选**。从社区目录或已有 Release 安装的界面可能不同；已发布的 0.0.17 恢复修复版与本候选使用不同资产，详见[版本与安装说明](docs/INSTALL.md#1-版本与兼容)。
 
 ## 从全局探索到标题
 
@@ -38,19 +40,24 @@
 
 ## 可选：电脑与 iPad 共享布局
 
-插件把布局记录写入普通库文件夹，由你的同步工具传输。先让两台设备具有对应的笔记，并把插件设置中的“包含范围”“排除范围”和“排除笔记”设为一致，使两边图谱包含相同笔记。再在两台设备的插件设置中各开启一次布局同步；默认图谱会自动准备和连接。不同已有布局或多份候选仍须明确选择。同步开启后的普通兼容修改会自动排队；冲突和关闭期间保存的草稿需要另行确认。关闭同步保留本机工作。
+先让两台设备具有相同的笔记，并把插件设置中的「**包含范围**」「**排除范围**」和「**排除笔记**」设为一致。再在两台设备的插件设置中各开启一次布局同步；默认共享图谱会自动准备和连接，无需手动创建或查找 ID。
 
-已验证链路为 Windows ↔ iPadOS + 坚果云。设置、视角和界面状态留在本机。本机保存、写入共享目录与另一台设备应用是不同阶段。配置、备份和恢复见[同步指南](docs/SYNC_GUIDE.md)。
+用同步工具传输笔记和 **`Knowledge Map Sync` 文件夹**。同步开启后的普通兼容修改会自动排队；文件到达另一端并通过校验后，图谱会自动更新。不同已有布局、多份候选、冲突和关闭期间保存的草稿，仍需要选择或审阅。关闭同步保留本机工作。
+
+已验证链路为 **Windows ↔ iPadOS + 坚果云官方 Nutstore Sync 插件**。设置、视角和界面状态留在本机。本机保存、写入共享目录与另一台设备应用是不同阶段。配置、备份和恢复见[同步指南](docs/SYNC_GUIDE.md)。
 
 ## 平台和限制
 
-- 桌面最低 Obsidian 1.6.7；iPad用户测试环境为 iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0。不据此宣称所有设备或版本已验证。
-- iPhone未验证，Android单独排期，不作为本轮1.0前置条件。iPad最低系统版本、客观帧率和内存上限尚未确定。
+- 桌面声明的最低 Obsidian 版本为 1.6.7；近期 Windows 测试使用 Obsidian 1.15.1。
+- iPad 测试设备为 iPad Pro 2022 / iPadOS 26.5.2，近期同步测试使用 Obsidian 1.15.1（404）及 Nutstore Sync 1.6.2。不据此宣称所有设备或版本已验证。演示素材展示桌面操作。
+- iPhone 未验证，Android 单独排期。iPad 最低系统版本、客观帧率和内存上限尚未确定。
 - 每组最多128个同级元素、一次影响最多5000节点；会话撤销最多50步，结构变化或插件重载会清空。
-- 图谱画布保持深色。大同步历史可能回放较慢；第三方限流与已披露的原iPad试验异常仍有边界。
+- 图谱画布保持深色。大同步历史可能回放较慢；第三方限流及原 iPad 试验中的未归因异常仍是已披露限制，详见[同步指南](docs/SYNC_GUIDE.md#protection-limits-and-disclosed-limitations)。
 
 ## 数据、隐私和帮助
 
 建图在本机完成，插件不编辑笔记正文，也不直接上传。共享布局包含相对路径、标题结构和坐标，第三方工具可能将它们上传到其服务。加入后还存在本机身份和私有日志；data.json并非完整同步备份。请导出完整恢复包，原位保留并另复制库外。
 
 [安装与回退](docs/INSTALL.md) · [数据边界](docs/DATA_SAFETY.md) · [问题反馈](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/issues) · [构建与测试](DEVELOPMENT.md) · [参与开发](CONTRIBUTING.md) · [MIT许可](LICENSE)
+
+开发者入口：本候选保留 `dddf14a` 的一键同步体验和已发布恢复修复，工作区与当前任务见[工作区规则](docs/WORKSPACE.md)和 [TODO](TODO.md)。

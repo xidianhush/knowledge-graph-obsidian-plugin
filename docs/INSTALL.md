@@ -1,6 +1,6 @@
 > 当前一键同步整合候选尚未发布；已发布0.0.17为恢复修复版。相同版本标签不代表相同源码或资产，权威关系见[工作区基线](WORKSPACE.md)。本页保留一键使用方法与原验收范围。
 
-# 安装、升级、卸载与已知限制（0.0.16）
+# 安装、升级、卸载与已知限制
 
 本文面向**使用者**，说明如何把插件装进一个 Obsidian 库、升级、回退与卸载，以及当前版本的已知限制。开发与回归说明见 [DEVELOPMENT.md](../DEVELOPMENT.md)，当前进度与验收记录见 [TODO.md](../TODO.md)。
 
@@ -8,15 +8,16 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 插件版本 | 0.0.16 |
+| 当前分支 | 0.0.17 开发候选，包含一键同步与恢复修复；尚未发布，不能覆盖同名 Release。已发布 0.0.17 为另一组恢复修复资产，见[工作区基线](WORKSPACE.md) |
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 0.0.15历史验证环境 | 本版已有 Windows Obsidian 1.15.0 技术证据；iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0 (396) 由用户手动验收。历史桌面 1.6.7 / 1.14.5 结果不能当成本轮复测。最终候选技术核验见 [发布准备](RELEASE_PREP_0.0.15.md) |
-| 平台声明 | `isDesktopOnly: false`；本版范围为桌面 + iPadOS。该布尔值也允许其他移动端安装，不代表 Android/iPhone 已适配或验证。Android 适配0.0.19；iPhone 未验证；最低 iPadOS 与客观移动帧率/内存界限未确立 |
-| 发布方式 | tag `0.0.16` 由 GitHub Actions Release 工作流构建并发布，[Release 页面](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/0.0.16)；资产仅 `main.js`、`manifest.json`、`styles.css`，校验值在 Release 正文，三资产附构建来源证明。最终线上核对见 [发布记录](RELEASE_PREP_0.0.16.md)。社区目录沿用现有条目与图标。 |
+| 近期候选短验 | Windows Obsidian 1.15.1；iPad 用户回报 iPadOS 26.5.2 / Obsidian 1.15.1（404）/ Nutstore Sync 1.6.2。限定重开、保存及跨端自动跟随结果见[短验记录](G4_NATIVE_SMOKE_RESULT_2026-11-27.md)，不代表原生大历史性能或所有平台通过 |
+| 平台声明 | `isDesktopOnly: false`；支持范围为桌面 + iPadOS。该布尔值也允许其他移动端安装，不代表 Android/iPhone 已适配或验证。Android 单独排期；iPhone 未验证；最低 iPadOS 与客观移动帧率/内存界限未确立 |
+| 安装来源 | 社区目录和[Release 页面](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases)提供已有发布包，不保证包含本分支的一键流程。本候选验证须使用对应源码构建的三运行文件或明确交付的候选包；保留本库 data.json 与 App 私有状态，不复制其他设备的身份或账本。历史发布记录见 [0.0.16](RELEASE_PREP_0.0.16.md) / [0.0.17](RELEASE_PREP_0.0.17.md) |
 
 ## 0.0.16 同步与恢复
 
-0.0.16加入Windows ↔ iPadOS布局同步，已验证传输为坚果云。同步加入、私有身份/日志、完整备份与旧版兼容导出见[同步指南](SYNC_GUIDE.md)。下方历史迁移说明保留；同步状态不能只备份data.json。Android排期0.0.19，iPhone未验证。
+0.0.16加入Windows ↔ iPadOS布局同步，已验证传输为坚果云。同步加入、私有身份/日志、完整备份与旧版兼容导出见[同步指南](SYNC_GUIDE.md)。下方历史迁移说明保留；同步状态不能只备份data.json。Android 单独排期，iPhone 未验证。
 
 SYNC-UX 易用性改造（2026-11-24 核心流程用户真机验收通过，当前整合开发候选尚未发布；已发布的0.0.17为恢复修复版）：首次使用只需点一次「开启布局同步」，插件自动准备默认共享布局（固定默认命名空间 + `Knowledge Map Sync/bootstrap-v1` 不可变初始化记录，使空布局可发现）、连接并接收后续布局，移除“先手动移动一个圆才能同步”的旧准备要求；两台设备的图谱须包含相同笔记：本页所述插件设置中的“包含范围”“排除范围”和“排除笔记”应保持一致；笔记和 Knowledge Map Sync 文件夹由同步工具传输。已有不同布局或冲突仍展示预览由用户决定，关闭期间草稿仍需审阅。升级不更换已加入连接的 ID、不重新导入、不改变原启用状态。计划与设计见 [SYNC-UX 实施计划](SYNC_UX_EASY_SETUP_PLAN.md)、[SYNC-UX 设计说明](SYNC_UX_EASY_SETUP_DESIGN.md)。
 
@@ -78,7 +79,7 @@ SYNC-UX 易用性改造（2026-11-24 核心流程用户真机验收通过，当�
 - 笔记节点在悬停/预览时会显示正文摘要（最多 220 字符），这是既有交互的一部分；该摘要只在内存渲染，不写入 `data.json`、不写入日志或状态消息。
 - 插件不发送网络请求、不上传笔记内容、不采集遥测。
 
-## 6. 已知限制（0.0.16）
+## 6. 已知限制
 
 - 单组同级节点超过 128 个，或受影响节点超过修复预算（5000）时，该组回退为自动布局，不能手动调整。
 - 图谱画布固定深色，不跟随 Obsidian 浅色主题；宿主界面变浅时画布仍为深色（DEC-001，已决定维持）。
@@ -86,7 +87,7 @@ SYNC-UX 易用性改造（2026-11-24 核心流程用户真机验收通过，当�
 - 卸载插件会删除布局数据（见第 4 节）。
 - 部分第三方插件弹窗（例如文件改名后的“更新链接”确认、Excalidraw 首次欢迎页）会暂时盖住图谱并拦截鼠标输入，处理完弹窗即可恢复。
 - 稳定性调查 FB-006 已定因：早期原生自动化对 Obsidian 渲染页执行整页 reload 会触发宿主层告警（插件被禁用时同样出现），属测试驱动产物，不是插件缺陷；正常使用不会触发。详见 [DESKTOP_STABILITY_RESULT.md](../DESKTOP_STABILITY_RESULT.md)。
-- 0.0.15 加入 iPadOS；旧版 0.0.14 仅桌面。iPhone 未验证，Android 适配0.0.19。iPad 取消构建、强制 Worker 失败、5000 节点冷启动、128 兄弟保存延迟及客观帧率/内存峰值尚无完整真机证据；桌面模拟与 Node 故障测试不能替代这些结果。
+- 0.0.15 加入 iPadOS；旧版 0.0.14 仅桌面。iPhone 未验证，Android 单独排期。iPad 取消构建、强制 Worker 失败、5000 节点冷启动、128 兄弟保存延迟及客观帧率/内存峰值尚无完整真机证据；桌面模拟与 Node 故障测试不能替代这些结果。
 - 触屏：单指平移、双指捏合、双击聚焦/双击空白重置；长按笔记或标题，或选中后点「预览」。点 ✥「调整布局」后可拖动单个元素、松手保存，再点 ✥ 结束；支持撤销/重做，触屏整组拖动与选父级后置。
 - 开发用的快照冒烟命令依赖本地 `smoke-payload.json`；正式交付包只含三个运行文件，不含该快照。
 - 兼容性矩阵覆盖 Obsidian 1.14.5 桌面版、单显示器、核心插件与 6 个常见社区插件（Dataview、Templater、Obsidian Git、Style Settings、Omnisearch、Excalidraw），未做 WCAG/无障碍测量；详见 [COMPAT_MATRIX_RESULT.md](../COMPAT_MATRIX_RESULT.md)。

@@ -2,7 +2,7 @@
 
 # Layout sync and recovery
 
-Windows ↔ iPadOS with Nutstore is the validated transport scope. Android is planned for 0.0.19; iPhone is unverified. The plugin writes ordinary vault files; your external sync tool transfers them. Include the same notes in both maps: match Include scope, Exclude scope and Excluded notes in plugin settings. Let your sync tool transfer the notes before applying their layouts.
+Windows ↔ iPadOS with Nutstore Sync is the validated transport scope. Android adaptation has a separate schedule; iPhone is unverified. The plugin writes ordinary vault files; your external sync tool transfers them. Include the same notes in both maps: match Include scope, Exclude scope and Excluded notes in plugin settings. Let your sync tool transfer the notes before applying their layouts.
 
 ## First join and local work
 
@@ -33,7 +33,7 @@ On iPad, verify the actual open vault and target plugin directory, complete the 
 
 ## Protection limits and disclosed limitations
 
-Current development-candidate measurement (2026-11-26): a synthetic Windows Node host with 409 accepted operations took 122.298 / 125.022 / 122.669 seconds to reconstruct and replay. These results exceed the 30-second investigation line and need investigation; they are not native Obsidian or iPad timings. Backup, paused-save refusal and reviewed rotation passed in memory adapters. See [method and results](G4_MEASUREMENT_RESULT_2026-11-26.md). The previously accepted release figures below remain historical G8 evidence, not a current-candidate speed claim.
+Before the latest cache optimization (2026-11-26), a synthetic Windows Node host with 409 accepted operations took 122.298 / 125.022 / 122.669 seconds to reconstruct and replay, exceeding the 30-second investigation line. Backup, paused-save refusal and reviewed rotation passed in memory adapters; see [method and results](G4_MEASUREMENT_RESULT_2026-11-26.md). Investigation and a first cache optimization followed. In a separate matched 406-operation Node comparison, median replay time fell from 34.470 to 18.917 seconds; these are different test conditions and must not be compared directly to the 409-operation timings. See the [optimization results](G4_OPTIMIZATION_RESULT_2026-11-27.md). Small-scale device save/sync/reopen checks are recorded [separately](G4_NATIVE_SMOKE_RESULT_2026-11-27.md); neither they nor the Node measurements establish native Obsidian or iPad large-history performance. The previously accepted release figures below remain historical G8 evidence, not a current-candidate speed claim.
 
 Keep originals and backups when capacity or integrity checks pause an operation. Use reviewed recovery/rotation to a new logical library when appropriate; each device must explicitly select and join the new ID. Offline old devices may continue the old history, which does not automatically merge into the new one. Do not delete operation files to bypass limits.
 
