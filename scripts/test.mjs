@@ -20,6 +20,7 @@ checks.push('sync_join_identity_check');
 checks.push('sync_current_join_check');
 checks.push('sync_bootstrap_check');
 checks.push('sync_easy_setup_check');
+checks.push('sync_replay_cache_check');
 checks.push('layout_upgrade_check');
 for(const name of checks)execFileSync(process.execPath,[`scripts/${name}.mjs`],{cwd,stdio:'inherit'});
 console.log(`Completed build and ${checks.length-1} synthetic check scripts.`);

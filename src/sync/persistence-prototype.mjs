@@ -7,7 +7,7 @@ import {packSchema3Operation} from './wire-prototype.mjs';
 import {randomSyncOperationId} from './author-prototype.mjs';
 import {reviewSchema3Conflict,buildSchema3ConflictResolution} from './conflict-resolution-prototype.mjs';
 const ID=/^[a-f0-9]{32}$/,HASH=/^[a-f0-9]{64}$/,META=262144,MAX_EVENTS=4096;
-const REPLAY_BLOB_BYTES=512*1024,REPLAY_BLOB_ENTRIES=8;
+const REPLAY_BLOB_BYTES=512*1024,REPLAY_BLOB_ENTRIES=1024;
 const copy=x=>structuredClone(x),fail=reason=>{throw Error('persistence-'+reason);};
 const canonical=(value,maxBytes=limits.snapshotBytes)=>JSON.stringify(cloneBoundedSyncJson(value,{maxBytes}));
 const same=(a,b)=>canonical(a)===canonical(b);
@@ -107,6 +107,8 @@ export function createDurableSyncSession({privateStore,sharedStore,attemptHistor
     const cached=replayBlobs?.get(hash);
     if(cached&&cached.bytes<=budget){
       privateStore.checkReplayCacheAccess();
+      // Keep reused history blobs ahead of one-use snapshots, within both caps.
+      replayBlobs.delete(hash);replayBlobs.set(hash,cached);
       return copy(cached.value);
     }
     const result=await readPrivate(`blobs/${hash}.json`,budget);
