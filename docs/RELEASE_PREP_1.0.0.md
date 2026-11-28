@@ -28,6 +28,8 @@ manifest、package、package-lock根及根包版本、versions映射和BASELINE�
 - 已完成：用户回传iPad安装后的测试库ZIP及插件列表截图，明确确认替换并显示v1.0.0，截图中Knowledge Map处于启用状态。仅定向读取其中插件目录的main.js/manifest.json/styles.css（各条目CRC通过），三份字节均与本地冻结、PC实际安装及远端演练记录一致，补齐当前缓存候选iPad运行字节证据；包内账号配置/设备身份/私有账本未检查。未由版本截图推定新一轮拖动、传输或冷启动体验通过，已有功能验收按原日期保留。
 - 尚未执行：正式1.0.0 tag/Release、现有社区条目更新及回读。不新申请同ID插件，不移动旧tag或覆盖旧Release。
 
+默认分支对齐已整理为[发布PR #1](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/pull/1)，base main保持db835e1，未合并；GitHub确认无合并冲突。最终完整本地check再次退出0，安装证据文档提交76b4d06的[分支CI](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46093795136)通过，PR独立检查及后续文档提交检查以PR当前结果为准。演练340171d之后仅TODO/准备记录变化，运行源码/工作流/三资产未变；没有重复演练同一运行字节。G6准备材料已具备审阅条件，正式合并main、推1.0.0 tag触发Release及社区操作留待用户最终明确授权；不从原交接push授权推定正式发布。
+
 本地冻结核对：首次11份受影响文档133个本地链接检查通过；版本/lock/映射/BASELINE一致，固定来源不变；三资产与包内摘要相同，GIF摘要保持。Release YAML已解析核对，artifact仅取release/assets、保留7天，并按run_attempt区分重跑，避免覆盖前次证据。
 
 远端ZIP为249638字节，SHA-256 `2f63fc26cef2d8676cd35ee148c04c231c31abda77521bfa0c02fee2bae852eb`，保留至2026-12-05；ZIP编码/压缩与本地交付ZIP不同，不能比较压缩包摘要来代替三文件字节比较。本次已实际逐文件比较全部内容，无差异。
