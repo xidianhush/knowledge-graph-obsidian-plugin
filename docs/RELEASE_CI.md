@@ -1,6 +1,6 @@
 # 发布检查与历史记录
 
-历史正式发布证据见[0.0.17记录](RELEASE_PREP_0.0.17.md)。当前1.0.0候选整合一键同步与恢复修复，实际源码/三资产及远端验证状态见[发布准备](RELEASE_PREP_1.0.0.md)，固定来源见[基线](WORKSPACE.md)。此前流水线与0.0.x说明保存在[历史记录](archive/RELEASE_CI_before_convergence_2026-11-24.md)。
+1.0.0已正式发布，整合一键同步与恢复修复；正式流水线、实际三资产下载和社区构建复现均通过，具体证据与保留边界见[发布记录](RELEASE_PREP_1.0.0.md)，固定来源见[基线](WORKSPACE.md)。旧正式证据见[0.0.17记录](RELEASE_PREP_0.0.17.md)，此前流水线与0.0.x说明保存在[历史记录](archive/RELEASE_CI_before_convergence_2026-11-24.md)。
 
 ## 当前流程
 
