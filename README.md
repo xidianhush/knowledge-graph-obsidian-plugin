@@ -48,7 +48,7 @@ Layouts are saved separately from your notes and reused after edits where they c
 
 For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a [release](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases) into `.obsidian/plugins/knowledge-graph-smoke/`. See the [installation guide](docs/INSTALL.md) for upgrades, backups and rollback.
 
-This branch describes an **unreleased one-switch sync candidate**. Installing from the community directory or an existing release may give you a different interface. The published 0.0.17 recovery release and this candidate have different assets; see the [version and installation details](docs/INSTALL.md#1-版本与兼容).
+The one-switch sync flow below is included in **1.0.0**. Older releases may show a different interface. Install all three runtime files from the same version; see the [version and installation details](docs/INSTALL.md#1-版本与兼容).
 
 ## Optional: share layouts between Windows and iPad
 
@@ -72,4 +72,4 @@ Map building happens locally within your configured scope. The plugin does not m
 
 [Installation and rollback](docs/INSTALL.md) · [Data boundaries](docs/DATA_SAFETY.md) · [Report an issue](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/issues) · [Build and test](DEVELOPMENT.md) · [Contribute](CONTRIBUTING.md) · [MIT license](LICENSE)
 
-For contributors: this candidate retains the one-switch sync experience from `dddf14a` and the published recovery fixes. See [workspace rules](docs/WORKSPACE.md) and [current tasks](TODO.md).
+For contributors: 1.0.0 retains the one-switch sync experience from `dddf14a` and the published recovery fixes. See [workspace rules](docs/WORKSPACE.md) and [current tasks](TODO.md).

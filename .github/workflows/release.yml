@@ -152,6 +152,14 @@ jobs:
             done < release/SHA256SUMS
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Retain the verified candidate for byte comparison
+        uses: actions/upload-artifact@v4
+        with:
+          name: knowledge-map-${{ env.TAG }}-${{ github.sha }}-attempt-${{ github.run_attempt }}
+          path: release/assets/
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Assemble the Release body
         run: |
           set -euo pipefail

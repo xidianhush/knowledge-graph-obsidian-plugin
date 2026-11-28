@@ -3,6 +3,6 @@
   "recovery": "6fdc75778ff397e126784566eb607bdcc4f039d5",
   "published": "db835e18815f665c969abbee133f0d243767ec33",
   "activeBranch": "codex/baseline-convergence",
-  "runtimeVersion": "0.0.17",
+  "runtimeVersion": "1.0.0",
   "syncMode": "one-switch"
 }

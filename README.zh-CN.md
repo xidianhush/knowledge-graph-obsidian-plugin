@@ -14,7 +14,7 @@
 
 手动安装时，将 [Release](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases) 中的 main.js、manifest.json 和 styles.css 放入本库 .obsidian/plugins/knowledge-graph-smoke/。升级、备份和回退见[安装指南](docs/INSTALL.md)。
 
-本分支介绍的是**尚未发布的一键同步候选**。从社区目录或已有 Release 安装的界面可能不同；已发布的 0.0.17 恢复修复版与本候选使用不同资产，详见[版本与安装说明](docs/INSTALL.md#1-版本与兼容)。
+下文的一键同步流程对应 **1.0.0**。旧版本的界面可能不同，请安装同一版本的三个运行文件，详见[版本与安装说明](docs/INSTALL.md#1-版本与兼容)。
 
 ## 从全局探索到标题
 
@@ -60,4 +60,4 @@
 
 [安装与回退](docs/INSTALL.md) · [数据边界](docs/DATA_SAFETY.md) · [问题反馈](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/issues) · [构建与测试](DEVELOPMENT.md) · [参与开发](CONTRIBUTING.md) · [MIT许可](LICENSE)
 
-开发者入口：本候选保留 `dddf14a` 的一键同步体验和已发布恢复修复，工作区与当前任务见[工作区规则](docs/WORKSPACE.md)和 [TODO](TODO.md)。
+开发者入口：1.0.0 保留 `dddf14a` 的一键同步体验和已发布恢复修复，工作区与当前任务见[工作区规则](docs/WORKSPACE.md)和 [TODO](TODO.md)。

@@ -7,6 +7,6 @@ export function validateBaselineRecord(value) {
     if (!/^[a-f0-9]{40}$/.test(value[key]))
       throw Error('baseline requires immutable commit: ' + key);
   if (value.activeBranch !== 'codex/baseline-convergence') throw Error('unexpected active branch');
-  if (value.runtimeVersion !== '0.0.17' || value.syncMode !== 'one-switch')
+  if (value.runtimeVersion !== '1.0.0' || value.syncMode !== 'one-switch')
     throw Error('unexpected product baseline');
 }

@@ -5,14 +5,14 @@ const value = {
   recovery: 'b'.repeat(40),
   published: 'c'.repeat(40),
   activeBranch: 'codex/baseline-convergence',
-  runtimeVersion: '0.0.17',
+  runtimeVersion: '1.0.0',
   syncMode: 'one-switch',
 };
 assert.doesNotThrow(() => validateBaselineRecord(value));
 for (const change of [
   { experience: 'HEAD' },
   { syncMode: 'manual' },
-  { runtimeVersion: '0.0.16' },
+  { runtimeVersion: '0.0.17' },
   { activeBranch: 'main' },
 ])
   assert.throws(() => validateBaselineRecord({ ...value, ...change }));
