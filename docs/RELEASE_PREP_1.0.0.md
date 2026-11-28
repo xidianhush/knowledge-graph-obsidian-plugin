@@ -22,12 +22,17 @@ manifest、package、package-lock根及根包版本、versions映射和BASELINE�
 
 - 已完成：G3明确后置记录、版本/严格基线守卫、发布说明、首次构建与运行代码不变核对。
 - 已完成：完整check和test:clean退出0（构建及46个合成脚本等门禁），干净导出main与当前冻结字节相同；最终白名单打包及runtime ZIP的CRC/摘要核对。一次独立复核已完成，发现的文档路径遗漏已按下节修正并完成RED/GREEN、完整check及干净导出复验。
-- 已完成：候选源码提交58c004c及专用codex分支推送；该提交的[远端Checks](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46089719835)成功。后续防漏修正提交须另验远端CI，不能沿用旧提交结果。
-- 待完成：修正提交的远端CI、Release手动dry run、远端三资产与本地候选比对。
-- 待核对：实际安装证据和需要的最小交付衔接。已有Windows/iPad功能证据按原版本/字节范围保留；当前缓存候选iPad运行字节此前未独立采集，不伪称已采集。
+- 已完成：候选源码提交58c004c及专用codex分支推送；该提交的[远端Checks](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46089719835)成功。防漏修正340171d亦已推送，其[远端Checks](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46090744095)独立成功。
+- 已完成：用户完成登录后，从候选分支手动触发[Release演练46092147436](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46092147436)，精确源码340171d，输入1.0.0，事件workflow_dispatch；构建、检查、三资产打包及来源证明步骤成功，正式发布/Release资产回读步骤均跳过。下载artifact 15242071568，ZIP摘要与GitHub记录一致，CRC通过，恰好main.js/manifest.json/styles.css，全部与本地冻结文件及交付包逐字节相同。
+- 已完成：PC原独立测试库三文件升级至1.0.0，原profile保留；原生设置实际显示v1.0.0并启用，原同步设置保持“本机布局已保存，当前没有待处理修改”，重新打开图谱仍为A左上/B右下。14份合成笔记/说明/共享JSON摘要保持，安装三文件等于本地和远端冻结值。此次未再拖动或传输，不冒充双向同步重新验收。
+- 已完成：用户回传iPad安装后的测试库ZIP及插件列表截图，明确确认替换并显示v1.0.0，截图中Knowledge Map处于启用状态。仅定向读取其中插件目录的main.js/manifest.json/styles.css（各条目CRC通过），三份字节均与本地冻结、PC实际安装及远端演练记录一致，补齐当前缓存候选iPad运行字节证据；包内账号配置/设备身份/私有账本未检查。未由版本截图推定新一轮拖动、传输或冷启动体验通过，已有功能验收按原日期保留。
 - 尚未执行：正式1.0.0 tag/Release、现有社区条目更新及回读。不新申请同ID插件，不移动旧tag或覆盖旧Release。
 
-本地冻结核对：首次11份受影响文档133个本地链接检查通过；版本/lock/映射/BASELINE一致，固定来源不变；三资产与包内摘要相同，GIF摘要保持。Release YAML已解析核对，artifact仅取release/assets、保留7天，并按run_attempt区分重跑，避免覆盖前次证据。手动发布演练尚未记为通过。
+本地冻结核对：首次11份受影响文档133个本地链接检查通过；版本/lock/映射/BASELINE一致，固定来源不变；三资产与包内摘要相同，GIF摘要保持。Release YAML已解析核对，artifact仅取release/assets、保留7天，并按run_attempt区分重跑，避免覆盖前次证据。
+
+远端ZIP为249638字节，SHA-256 `2f63fc26cef2d8676cd35ee148c04c231c31abda77521bfa0c02fee2bae852eb`，保留至2026-12-05；ZIP编码/压缩与本地交付ZIP不同，不能比较压缩包摘要来代替三文件字节比较。本次已实际逐文件比较全部内容，无差异。
+
+PC安装过程先停用Knowledge Map，备份旧三文件，再替换候选三文件、重新扫描清单并启用；Nutstore Sync未停用/改配置。原设置窗口为独立原生窗口，首次操作错误目标只切回主画布，未改变插件或布局，定位设置窗口后完成操作。保护摘要首次因Windows长路径读取失败，改用扩展路径后完整采集14份，再执行替换；未把失败的预检记作通过。此次是插件卸载/重载后的原生检查，不宣称整应用冷启动已重测。
 
 ## 独立复核与修正
 
@@ -35,10 +40,10 @@ manifest、package、package-lock根及根包版本、versions映射和BASELINE�
 
 修正后完整check与test:clean均退出0，三运行资产摘要保持上节冻结值。Minor为DEVELOPMENT与RELEASE_CI的旧版本上下文，已局部校准；不改既有用户验收文字或功能。历史提交中的原始路径仍可能被检索到，普通后续提交不消除历史；没有擅自改写远端历史。
 
-复核提出的最终安装证据、远端演练/字节核对和默认分支对齐仍是收尾事项，不算已完成。G3由用户明确后置；大历史原生性能、Android/iPhone等既有边界继续保留，不扩展本轮范围或开启重复优化/复核。
+复核提出的远端演练/字节核对和PC/iPad安装对齐现已完成；默认分支对齐与正式tag/Release/现有社区条目回读仍未执行，不能把发布准备通过写作已发布。G3由用户明确后置；大历史原生性能、Android/iPhone等既有边界继续保留，不扩展本轮范围或开启重复优化/复核。
 
 ## 工具与保全
 
-GitHub连接可做只读运行/资产核对，但当前工具未提供workflow dispatch；本机gh不在PATH且常见安装位置未找到。后续手动演练将使用可用的已授权路径，不能把缺少入口写成演练已通过。
+GitHub连接可做只读运行/资产核对，但当前工具未提供workflow dispatch；本机gh不在PATH。最终由浏览器页面选择候选分支/1.0.0并提交演练，页面明确成功排队，随后连接器核对精确源码运行成功并下载产物。下载本地产物遭沙箱网络阻止后获准重跑成功，未扩大账号权限或建立新凭据。
 
 私有原件、升版前文件、资产摘要、RED/GREEN日志及执行账本保存在`.local/g6-100`，不进入公开包。用户库/身份、App私有状态与服务账号不复制到候选包。
