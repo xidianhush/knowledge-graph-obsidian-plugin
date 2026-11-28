@@ -1,8 +1,8 @@
-> 当前活动分支与三条基线见[工作区规则](docs/WORKSPACE.md)。先运行npm run workspace:check。当前源码为dddf14a一键同步+已发布恢复修复的整合候选，0.0.17版本标签不表示与已发布资产相同。旧分步引导不参与构建，详细新证据见基线收敛结果。
+> 当前活动分支与三条基线见[工作区规则](docs/WORKSPACE.md)。先运行npm run workspace:check。当前源码为1.0.0候选，保留dddf14a一键同步与已发布恢复修复；旧分步引导不参与构建。实际冻结和远端进度见[发布准备](docs/RELEASE_PREP_1.0.0.md)。
 
 # 开发与验证
 
-本地发布记录为0.0.17；本工作区为新整合开发候选，尚未发布/体验验收。当前任务见[TODO](TODO.md)，本轮证据见[执行记录](docs/QUALITY_IMPLEMENTATION_2026-11-24.md)。历史开发记录见[归档](docs/archive/DEVELOPMENT_before_quality_2026-11-24.md)，不能当本轮重新通过。
+历史发布记录保留0.0.17；当前1.0.0候选的main/CSS与[G4限定用户验收候选](docs/G4_NATIVE_SMOKE_RESULT_2026-11-27.md)相同，最终发布仍按[准备记录](docs/RELEASE_PREP_1.0.0.md)核对，不把体验短验写成远端或正式发布通过。当前任务见[TODO](TODO.md)，原工程实施证据见[执行记录](docs/QUALITY_IMPLEMENTATION_2026-11-24.md)。历史开发记录见[归档](docs/archive/DEVELOPMENT_before_quality_2026-11-24.md)，不能当本轮重新通过。
 
 ## 从干净源码开始
 

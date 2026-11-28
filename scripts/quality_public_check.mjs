@@ -20,7 +20,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     for (const entry of await fs.readdir(folder, { withFileTypes: true })) {
       const p = path.join(folder, entry.name);
       if (entry.isDirectory()) await scan(p);
-      else if (/\.(?:js|mjs|css|json)$/.test(entry.name)) {
+      else if (/\.(?:js|mjs|css|json|md)$/.test(entry.name)) {
         try {
           validatePublicText(await fs.readFile(p, 'utf8'));
         } catch (e) {
@@ -31,11 +31,17 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     }
   };
   await scan('src');
+  await scan('docs');
+  for (const name of ['README.md', 'README.zh-CN.md', 'DEVELOPMENT.md', 'CONTRIBUTING.md']) {
+    if (!(await fs.stat(name).catch(() => null))?.isFile()) continue;
+    validatePublicText(await fs.readFile(name, 'utf8'));
+    count++;
+  }
   for (const name of ['main.js', 'manifest.json', 'styles.css']) {
     validatePublicText(await fs.readFile(path.join('dist', name), 'utf8'));
     count++;
   }
   console.log(
-    'Public source/runtime leak guard passed: ' + count + ' files (not a full secret audit)',
+    'Public source/runtime/docs leak guard passed: ' + count + ' files (not a full secret audit)',
   );
 }
