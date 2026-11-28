@@ -1,5 +1,7 @@
 # Knowledge Map
 
+[English](README.md) · [简体中文](README.zh-CN.md)
+
 **Explore the hierarchy and connections in your Obsidian knowledge as a map you can arrange.** Folders, notes and headings form nested circles; wiki-links connect them.
 
 ![Folders, notes and headings in one nested map](docs/assets/knowledge-map-overview.png?v=20261121)
@@ -34,41 +36,40 @@ Put core ideas in the centre and supporting details around them.
 
 Press ✥ **Adjust layout**, drag a circle, then press ✥ again to finish. The layout toolbar provides undo, redo and reset controls. Desktop also supports group dragging; touch layout editing moves one element at a time.
 
-![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif?v=20261121)
+![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif?v=20261127-avoidance)
 
 Layouts are saved separately from your notes and reused after edits where they can be reconciled. Incompatible groups fall back to automatic layout.
 
 ## Install and start
 
 1. In **Settings → Community plugins → Browse**, search for **Knowledge Map**, install and enable it. You can also use the [directory page](https://community.obsidian.md/plugins/knowledge-graph-smoke).
-2. Click the ribbon icon or run **Build knowledge graph from current vault** from the command palette.
-3. Choose the folders to include in the plugin settings. The interface supports **English and 简体中文**, following the app language by default.
+2. Choose the folders to include in the plugin settings.
+3. Click the ribbon icon or run **Build knowledge graph from current vault** from the command palette. The interface supports **English and 简体中文**, following the app language by default.
 
 For manual installation, copy `main.js`, `manifest.json` and `styles.css` from a [release](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases) into `.obsidian/plugins/knowledge-graph-smoke/`. See the [installation guide](docs/INSTALL.md) for upgrades, backups and rollback.
 
+The one-switch sync flow below is included in **1.0.0**. Older releases may show a different interface. Install all three runtime files from the same version; see the [version and installation details](docs/INSTALL.md#1-版本与兼容).
+
+## Optional: share layouts between Windows and iPad
+
+Keep the same notes on both devices and match **Include scope**, **Exclude scope** and **Excluded notes** in plugin settings. Turn on **Layout sync** once on each device. The plugin prepares and connects the default shared layout automatically; you do not need to create or look up an ID.
+
+Use your sync tool to transfer your notes and the **`Knowledge Map Sync` folder**. Compatible saved edits are queued automatically while sync is on. After the files arrive and pass validation, the receiving map updates automatically. Differing existing layouts, multiple candidates, conflicts and drafts saved while sync was off require a choice or review. Turning sync off keeps local work.
+
+The tested transport is **Windows ↔ iPadOS with Nutstore Sync**. Settings, views and UI stay local. Local saving, writing shared files and applying them on the other device are separate steps. See the [sync and recovery guide](docs/SYNC_GUIDE.md) for setup, backups and recovery.
+
 ## Platforms and limits
 
-- **Desktop:** Obsidian 1.6.7+.
-- **iPadOS (0.0.15):** user testing covered iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0. The demos show desktop controls. iPhone is unverified; Android adaptation is planned for 0.0.18. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
+- **Desktop:** the declared minimum is Obsidian 1.6.7; recent Windows testing used Obsidian 1.15.1.
+- **iPadOS:** tested on iPad Pro 2022 / iPadOS 26.5.2. Recent sync testing used Obsidian 1.15.1 (404) and Nutstore Sync 1.6.2. This does not establish support for every device or app version. The demos show desktop controls.
+- **Other mobile devices:** iPhone is unverified; Android adaptation has a separate schedule. Minimum iPadOS and objective iPad frame-rate / memory limits have not been established.
 - Layout editing supports up to **128 siblings per group** and **5000 affected nodes**. Undo keeps **50 steps** within the session and clears on structural changes or plugin reload.
-- The map canvas stays dark, including with a light Obsidian theme.
-
-## 中文简介
-
-**Knowledge Map（知识地图）** 用嵌套圆展示知识的包含层级，用连线展示知识之间的联系。拖动画布探索，缩放查看层级，预览笔记内容；点 ✥「调整布局」，把核心知识放在中间、细节放在周围，再点一次结束。
-
-桌面用 Ctrl + 悬停预览；iPad 用长按或选中后的「预览」按钮，触屏支持单元素拖动。0.0.15 加入 iPadOS 支持并保留桌面；iPhone 未验证，0.0.16加入布局同步；0.0.17修复升级后布局回落并加入审阅式历史恢复；Android 适配留到0.0.18。
-
-## Sync layouts across Windows and iPad
-
-**0.0.16** adds reviewed layout sync using ordinary vault files transferred by your own sync service. Windows ↔ iPadOS with Nutstore is the tested transport scope. Select the same shared layout on each device, then explicitly review the first join. Compatible saved edits are queued automatically while sync is enabled; conflicts and drafts saved while sync was off require review. Turning sync off keeps local work.
-
-**0.0.17** fixes upgrade continuity: compatible saved layouts survive an upgrade and the original layout is archived once. A reviewed historical restore previews each title group (unchanged / adjusted / unavailable), verifies a complete backup before applying, restores locally when unjoined, and stages a local draft for separate publication when joined. Joined sessions are never re-imported. The iPad native restore entry (unjoined) was device-verified in an independent synthetic test vault.
-
-Settings, views and UI stay local. See the [sync and recovery guide](docs/SYNC_GUIDE.md) before joining, backing up or rolling back. Large histories can take longer to replay; transport rate limits and the disclosed original iPad anomaly remain unresolved. Android adaptation is planned for 0.0.18; iPhone remains unverified.
+- The map canvas stays dark, including with a light Obsidian theme. Large sync histories can take longer to replay; third-party rate limits and the original unassigned iPad trial anomaly remain disclosed limitations. See the [sync guide](docs/SYNC_GUIDE.md#protection-limits-and-disclosed-limitations).
 
 ## Data and development
 
 Map building happens locally within your configured scope. The plugin does not modify your notes or make network uploads. Before sync is joined, local settings and layouts use the plugin's `data.json`; sync additionally keeps device-local identity and a private journal, and writes layout records to `Knowledge Map Sync`. Your external sync tool transfers shared files, which include relative paths, heading structure and coordinates. Keep full recovery backups and copy them outside the vault; `data.json` alone is not a complete sync backup.
 
-[Data, upgrades and limits](docs/INSTALL.md) · [Build and test](DEVELOPMENT.md) · [Current tasks](TODO.md) · [0.0.17 release notes](docs/RELEASE_NOTES_0.0.17.md) · [MIT license](LICENSE)
+[Installation and rollback](docs/INSTALL.md) · [Data boundaries](docs/DATA_SAFETY.md) · [Report an issue](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/issues) · [Build and test](DEVELOPMENT.md) · [Contribute](CONTRIBUTING.md) · [MIT license](LICENSE)
+
+For contributors: 1.0.0 retains the one-switch sync experience from `dddf14a` and the published recovery fixes. See [workspace rules](docs/WORKSPACE.md) and [current tasks](TODO.md).

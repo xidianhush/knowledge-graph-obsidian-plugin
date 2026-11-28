@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { buildKnowledgeMapUnifiedCandidate } from './build_sync_a3_probe.mjs';
+import { buildKnowledgeMapUnified } from './bundle-sync-host.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = p => fs.readFileSync(path.join(root, p), 'utf8').replace(/\r\n/g, '\n');
@@ -30,7 +30,7 @@ const adapters = [
 export const graphHostBundle = '// Shared graph pipeline and GraphCore; host APIs stay in adapters.\n' + pipeline + '\n' + core + '\n' + adapters + '\nconst PIPELINE_WORKER_SOURCE = ' + JSON.stringify(workerSource) + ';\n' + read('src/adapters/vault-pipeline.js') + '\n' + read('src/adapters/obsidian-native.js') + '\n' + read('src/settings.js') + '\n' + read('src/plugin.js');
 
 function build() {
-  const {main:bundle}=buildKnowledgeMapUnifiedCandidate(root,graphHostBundle);
+  const {main:bundle}=buildKnowledgeMapUnified(root,graphHostBundle);
   fs.mkdirSync(output, { recursive: true });
   fs.writeFileSync(path.join(output, 'main.js'), bundle);
   fs.writeFileSync(path.join(output, 'graph-core.mjs'), core + '\nexport { GraphCore, decodeGraphPayload, createLayoutEditor, createLayoutModel, createLayoutStore };\n');
@@ -38,8 +38,9 @@ function build() {
   fs.writeFileSync(path.join(output, 'pipeline-worker.js'),workerSource);
   fs.writeFileSync(path.join(output, 'browser.mjs'), "import { GraphCore, createLayoutStore } from './graph-core.mjs';\n" + i18n + '\n' + adapters + '\nexport { mountGraph, createCanvasPlatform };\n');
   for (const name of ['manifest.json', 'styles.css']) fs.copyFileSync(path.join(root, name), path.join(output, name));
-  const payload = path.join(root, '.local/smoke-payload.json');
-  if (fs.existsSync(payload)) fs.copyFileSync(payload, path.join(output, 'smoke-payload.json'));
-  console.log(JSON.stringify({ bytes: Buffer.byteLength(bundle), sha256: crypto.createHash('sha256').update(bundle).digest('hex'), payloadIncluded: fs.existsSync(payload) }));
+  // Private snapshots belong to explicit test fixtures, never a default build.
+  // Clear only the known legacy copy in this generated output directory.
+  fs.rmSync(path.join(output, 'smoke-payload.json'), { force: true });
+  console.log(JSON.stringify({ bytes: Buffer.byteLength(bundle), sha256: crypto.createHash('sha256').update(bundle).digest('hex'), payloadIncluded: false }));
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))build();

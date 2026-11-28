@@ -7,24 +7,26 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path(r'D:\obsidian_vault\knowledge-graph')
-EVIDENCE = ROOT / '.local/evidence'
-EVIDENCE.mkdir(parents=True, exist_ok=True)
-
-provenance = {'source': str(SOURCE), 'commit': subprocess.check_output(
-    ['git', '-C', str(SOURCE), 'rev-parse', 'HEAD'], text=True).strip(), 'files': {}}
-for name in ('render.js', 'app.js', 'template.html'):
-    raw = (ROOT / 'upstream' / name).read_bytes()
-    assert raw == (SOURCE / 'web' / name).read_bytes()
-    provenance['files'][name] = hashlib.sha256(raw).hexdigest()
-(ROOT / 'upstream/provenance.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
+import argparse
+parser=argparse.ArgumentParser(description='Prepare an isolated smoke vault from an explicit private JSON fixture')
+parser.add_argument('--snapshot',required=True,type=Path)
+parser.add_argument('--launch',action='store_true')
+args=parser.parse_args()
+snapshot=args.snapshot.resolve()
+assert snapshot.is_file() and snapshot.suffix.lower()=='.json','Provide an existing JSON fixture; default build never copies private snapshots.'
+EVIDENCE=ROOT/'.local/evidence';EVIDENCE.mkdir(parents=True,exist_ok=True)
+provenance={'fixtureSha256':hashlib.sha256(snapshot.read_bytes()).hexdigest(),'files':{}}
+for name in ('render.js','app.js','template.html'):
+    provenance['files'][name]=hashlib.sha256((ROOT/'upstream'/name).read_bytes()).hexdigest()
+(EVIDENCE/'smoke-provenance.json').write_text(json.dumps(provenance,indent=2),encoding='utf-8')
 
 vault = ROOT / 'test-vault'
 config = vault / '.obsidian'
 plugin = config / 'plugins/knowledge-graph-smoke'
 plugin.mkdir(parents=True, exist_ok=True)
-for name in ('manifest.json', 'main.js', 'styles.css', 'smoke-payload.json'):
+for name in ('manifest.json', 'main.js', 'styles.css'):
     shutil.copy2(ROOT / 'dist' / name, plugin / name)
+shutil.copy2(snapshot,plugin/'smoke-payload.json')
 (config / 'community-plugins.json').write_text('["knowledge-graph-smoke"]', encoding='utf-8')
 (config / 'core-plugins.json').write_text('["file-explorer","switcher","command-palette"]', encoding='utf-8')
 (config / 'appearance.json').write_text('{"theme":"obsidian"}', encoding='utf-8')

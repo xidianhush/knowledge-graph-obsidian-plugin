@@ -1,7 +1,42 @@
 {
   "name": "knowledge-graph-obsidian-plugin",
-  "version": "0.0.17",
+  "version": "1.0.0",
   "private": true,
-  "engines": { "node": ">=22" },
-  "scripts": { "build": "node scripts/build.mjs", "test": "node scripts/test.mjs", "test:sync-disk": "node scripts/sync_persistence_check.mjs", "test:sync-join": "node scripts/sync_join_check.mjs", "test:sync-host-disk": "node scripts/sync_host_disk_check.mjs", "test:sync-config-disk": "node scripts/sync_private_config_disk_check.mjs", "test:sync-lifecycle-disk": "node scripts/sync_lifecycle_disk_check.mjs", "test:sync-local-disk": "node scripts/sync_local_work_disk_check.mjs", "test:sync-connections-disk": "node scripts/sync_connection_catalog_disk_check.mjs", "test:sync-auto-publish-disk": "node scripts/sync_auto_publish_disk_check.mjs", "test:sync-unified-disk": "node scripts/sync_unified_host_disk_check.mjs", "test:sync-settings-browser": "python scripts/sync_settings_browser_check.py" }
+  "engines": {
+    "node": "^22.13.0 || >=24.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs",
+    "test:sync-disk": "node scripts/sync_persistence_check.mjs",
+    "test:sync-join": "node scripts/sync_join_check.mjs",
+    "test:sync-host-disk": "node scripts/sync_host_disk_check.mjs",
+    "test:sync-config-disk": "node scripts/sync_private_config_disk_check.mjs",
+    "test:sync-lifecycle-disk": "node scripts/sync_lifecycle_disk_check.mjs",
+    "test:sync-local-disk": "node scripts/sync_local_work_disk_check.mjs",
+    "test:sync-connections-disk": "node scripts/sync_connection_catalog_disk_check.mjs",
+    "test:sync-bootstrap-disk": "node scripts/sync_bootstrap_disk_check.mjs",
+    "test:sync-easy-disk": "node scripts/sync_easy_setup_disk_check.mjs",
+    "test:sync-auto-publish-disk": "node scripts/sync_auto_publish_disk_check.mjs",
+    "test:sync-unified-disk": "node scripts/sync_unified_host_disk_check.mjs",
+    "test:sync-settings-browser": "python scripts/sync_settings_browser_check.py",
+    "test:sync-easy-sketch": "python scripts/sync_easy_settings_sketch_check.py",
+    "test:sync-ux-delivery": "node scripts/sync_ux_delivery_check.mjs",
+    "prepare:sync-ux": "node scripts/prepare_sync_ux_candidate.mjs",
+    "lint": "eslint scripts/quality*.mjs scripts/baseline*.mjs scripts/bundle-sync-host.mjs",
+    "format:check": "prettier --check \"scripts/quality*.mjs\" \"scripts/baseline*.mjs\" scripts/bundle-sync-host.mjs eslint.config.mjs prettier.config.mjs tsconfig.quality.json",
+    "typecheck": "tsc -p tsconfig.quality.json",
+    "test:release": "node scripts/quality_release_test.mjs && node scripts/quality_release_check.mjs",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm test && npm run test:release && npm run test:security && npm run test:baseline",
+    "test:security": "node scripts/quality_security_check.mjs && node scripts/quality_public_check.mjs",
+    "test:clean": "node scripts/quality_clean_check.mjs",
+    "test:baseline": "node scripts/baseline_contract_check.mjs && node scripts/baseline_check.mjs",
+    "workspace:check": "node scripts/baseline_check.mjs --workspace"
+  },
+  "devDependencies": {
+    "eslint": "10.15.0",
+    "globals": "16.5.0",
+    "prettier": "3.10.1",
+    "typescript": "5.9.3"
+  }
 }

@@ -29,4 +29,28 @@ const exportEventAgain=p4.syncHost.isExportEvent;p4.syncHost.isExportEvent=path=
 const doc={hidden:false,defaultView:{}},view={contentEl:{ownerDocument:doc,getClientRects:()=>[{}]},closed:false};let wakes=0;p4.syncHost.resumePublication=async()=>{wakes++;return {kind:'held'};};p4.vaultLayoutDriver.graphReady(view,{},0);await p4.syncHost.settled();const baseline=wakes;
 assert.equal(typeof leafWake,'function');assert.deepEqual(listeners.map(x=>x.event).sort(),['focus','visibilitychange']);for(const l of listeners)l.fn();leafWake();assert.equal(wakes,baseline+3);
 const view2={...view};p4.vaultLayoutDriver.graphReady(view2,{},0);assert.equal((await p4.syncHost.previewJoin()).reason,'graph-unavailable');p4.vaultLayoutDriver.graphClosed(view2);assert.equal((await p4.syncHost.previewJoin()).reason,'join-not-required');await p4.syncHost.close();
-await fs.mkdir('.local/sync-016/unified/u3',{recursive:true});await fs.writeFile('.local/sync-016/unified/u3/candidate-check.json',JSON.stringify({pass:true,checks:9,build:real.build},null,2));console.log('Unified candidate: entry/build/config/HUD/fresh-file and foreground wake contracts passed (9).');
+// SYNC-UX-A3: the formal candidate bundles the easy panel and its orchestration deps.
+assert.ok(real.build.modules.some(m=>m.file==='src/sync/obsidian-easy-settings.mjs'));
+assert.ok(real.build.modules.some(m=>m.file==='src/sync/easy-sync-setup.mjs'));
+assert.ok(real.build.modules.some(m=>m.file==='src/sync/default-layout-bootstrap.mjs'));
+const entrySource=await fs.readFile('src/sync/obsidian-unified-entry.js','utf8');
+assert.ok(entrySource.includes('mountObsidianEasySettings({container:tab.containerEl'),'settings tab must mount the easy panel');
+// SYNC-UX-A3: pre-join shared-folder events wake a coalesced, authorized-only resume.
+let easyClock=0,easyTid=0;const easyTimers=new Map();
+const fakeWin={setTimeout:(fn,ms)=>{const id=++easyTid;easyTimers.set(id,{fn,at:easyClock+ms});return id;},clearTimeout:id=>{easyTimers.delete(id);}};
+const advanceEasy=ms=>{easyClock+=ms;for(const[id,t]of[...easyTimers])if(t.at<=easyClock){easyTimers.delete(id);t.fn();}};
+const flushEasy=()=>new Promise(resolve=>setImmediate(resolve));
+const easyHandlers={};app.vault.on=(event,fn)=>{easyHandlers[event]=fn;return{};};
+app.workspace={on:()=>({}),containerEl:{ownerDocument:{defaultView:fakeWin}}};
+const p5=new context.module.exports();p5.app=app;p5.manifest=plugin.manifest;p5.registerEvent=()=>{};await p5.onload();
+let easyCalls=0;p5.syncHost.resumeEasySync=async()=>{easyCalls++;return{kind:'ready'};};
+easyHandlers.create({path:'Knowledge Map Sync/bootstrap-v1/71e90242bea19488f2a16c60f78fcabc/a.json'},null);
+advanceEasy(300);await flushEasy();assert.equal(easyCalls,0,'unauthorized device must not auto-resume on shared events');
+app.saveLocalStorage(plugin.manifest.id+':easy-sync-v1','sealed-authorization');
+for(let i=0;i<5;i++)easyHandlers.modify({path:'Knowledge Map Sync/attempts-v1/71e90242bea19488f2a16c60f78fcabc/ops/op.json'},null);
+advanceEasy(300);await flushEasy();assert.equal(easyCalls,1,'a burst of shared events coalesces to one resume');
+easyHandlers.create({path:'Knowledge Map Sync/attempts-v1/71e90242bea19488f2a16c60f78fcabc/ops/op2.json'},null);
+advanceEasy(300);await flushEasy();assert.equal(easyCalls,2,'a later separate event resumes again');
+easyHandlers.modify({path:'notes/a.md'},null);advanceEasy(300);await flushEasy();assert.equal(easyCalls,2,'non-transport events are ignored');
+await p5.syncHost.close();
+await fs.mkdir('.local/sync-016/unified/u3',{recursive:true});await fs.writeFile('.local/sync-016/unified/u3/candidate-check.json',JSON.stringify({pass:true,checks:11,build:real.build},null,2));console.log('Unified candidate: entry/build/config/HUD/fresh-file/foreground wake and easy-panel bundling/coalesced authorized transport wake contracts passed (11).');
