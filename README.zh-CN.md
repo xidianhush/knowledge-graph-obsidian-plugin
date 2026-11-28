@@ -36,7 +36,7 @@
 
 点 ✥「调整布局」，拖动圆的位置，再点一次结束。工具栏支持撤销、重做和重置。桌面支持组拖动；触屏一次移动一个元素。布局独立于笔记保存，结构变化后会尽可能协调恢复；不兼容的组回退到自动布局。
 
-![调整布局](docs/assets/knowledge-map-layout.gif?v=20261121)
+![调整布局](docs/assets/knowledge-map-layout.gif?v=20261127-avoidance)
 
 ## 可选：电脑与 iPad 共享布局
 

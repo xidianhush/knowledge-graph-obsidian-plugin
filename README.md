@@ -36,7 +36,7 @@ Put core ideas in the centre and supporting details around them.
 
 Press ✥ **Adjust layout**, drag a circle, then press ✥ again to finish. The layout toolbar provides undo, redo and reset controls. Desktop also supports group dragging; touch layout editing moves one element at a time.
 
-![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif?v=20261121)
+![Adjusting circle positions on desktop](docs/assets/knowledge-map-layout.gif?v=20261127-avoidance)
 
 Layouts are saved separately from your notes and reused after edits where they can be reconciled. Incompatible groups fall back to automatic layout.
 
