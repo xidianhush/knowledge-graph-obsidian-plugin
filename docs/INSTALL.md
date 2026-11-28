@@ -1,4 +1,4 @@
-> 本页对应1.0.0候选的安装与恢复流程；实际发布/验证状态见[1.0.0准备记录](RELEASE_PREP_1.0.0.md)。旧0.0.17发布和同号开发候选的历史区别见[工作区基线](WORKSPACE.md)。
+> 本页对应已发布的[1.0.0](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/1.0.0)安装与恢复流程；实际资产验证和社区状态见[发布记录](RELEASE_PREP_1.0.0.md)。旧0.0.17发布和同号开发候选的历史区别见[工作区基线](WORKSPACE.md)。
 
 # 安装、升级、卸载与已知限制
 
@@ -8,7 +8,7 @@
 
 | 项 | 当前值 |
 | --- | --- |
-| 当前分支 | 1.0.0 发布候选，包含一键同步与恢复修复；准备阶段不等于已发布，进度见[发布准备](RELEASE_PREP_1.0.0.md)，正式说明见[1.0.0说明](RELEASE_NOTES_1.0.0.md) |
+| 当前发布 | 1.0.0，包含一键同步与恢复修复；GitHub三资产已发布并核对，社区目录更新进度见[发布记录](RELEASE_PREP_1.0.0.md)，正式说明见[1.0.0说明](RELEASE_NOTES_1.0.0.md) |
 | 最低 Obsidian 版本 | 1.6.7（`minAppVersion`） |
 | 0.0.15历史验证环境 | 本版已有 Windows Obsidian 1.15.0 技术证据；iPad Pro 2022 / iPadOS 26.5.2 / Obsidian 1.15.0 (396) 由用户手动验收。历史桌面 1.6.7 / 1.14.5 结果不能当成本轮复测。最终候选技术核验见 [发布准备](RELEASE_PREP_0.0.15.md) |
 | 近期候选短验 | Windows Obsidian 1.15.1；iPad 用户回报 iPadOS 26.5.2 / Obsidian 1.15.1（404）/ Nutstore Sync 1.6.2。限定重开、保存及跨端自动跟随结果见[短验记录](G4_NATIVE_SMOKE_RESULT_2026-11-27.md)，不代表原生大历史性能或所有平台通过 |

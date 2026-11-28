@@ -1,6 +1,16 @@
 # Knowledge Map 1.0.0 发布准备
 
-日期：2026-11-28（Asia/Shanghai）。本页记录实际准备结果，不代表已打tag、发布或通过社区审核。
+日期：2026-11-28（Asia/Shanghai）。GitHub正式发布及三资产下载核对已完成；社区条目更新/审核尚待完成，不代表社区审核已通过。
+
+## 正式发布结果
+
+用户明确回复“确认发布”，授权合并main、推送1.0.0 tag、正式Release及现有社区条目收尾。[PR #1](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/pull/1)按预期head 1138d83合并为e17f44d，合并树与已批准候选完全相同；[main CI](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46094798473)成功。固定tag `1.0.0`指向e17f44d，未移动旧tag或覆盖旧Release；本地活动分支仅快进，5025工作区保留。
+
+[正式Release](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/releases/tag/1.0.0)于2026-11-28 09:50:45（Asia/Shanghai）发布，非draft、非prerelease。[正式流水线46095082819](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46095082819)全部成功，包含构建来源证明和三资产白名单回读。实际下载main.js、manifest.json、styles.css，逐字节等于下节冻结值、本地交付包及iPad回传安装文件；分别846913、308、3055字节。tag/默认分支manifest均为1.0.0。
+
+社区[既有公开条目](https://community.obsidian.md/plugins/knowledge-graph-smoke)在本轮观察时仍显示0.0.17及旧版说明；门户未登录，尚未请求新版本检查或保存新版listing。此处保持待办，不重复申请同ID插件，也不将GitHub发布成功等同于社区审核通过。
+
+下方保留准备、复核与安装证据；其中原先的“未发布/待授权”是正式授权前的执行记录，当前状态以上节正式结果与TODO为准。
 
 ## 授权与范围
 
@@ -26,7 +36,7 @@ manifest、package、package-lock根及根包版本、versions映射和BASELINE�
 - 已完成：用户完成登录后，从候选分支手动触发[Release演练46092147436](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46092147436)，精确源码340171d，输入1.0.0，事件workflow_dispatch；构建、检查、三资产打包及来源证明步骤成功，正式发布/Release资产回读步骤均跳过。下载artifact 15242071568，ZIP摘要与GitHub记录一致，CRC通过，恰好main.js/manifest.json/styles.css，全部与本地冻结文件及交付包逐字节相同。
 - 已完成：PC原独立测试库三文件升级至1.0.0，原profile保留；原生设置实际显示v1.0.0并启用，原同步设置保持“本机布局已保存，当前没有待处理修改”，重新打开图谱仍为A左上/B右下。14份合成笔记/说明/共享JSON摘要保持，安装三文件等于本地和远端冻结值。此次未再拖动或传输，不冒充双向同步重新验收。
 - 已完成：用户回传iPad安装后的测试库ZIP及插件列表截图，明确确认替换并显示v1.0.0，截图中Knowledge Map处于启用状态。仅定向读取其中插件目录的main.js/manifest.json/styles.css（各条目CRC通过），三份字节均与本地冻结、PC实际安装及远端演练记录一致，补齐当前缓存候选iPad运行字节证据；包内账号配置/设备身份/私有账本未检查。未由版本截图推定新一轮拖动、传输或冷启动体验通过，已有功能验收按原日期保留。
-- 尚未执行：正式1.0.0 tag/Release、现有社区条目更新及回读。不新申请同ID插件，不移动旧tag或覆盖旧Release。
+- 已完成：正式1.0.0 tag/Release及实际三资产下载核对，见本页正式结果。待完成：社区条目更新及回读。不新申请同ID插件，不移动旧tag或覆盖旧Release。
 
 默认分支对齐已整理为[发布PR #1](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/pull/1)，base main保持db835e1，未合并；GitHub确认无合并冲突。最终完整本地check再次退出0，安装证据文档提交76b4d06的[分支CI](https://github.com/xidianhush/knowledge-graph-obsidian-plugin/actions/runs/46093795136)通过，PR独立检查及后续文档提交检查以PR当前结果为准。演练340171d之后仅TODO/准备记录变化，运行源码/工作流/三资产未变；没有重复演练同一运行字节。G6准备材料已具备审阅条件，正式合并main、推1.0.0 tag触发Release及社区操作留待用户最终明确授权；不从原交接push授权推定正式发布。
 
@@ -42,7 +52,7 @@ PC安装过程先停用Knowledge Map，备份旧三文件，再替换候选三�
 
 修正后完整check与test:clean均退出0，三运行资产摘要保持上节冻结值。Minor为DEVELOPMENT与RELEASE_CI的旧版本上下文，已局部校准；不改既有用户验收文字或功能。历史提交中的原始路径仍可能被检索到，普通后续提交不消除历史；没有擅自改写远端历史。
 
-复核提出的远端演练/字节核对和PC/iPad安装对齐现已完成；默认分支对齐与正式tag/Release/现有社区条目回读仍未执行，不能把发布准备通过写作已发布。G3由用户明确后置；大历史原生性能、Android/iPhone等既有边界继续保留，不扩展本轮范围或开启重复优化/复核。
+复核提出的远端演练/字节核对和PC/iPad安装对齐已完成；用户正式授权后的默认分支对齐和tag/Release也已完成，现余社区条目更新/回读。G3由用户明确后置；大历史原生性能、Android/iPhone等既有边界继续保留，不扩展本轮范围或开启重复优化/复核。
 
 ## 工具与保全
 
